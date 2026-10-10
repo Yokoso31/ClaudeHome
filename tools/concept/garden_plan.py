@@ -247,6 +247,84 @@ def power_greedy(items, occupied, lvl, poles_n=12):
     return gens, poles, areas, len(powered), len(targets)
 
 
+def regularize(out, L, cells):
+    """Farms and woodlands in straight rows: for each climate building, its pieces are put back on a grid of their size
+    around it (the grid phase that holds them best, nearest cells first); then the farms that need
+    no climate, in a tidy block. Anything that can't be done cleanly stays as the planner left it."""
+    items = out['items']
+    envs = [i for i in items if i['kind'] == 'env' and i.get('mode')]
+    sq = lambda e: {'x': e['x'] + e['w'] / 2 - 4.5, 'y': e['y'] + e['h'] / 2 - 4.5, 'w': 9, 'h': 9}
+    needs = set()
+    for p in LAY[L]['pieces']:
+        if p.get('cluster'):
+            for q in p['plots']:
+                needs.add((q['facility'], q.get('crop')))
+    inside = lambda r: sum(max(0, min(r['x'] + r['w'], c['x'] + c['w']) - max(r['x'], c['x'])) * max(0, min(r['y'] + r['h'], c['y'] + c['h']) - max(r['y'], c['y'])) for c in cells) >= r['w'] * r['h'] - E
+    kiosks = [{'x': x, 'y': y, 'w': 2, 'h': 2} for x, y in KIOSK.values()]
+    done = tot = 0
+    for N, P in (('Farmland', 2), ('Woodland', 4)):
+        groups = []
+        for e in envs:
+            # pieces shared with another building's square (pair zones) stay where the planner put them
+            F = [i for i in items if i['n'] == N and (i['n'], i.get('item')) in needs and ov(i, sq(e))
+                 and not any(ov(i, sq(o)) for o in envs if o is not e)]
+            if F:
+                groups.append((e, F))
+        free_f = [i for i in items if i['n'] == N and (i['n'], i.get('item')) not in needs]
+        tot += len(groups) + (1 if free_f else 0)
+        for e, F in groups + [(None, free_f)]:
+            if not F:
+                continue
+            others = [i for i in items if not any(i is f for f in F)]
+            other_sq = [sq(o) for o in envs if o is not e]
+            if e is not None:
+                cx, cy = e['x'] + e['w'] / 2, e['y'] + e['h'] / 2
+                S = sq(e)
+            else:
+                cx, cy = None, None
+            best = None
+            for ox in [k / 2 for k in range(2 * P)]:
+                for oy in [k / 2 for k in range(2 * P)]:
+                    cand = []
+                    for gx in range(0, 80 // P):
+                        for gy in range(0, 60 // P):
+                            r = {'x': ox + P * gx, 'y': oy + P * gy, 'w': P, 'h': P}
+                            if e is not None and not ov(r, S):
+                                continue
+                            if not inside(r) or any(ov(r, o) for o in others) or any(ov(r, k) for k in kiosks):
+                                continue
+                            if e is not None and any(ov(r, q) for q in other_sq):
+                                continue
+                            cand.append(r)
+                    if len(cand) < len(F):
+                        continue
+                    if e is None:
+                        # a compact block next to the pieces' current centre
+                        mx = sum(f['x'] for f in F) / len(F); my = sum(f['y'] for f in F) / len(F)
+                        key = lambda r: math.dist((r['x'], r['y']), (mx, my))
+                    else:
+                        key = lambda r: (abs(r['x'] + P / 2 - cx) + abs(r['y'] + P / 2 - cy), r['y'], r['x'])
+                    pick = sorted(cand, key=key)[:len(F)]
+                    score = sum(math.dist((r['x'] + P / 2, r['y'] + P / 2), (cx, cy) if e is not None else (mx + P / 2, my + P / 2)) for r in pick)
+                    if best is None or score < best[0]:
+                        best = (score, pick)
+            if best is None:
+                continue
+            pick = sorted(best[1], key=lambda r: (r['y'], r['x']))
+            crops = sorted((f.get('item') or '', f.get('weight') or 0) for f in F)
+            before = [(f['x'], f['y'], f.get('item'), f.get('weight')) for f in F]
+            bad0 = len(climate(out, LAY[L])[0])
+            for f, r, (crop, wgt) in zip(sorted(F, key=lambda f: (f['y'], f['x'])), pick, crops):
+                f['x'], f['y'] = r['x'], r['y']
+                f['item'], f['weight'] = crop, wgt
+            if len(climate(out, LAY[L])[0]) > bad0:   # never trade climate for neatness
+                for f, (x, y, it, w) in zip(F, before):
+                    f['x'], f['y'], f['item'], f['weight'] = x, y, it, w
+                continue
+            done += 1
+    return done, tot
+
+
 def main():
     inst = assign_lots(machine_weights())
     reserve = [(i['n'], i['k']) for i in inst if i['lot'] is None]
@@ -255,6 +333,9 @@ def main():
     levels = {}
     for L in LEVELS:
         out, (fixed, flower), key = run_planner(L, prev_items)
+        cells = [{k: t[k] for k in 'xywh'} for t in TERRACES] + ([{k: t[k] for k in 'xywh'} for t in EXTRA] if key[-1] else [])
+        rd, rn = regularize(out, L, cells)
+        print(f'  RV{L}: rows straightened for {rd} of {rn} groups of farms and woodlands', flush=True)
         items = []
         # crops and climate from the planner
         for it in out['items']:
