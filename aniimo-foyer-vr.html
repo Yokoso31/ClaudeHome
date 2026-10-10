@@ -1,0 +1,559 @@
+<title>Plan du Foyer VR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: carnet de route — sélecteur de niveau en tête, puis objectifs, carte du Foyer, Aniimo, habitabilité, checklist, tableau complet */
+:root{
+  --bg:#EDF1E8; --surface:#FAFCF7; --ink:#1A2923; --muted:#5B6B62; --line:#D2DBD0;
+  --accent:#DE9B12; --accent-ink:#7A5000; --accent-soft:#F6E5BA;
+  --hot:#D2502C; --cold:#2F7AC2; --warm:#E3842B; --sun:#D9B21C;
+  --farm:#B68856; --farm-new:#F4DDAE; --wood:#4C9858; --wood-dark:#2F6B3A; --mine:#878C9B;
+  --decor:#A962B6; --core:#2F3E48; --core-ink:#F2F5F0; --path:#E2D9C2; --map:#D7E4CE;
+  --good:#3B8A4E;
+  --f-display:"Fredoka","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111916; --surface:#18221E; --ink:#E4ECE6; --muted:#98AAA0; --line:#2B3832;
+  --accent:#F0B43C; --accent-ink:#F6D27E; --accent-soft:#3A3019;
+  --hot:#E8693F; --cold:#5A9DE0; --warm:#F09A45; --sun:#E8C843;
+  --farm:#9C7247; --farm-new:#5E4824; --wood:#5BAA67; --wood-dark:#3A7F46; --mine:#7A7F8D;
+  --decor:#C17FCC; --core:#0C1310; --core-ink:#E4ECE6; --path:#39372D; --map:#1D2A23;
+  --good:#5DB873; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#111916; --surface:#18221E; --ink:#E4ECE6; --muted:#98AAA0; --line:#2B3832;
+  --accent:#F0B43C; --accent-ink:#F6D27E; --accent-soft:#3A3019;
+  --hot:#E8693F; --cold:#5A9DE0; --warm:#F09A45; --sun:#E8C843;
+  --farm:#9C7247; --farm-new:#5E4824; --wood:#5BAA67; --wood-dark:#3A7F46; --mine:#7A7F8D;
+  --decor:#C17FCC; --core:#0C1310; --core-ink:#E4ECE6; --path:#39372D; --map:#1D2A23;
+  --good:#5DB873; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,5vw,44px)}
+h2{font-size:24px}
+h3{font-size:17px}
+p{margin:0}
+.eyebrow{font-family:var(--f-data);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{max-width:64ch;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:16px}
+.sec-head{display:flex;flex-direction:column;gap:6px}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+
+/* header */
+header{display:flex;flex-direction:column;gap:18px}
+.picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.picker .lbl{font-weight:600;margin-right:6px}
+.chip{font:600 15px var(--f-data);border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1A1405}
+.chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.route{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.route .big{font-family:var(--f-display);font-size:28px;font-weight:600}
+.route .arrow{color:var(--accent);font-family:var(--f-display);font-size:28px}
+
+/* goals */
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.goal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.goal .k{font-size:12.5px;color:var(--muted)}
+.goal .v{font-family:var(--f-data);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.goal .d{font-size:12.5px;color:var(--muted)}
+.goal .d b{color:var(--accent-ink);font-weight:600}
+.unlocks{font-size:13.5px;color:var(--muted)}
+
+/* map */
+.map-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.map-scroll{overflow-x:auto}
+.map-scroll svg{display:block;width:100%;min-width:640px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+svg text{font-family:var(--f-body)}
+.t-title{font:700 12px var(--f-data);letter-spacing:.06em;fill:var(--muted)}
+.t-lbl{font:600 13px var(--f-body);fill:var(--ink)}
+.t-sub{font:500 11.5px var(--f-body);fill:var(--muted)}
+.t-core{font:600 12px var(--f-body);fill:var(--core-ink)}
+.t-decor{font:600 11px var(--f-body);fill:var(--surface)}
+.tile{fill:var(--farm);stroke:none}
+.tile.new{fill:var(--farm-new);stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3}
+.tree{fill:var(--wood)}
+.tree.new{fill:var(--farm-new);stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3}
+.trunk{fill:var(--wood-dark)}
+.minetile{fill:var(--mine)}
+.minetile.new{fill:var(--farm-new);stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3}
+.rng-hot{fill:var(--hot);fill-opacity:.10;stroke:var(--hot);stroke-width:1.5;stroke-dasharray:6 4}
+.rng-cold{fill:var(--cold);fill-opacity:.10;stroke:var(--cold);stroke-width:1.5;stroke-dasharray:6 4}
+.rng-sun{fill:var(--sun);fill-opacity:.12;stroke:var(--sun);stroke-width:1.5;stroke-dasharray:6 4}
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.tip{border-top:2px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tip h3{font-size:15.5px}
+.tip p{font-size:14px;color:var(--muted)}
+
+/* workers */
+.bar{display:flex;height:34px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.bar div{display:flex;align-items:center;justify-content:center;font:600 13px var(--f-data);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);min-width:0;white-space:nowrap;overflow:hidden}
+.jobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.job{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.job .dot{width:12px;height:12px;border-radius:50%;margin-top:5px;flex:none}
+.job .n{font-family:var(--f-data);font-weight:600}
+.job p{font-size:13px;color:var(--muted)}
+
+/* habitability */
+.hab-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px}
+@media (max-width:760px){.hab-grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+label{font-weight:600;font-size:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+input[type=number]{font:600 18px var(--f-data);padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:100%;max-width:240px}
+.result{font-size:14px;color:var(--muted)}
+.result strong{color:var(--ink)}
+.ok{color:var(--good);font-weight:600}
+.items{display:flex;flex-direction:column;gap:8px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;font-size:14px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.item:last-child{border-bottom:0}
+.item .h{font-family:var(--f-data);font-weight:600;color:var(--decor);text-align:right}
+.item .s{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
+
+/* checklist */
+.check{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 6px}
+.check label{display:flex;gap:12px;align-items:flex-start;padding:10px 10px;border-radius:10px;font-weight:500;cursor:pointer}
+.check label:hover{background:var(--bg)}
+.check input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex:none}
+.check input:checked + span{color:var(--muted);text-decoration:line-through}
+.progress{font-family:var(--f-data);font-size:13px;color:var(--muted)}
+
+/* table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+th{font:600 11.5px var(--f-data);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+tr.cur td{background:var(--accent-soft)}
+.unk{color:var(--muted);font-style:italic}
+
+.note{font-size:13px;color:var(--muted);max-width:75ch}
+.sources{font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+.sources a{color:var(--cold)}
+@media (prefers-reduced-motion:no-preference){ .chip{transition:background .15s,border-color .15s} }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Aniimo · Foyer · Camping-car (VR)</div>
+    <h1>Plan du Foyer VR, du niveau 14 au 20</h1>
+    <p class="lede">Choisis ton niveau actuel. La page affiche ce qu'il faut pour le palier suivant, la carte des zones à poser, la répartition de tes Aniimo et la route d'habitabilité. Les tuiles en pointillés sont celles à ajouter pour monter.</p>
+    <div class="picker" role="group" aria-label="Niveau actuel du VR">
+      <span class="lbl">Mon VR est niveau</span>
+      <div id="chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+    <div class="route"><span class="big" id="r-from">VR 14</span><span class="arrow">→</span><span class="big" id="r-to">VR 15</span><span class="eyebrow" id="r-note"></span></div>
+  </header>
+
+  <section aria-labelledby="h-goals">
+    <div class="sec-head">
+      <div class="eyebrow">Objectifs du palier</div>
+      <h2 id="h-goals">Ce que l'écran « Améliorer le VR » va te demander</h2>
+    </div>
+    <div class="goals" id="goals"></div>
+    <p class="unlocks" id="unlocks"></p>
+  </section>
+
+  <section aria-labelledby="h-map">
+    <div class="sec-head">
+      <div class="eyebrow">Carte des zones</div>
+      <h2 id="h-map">Le plan de ton Foyer</h2>
+      <p class="lede">Carte schématique : elle montre où placer chaque type de parcelle et combien en poser, pas la position exacte case par case. Le noyau au centre garde le stockage collé aux ateliers pour que les porteurs fassent les trajets les plus courts.</p>
+    </div>
+    <div class="map-box">
+      <div class="map-scroll"><svg id="map" viewBox="0 0 960 640" role="img" aria-label="Plan schématique du Foyer"></svg></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--farm)"></i>Champ déjà posé</span>
+        <span><i class="sw" style="background:var(--farm-new);outline:2px dashed var(--accent);outline-offset:-2px"></i>À poser pour le palier</span>
+        <span><i class="sw" style="background:var(--wood)"></i>Bois</span>
+        <span><i class="sw" style="background:var(--mine)"></i>Mine</span>
+        <span><i class="sw" style="background:var(--decor)"></i>Mobilier d'habitabilité</span>
+        <span><i class="sw" style="background:var(--hot)"></i>Portée chauffage</span>
+        <span><i class="sw" style="background:var(--cold)"></i>Portée refroidisseur</span>
+        <span><i class="sw" style="background:var(--sun)"></i>Portée lampe solaire</span>
+      </div>
+    </div>
+    <div class="tips-grid">
+      <div class="tip"><h3>Une bande de température par bloc</h3><p>Une culture pousse à 100 % dans sa température, 80 % à un cran, 50 % à deux crans, 20 % au-delà. Un champ frais dans la portée d'un chauffage perd plus qu'un champ sans appareil. Active l'affichage des portées dans les réglages de construction.</p></div>
+      <div class="tip"><h3>Le chevauchement fait le tiède</h3><p>Torride + frais donne tiède là où les portées se croisent. Pose les 2 champs du milieu dans ce recoupement pour le cerisier, sans troisième appareil.</p></div>
+      <div class="tip"><h3>Le bon type au bon poste</h3><p>Un Aniimo dont le type correspond à l'installation travaille 20 % plus vite. Type Plante pour semer, Eau pour arroser, Ténèbres pour récolter et couper, Terre pour les mines.</p></div>
+      <div class="tip"><h3>Sauvegarde chaque bloc en Combo</h3><p>Sélection multiple puis « enregistrer en Combo » : à chaque palier tu déplaces un bloc entier d'un coup pour libérer la place des nouvelles parcelles, au lieu de tout reposer.</p></div>
+      <div class="tip"><h3>Lance l'amélioration avant de partir</h3><p>À partir du niveau 14, une amélioration dure 6 h et plus (12 h pour le niveau 20). Démarre-la juste avant une longue pause ou la nuit.</p></div>
+      <div class="tip"><h3>Garde une réserve libre</h3><p>Chaque palier ajoute 2 champs et 1 bois, et 1 mine tous les deux niveaux. Laisse la zone de réserve vide pour ne jamais devoir démonter.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-work">
+    <div class="sec-head">
+      <div class="eyebrow">Équipe</div>
+      <h2 id="h-work">Répartition des Aniimo</h2>
+      <p class="lede" id="work-lede"></p>
+    </div>
+    <div class="bar" id="bar" aria-hidden="true"></div>
+    <div class="jobs" id="jobs"></div>
+    <p class="note">C'est une base de départ, pas une valeur officielle. Regarde où la production s'accumule ou attend : s'il y a des produits qui traînent dans les installations, ajoute un porteur ; si des champs attendent d'être plantés ou arrosés, déplace un Aniimo vers ce poste.</p>
+  </section>
+
+  <section aria-labelledby="h-hab">
+    <div class="sec-head">
+      <div class="eyebrow">Habitabilité</div>
+      <h2 id="h-hab">Atteindre le seuil d'habitabilité</h2>
+      <p class="lede">Depuis le niveau 10, chaque palier demande un score d'habitabilité. De 15 000 au niveau 14, il faut monter jusqu'à 20 000 au niveau 20. Entre ton score actuel pour voir ce qu'il te manque.</p>
+    </div>
+    <div class="hab-grid">
+      <div class="panel">
+        <div class="field">
+          <label for="hab">Mon habitabilité actuelle</label>
+          <input type="number" id="hab" min="0" step="50" value="15000" inputmode="numeric">
+        </div>
+        <div class="result" id="hab-res"></div>
+        <div class="field">
+          <label for="coins">Mes Pièces du Foyer</label>
+          <input type="number" id="coins" min="0" step="10000" placeholder="ex. 2500000" inputmode="numeric">
+        </div>
+        <div class="result" id="coin-res"></div>
+      </div>
+      <div class="panel">
+        <h3>Les pièces qui rapportent le plus</h3>
+        <div class="items">
+          <div class="item"><span>Set <i>Harvest Moon</i> (26 pièces)</span><span class="h">+5 301</span><span class="s">Le plus gros total d'un set. À viser en premier si tu ne l'as pas.</span></div>
+          <div class="item"><span><i>Mige Pool Bathtub</i> · boutique de meubles</span><span class="h">1 249 ×5</span><span class="s">Jusqu'à 5 exemplaires, soit 6 245 au total.</span></div>
+          <div class="item"><span><i>Forest Whispers Wooden Bath</i> · boutique</span><span class="h">1 198 ×5</span><span class="s">Jusqu'à 5 exemplaires, soit 5 990 au total.</span></div>
+          <div class="item"><span>Set <i>Timber Serenity</i> (13 pièces)</span><span class="h">+2 449</span><span class="s">Emprise compacte de 7 × 4 × 6, idéal à l'intérieur du VR.</span></div>
+          <div class="item"><span><i>Sunlit Grove</i> · événement</span><span class="h">2 025 ×1</span><span class="s">La meilleure pièce unique. À récupérer dès qu'un événement la propose.</span></div>
+          <div class="item"><span><i>Aniimo Ludo</i> · Bud Tickets (dès VR 13)</span><span class="h">221</span><span class="s">Coûte autant de Bud Tickets qu'il donne d'habitabilité. Parfait pour combler un petit écart.</span></div>
+          <div class="item"><span>À éviter : <i>Storage Unit</i></span><span class="h">10</span><span class="s">210 Pièces pour 10 points : à poser pour le stockage, jamais pour le score.</span></div>
+        </div>
+        <p class="note">Ces cinq grosses sources cumulent environ 22 000 points, de quoi couvrir tous les seuils jusqu'au niveau 20.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-check">
+    <div class="sec-head">
+      <div class="eyebrow">Ordre d'action</div>
+      <h2 id="h-check">Checklist du palier</h2>
+      <p class="progress" id="progress"></p>
+    </div>
+    <div class="check" id="check"></div>
+  </section>
+
+  <section aria-labelledby="h-all">
+    <div class="sec-head">
+      <div class="eyebrow">Tous les paliers</div>
+      <h2 id="h-all">Exigences du niveau 14 au 20</h2>
+      <p class="lede">La règle se lit d'un coup d'œil : au niveau N, il faut 2N champs, N bois et N/2 mines. La ligne surlignée est ton prochain palier.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Niveau</th><th>Habitabilité</th><th>Champs</th><th>Bois</th><th>Mines</th><th class="l">Titre / quête</th><th>Coût (Pièces)</th><th>Durée</th><th>Aniimo max</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="note">Les données viennent des guides communautaires, qui ne sont pas toujours d'accord entre eux. Les cases « non publié » ne figuraient dans aucune source fiable : vérifie-les dans l'écran d'amélioration du jeu. Les noms d'objets sont en anglais, comme dans les bases de données d'où ils viennent.</p>
+  </section>
+
+  <section aria-labelledby="h-src">
+    <div class="sec-head"><div class="eyebrow">Sources</div><h2 id="h-src">D'où viennent les chiffres</h2></div>
+    <div class="sources">
+      <a href="https://metabot.gg/en/aniimo/guides/homeland" target="_blank" rel="noopener">Metabot : RV Upgrades, Facilities and the Best Workers</a>
+      <a href="https://questlog.gg/aniimo/en/homeland" target="_blank" rel="noopener">Questlog : Homeland &amp; RV</a>
+      <a href="https://www.aniimoverse.com/guides/homeland" target="_blank" rel="noopener">AniimoVerse : Homeland Guide</a>
+      <a href="https://aniimotools.dev/systems/homeland/rv-levels/" target="_blank" rel="noopener">AniimoTools : RV Levels</a>
+      <a href="https://aniimotools.dev/systems/homeland/home-index/" target="_blank" rel="noopener">AniimoTools : Home Index (habitabilité, sets)</a>
+      <a href="https://metaforge.app/aniimo/database/rv/rv-level-14" target="_blank" rel="noopener">MetaForge : RV Level 14</a>
+      <a href="https://ae-bii.github.io/aniimax/" target="_blank" rel="noopener">Aniimax : optimiseur de production (températures)</a>
+      <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3806795108" target="_blank" rel="noopener">Steam : RV / Homeland Guide</a>
+      <a href="https://mobi.gg/en/tips/aniimo-homeland/" target="_blank" rel="noopener">Mobi.gg : Work Abilities and Production</a>
+      <a href="https://aniimoguide.com/homeland" target="_blank" rel="noopener">AniimoGuide : Homeland &amp; RV Planner (calcul case par case)</a>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  // Exigences pour ATTEINDRE le niveau indiqué
+  var LV = {
+    14:{hab:15000,F:28,W:14,M:7, title:null, quest:"Facilities, Orders, and Life: Part 2", cost:2620000, time:"6 h", cap:36, unlocks:"Module d'énergie niv. 2, module écologique niv. 6, plafond des installations relevé"},
+    15:{hab:15500,F:30,W:15,M:7, title:"Wayfarer II", quest:null, cost:3760000, time:"7 h", cap:38},
+    16:{hab:16000,F:32,W:16,M:8, title:null, quest:null, cost:4900000, time:null, cap:40},
+    17:{hab:17000,F:34,W:17,M:8, title:null, quest:null, cost:null, time:null, cap:42},
+    18:{hab:18000,F:36,W:18,M:9, title:null, quest:null, cost:null, time:null, cap:43},
+    19:{hab:19000,F:38,W:19,M:9, title:"Wayfarer III", quest:null, cost:null, time:null, cap:44},
+    20:{hab:20000,F:40,W:20,M:10,title:null, quest:"Lucky Gift", cost:20800000, time:"12 h", cap:45, unlocks:"Niveau maximum, plafond des installations relevé"}
+  };
+  // Répartition des champs par bande (croissante d'un palier à l'autre)
+  var FARM = {
+    28:{hot:6,warm:2,cool:6,sun:6,neu:8},
+    30:{hot:6,warm:2,cool:6,sun:6,neu:10},
+    32:{hot:7,warm:2,cool:7,sun:6,neu:10},
+    34:{hot:7,warm:2,cool:7,sun:8,neu:10},
+    36:{hot:8,warm:2,cool:8,sun:8,neu:10},
+    38:{hot:8,warm:2,cool:8,sun:8,neu:12},
+    40:{hot:8,warm:2,cool:8,sun:8,neu:14}
+  };
+  var JOBS = [
+    {k:"plant", name:"Plantation", type:"type Plante", w:.22, c:"var(--wood)", p:"Sème les champs et les bois."},
+    {k:"water", name:"Arrosage", type:"type Eau", w:.20, c:"var(--cold)", p:"Arrose, puise l'eau, brasse."},
+    {k:"harv",  name:"Récolte et coupe", type:"type Ténèbres", w:.20, c:"#6A5A8C", p:"Récolte, coupe le bois, fait sécher."},
+    {k:"mine",  name:"Minage", type:"type Terre", w:.12, c:"var(--mine)", p:"Fait tourner les mines."},
+    {k:"carry", name:"Transport", type:"compétence Porter", w:.14, c:"var(--accent)", p:"Ramène la production au stockage."},
+    {k:"art",   name:"Artisanat", type:"compétence Artisanat", w:.12, c:"var(--decor)", p:"Meubles et objets du Foyer."}
+  ];
+
+  var fmt = function(n){ return n.toLocaleString("fr-FR"); };
+  var cur = 14;
+  try { var s = parseInt(localStorage.getItem("foyer-cur"),10); if (LV[s] && s < 20) cur = s; } catch(e){}
+
+  // ---------- chips ----------
+  var chips = document.getElementById("chips");
+  [14,15,16,17,18,19].forEach(function(l){
+    var b = document.createElement("button");
+    b.className = "chip"; b.type = "button"; b.textContent = l; b.dataset.l = l;
+    b.addEventListener("click", function(){ cur = l; try{localStorage.setItem("foyer-cur", l);}catch(e){} render(); });
+    chips.appendChild(b);
+  });
+
+  function alloc(arr, total){
+    var raw = arr.map(function(j){ return j.w*total; });
+    var base = raw.map(Math.floor);
+    var left = total - base.reduce(function(a,b){return a+b;},0);
+    raw.map(function(r,i){return [r-base[i], i];}).sort(function(a,b){return b[0]-a[0];}).slice(0,left).forEach(function(x){ base[x[1]]++; });
+    return base;
+  }
+
+  // ---------- SVG map ----------
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent, text){
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    (parent || svg).appendChild(e); return e;
+  }
+  var svg = document.getElementById("map");
+
+  function tiles(x, y, cols, have, target, pitch, size){
+    for (var i=0;i<target;i++){
+      var cx = x + (i%cols)*pitch, cy = y + Math.floor(i/cols)*pitch;
+      el("rect",{x:cx,y:cy,width:size,height:size,rx:5,"class":"tile"+(i>=have?" new":"")});
+    }
+  }
+  function plus(n){ return n>0 ? " (+"+n+")" : ""; }
+
+  function drawMap(){
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var A = LV[cur], B = LV[cur+1];
+    var fa = FARM[A.F], fb = FARM[B.F];
+    el("rect",{x:0,y:0,width:960,height:640,rx:14,style:"fill:var(--map)"});
+    // chemins
+    el("rect",{x:0,y:300,width:960,height:34,style:"fill:var(--path)"});
+    el("rect",{x:463,y:0,width:34,height:640,style:"fill:var(--path)"});
+
+    // ----- NW : chaud / tiède / frais -----
+    el("text",{x:26,y:30,"class":"t-title"},null,"CHAMPS À TEMPÉRATURE");
+    el("rect",{x:18,y:44,width:250,height:132,rx:12,"class":"rng-hot"});
+    el("rect",{x:168,y:44,width:250,height:132,rx:12,"class":"rng-cold"});
+    tiles(28,56,4,fa.hot,fb.hot,34,28);
+    tiles(184,56,2,fa.warm,fb.warm,34,28);
+    tiles(272,56,4,fa.cool,fb.cool,34,28);
+    el("circle",{cx:44,cy:152,r:11,style:"fill:var(--hot)"});
+    el("text",{x:60,y:156,"class":"t-sub"},null,"chauffage");
+    el("circle",{cx:290,cy:152,r:11,style:"fill:var(--cold)"});
+    el("text",{x:306,y:156,"class":"t-sub"},null,"refroidisseur");
+    el("text",{x:26,y:198,"class":"t-lbl"},null,"Torride ×"+fb.hot+plus(fb.hot-fa.hot));
+    el("text",{x:26,y:214,"class":"t-sub"},null,"Canne à sucre");
+    el("text",{x:184,y:198,"class":"t-lbl"},null,"Tiède ×"+fb.warm);
+    el("text",{x:184,y:214,"class":"t-sub"},null,"Cerisier");
+    el("text",{x:310,y:198,"class":"t-lbl"},null,"Frais ×"+fb.cool+plus(fb.cool-fa.cool));
+    el("text",{x:310,y:214,"class":"t-sub"},null,"Fraise, rose, ginseng");
+    el("text",{x:26,y:244,"class":"t-sub"},null,"Garde ce bloc loin de la lampe solaire et des bois d'érable.");
+
+    // ----- NE : bois -----
+    el("text",{x:516,y:30,"class":"t-title"},null,"BOIS");
+    for (var i=0;i<B.W;i++){
+      var tx = 534 + (i%10)*41, ty = 66 + Math.floor(i/10)*48;
+      var isNew = i >= A.W;
+      el("rect",{x:tx-3,y:ty+10,width:6,height:14,"class":"trunk"});
+      el("circle",{cx:tx,cy:ty,r:15,"class":"tree"+(isNew?" new":"")});
+    }
+    el("text",{x:516,y:186,"class":"t-lbl"},null,"Bois ×"+B.W+plus(B.W-A.W));
+    el("text",{x:516,y:204,"class":"t-sub"},null,"Bois, bambou, fruitiers · Plante + Ténèbres");
+    el("text",{x:516,y:222,"class":"t-sub"},null,"Érable : au bout, avec un refroidisseur extrême");
+    // réserve
+    el("rect",{x:800,y:170,width:144,height:76,rx:10,style:"fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4"});
+    el("text",{x:872,y:204,"text-anchor":"middle","class":"t-sub"},null,"Réserve libre");
+    el("text",{x:872,y:220,"text-anchor":"middle","class":"t-sub"},null,"paliers suivants");
+
+    // ----- bande centrale : noyau + déco -----
+    el("rect",{x:380,y:244,width:200,height:148,rx:16,style:"fill:var(--core)"});
+    // camping-car
+    el("rect",{x:432,y:256,width:96,height:40,rx:9,style:"fill:var(--accent)"});
+    el("rect",{x:500,y:262,width:20,height:14,rx:3,style:"fill:var(--core)"});
+    el("rect",{x:442,y:262,width:44,height:12,rx:3,style:"fill:var(--core)"});
+    el("circle",{cx:452,cy:298,r:7,style:"fill:var(--core-ink)"});
+    el("circle",{cx:508,cy:298,r:7,style:"fill:var(--core-ink)"});
+    var cells = [["Stockage",392,316],["Établi",484,316],["Moulin",392,352],["Ateliers",484,352]];
+    cells.forEach(function(c){
+      el("rect",{x:c[1],y:c[2],width:84,height:30,rx:6,style:"fill:none;stroke:var(--core-ink);stroke-opacity:.5"});
+      el("text",{x:c[1]+42,y:c[2]+19,"text-anchor":"middle","class":"t-core"},null,c[0]);
+    });
+    // baignoires
+    for (var b=0;b<5;b++){
+      el("rect",{x:26+b*68,y:252,width:58,height:40,rx:10,style:"fill:var(--decor)"});
+      el("text",{x:55+b*68,y:276,"text-anchor":"middle","class":"t-decor"},null,"Mige");
+      el("rect",{x:596+b*70,y:252,width:60,height:40,rx:10,style:"fill:var(--decor)"});
+      el("text",{x:626+b*70,y:276,"text-anchor":"middle","class":"t-decor"},null,"Forest");
+    }
+    el("rect",{x:26,y:344,width:330,height:40,rx:10,style:"fill:var(--decor);fill-opacity:.85"});
+    el("text",{x:191,y:368,"text-anchor":"middle","class":"t-decor"},null,"Set Harvest Moon · +5 301");
+    el("rect",{x:596,y:344,width:340,height:40,rx:10,style:"fill:var(--decor);fill-opacity:.85"});
+    el("text",{x:766,y:368,"text-anchor":"middle","class":"t-decor"},null,"Set Timber Serenity · +2 449 (ou dans le VR)");
+
+    // ----- SW : lumière + neutre -----
+    el("text",{x:26,y:420,"class":"t-title"},null,"CHAMPS LUMIÈRE ET NEUTRES");
+    el("rect",{x:18,y:432,width:152,height:124,rx:12,"class":"rng-sun"});
+    tiles(28,444,4,fa.sun,fb.sun,34,28);
+    el("circle",{cx:94,cy:534,r:11,style:"fill:var(--sun)"});
+    tiles(186,444,8,fa.neu,fb.neu,34,28);
+    el("text",{x:26,y:580,"class":"t-lbl"},null,"Lumière ×"+fb.sun+plus(fb.sun-fa.sun));
+    el("text",{x:26,y:596,"class":"t-sub"},null,"Fleur d'oranger, lavande,");
+    el("text",{x:26,y:611,"class":"t-sub"},null,"raisin, noyer");
+    el("text",{x:186,y:580,"class":"t-lbl"},null,"Neutre ×"+fb.neu+plus(fb.neu-fa.neu));
+    el("text",{x:186,y:596,"class":"t-sub"},null,"Blé (formule rapide) et cultures");
+    el("text",{x:186,y:611,"class":"t-sub"},null,"sans exigence de température");
+
+    // ----- SE : mines -----
+    el("text",{x:516,y:420,"class":"t-title"},null,"MINES");
+    for (var m=0;m<B.M;m++){
+      var mx = 526 + (m%5)*58, my = 440 + Math.floor(m/5)*58;
+      var mn = m >= A.M;
+      el("rect",{x:mx,y:my,width:48,height:48,rx:8,"class":"minetile"+(mn?" new":"")});
+      el("path",{d:"M"+(mx+10)+" "+(my+38)+" L"+(mx+24)+" "+(my+12)+" L"+(mx+38)+" "+(my+38)+" Z",style:"fill:var(--surface);fill-opacity:"+(mn?".9":".55")});
+    }
+    el("text",{x:516,y:580,"class":"t-lbl"},null,"Mines ×"+B.M+plus(B.M-A.M));
+    el("text",{x:516,y:596,"class":"t-sub"},null,"Équipe type Terre. Près du chemin");
+    el("text",{x:516,y:611,"class":"t-sub"},null,"pour des porteurs rapides.");
+    el("rect",{x:830,y:436,width:114,height:110,rx:10,style:"fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4"});
+    el("text",{x:887,y:488,"text-anchor":"middle","class":"t-sub"},null,"Réserve");
+    el("text",{x:887,y:504,"text-anchor":"middle","class":"t-sub"},null,"mines");
+  }
+
+  // ---------- render ----------
+  function render(){
+    var A = LV[cur], B = LV[cur+1], T = cur+1;
+    Array.prototype.forEach.call(chips.children, function(c){ c.setAttribute("aria-pressed", String(+c.dataset.l === cur)); });
+    document.getElementById("r-from").textContent = "VR " + cur;
+    document.getElementById("r-to").textContent = "VR " + T;
+    document.getElementById("r-note").textContent = T === 20 ? "dernier palier" : "";
+
+    var g = [
+      ["Habitabilité", fmt(B.hab), "+"+fmt(B.hab - A.hab)+" par rapport au VR "+cur],
+      ["Champs", B.F, "<b>+"+(B.F-A.F)+"</b> à poser"],
+      ["Bois", B.W, "<b>+"+(B.W-A.W)+"</b> à poser"],
+      ["Mines", B.M, B.M>A.M ? "<b>+"+(B.M-A.M)+"</b> à poser" : "rien à ajouter"],
+      ["Titre requis", B.title || "aucun", B.title ? "titre de personnage, hors Foyer" : "&nbsp;"],
+      ["Coût", B.cost ? fmt(B.cost) : "non publié", B.time ? "Pièces du Foyer · "+B.time+" de travaux" : (B.cost ? "Pièces du Foyer · durée non publiée" : "voir l'écran d'amélioration")],
+      ["Aniimo max", B.cap, "<b>+"+(B.cap-A.cap)+"</b> places"]
+    ];
+    if (B.quest) g.splice(5,0,["Quête", B.quest, "à terminer avant"]);
+    document.getElementById("goals").innerHTML = g.map(function(x){
+      return '<div class="goal"><span class="k">'+x[0]+'</span><span class="v">'+x[1]+'</span><span class="d">'+x[2]+'</span></div>';
+    }).join("");
+    document.getElementById("unlocks").textContent = B.unlocks ? "Débloque : " + B.unlocks + "." : "Les déblocages de ce palier ne sont pas encore documentés : regarde l'écran d'amélioration.";
+
+    drawMap();
+
+    // workers
+    var na = alloc(JOBS, A.cap), nb = alloc(JOBS, B.cap);
+    document.getElementById("work-lede").textContent = "Avec "+A.cap+" places aujourd'hui, puis "+B.cap+" au VR "+T+". Chaque nombre indique combien d'Aniimo mettre sur ce poste ; le « + » est la place gagnée au palier.";
+    document.getElementById("bar").innerHTML = JOBS.map(function(j,i){
+      return '<div style="flex:'+nb[i]+';background:'+j.c+'">'+nb[i]+'</div>';
+    }).join("");
+    document.getElementById("jobs").innerHTML = JOBS.map(function(j,i){
+      var d = nb[i]-na[i];
+      return '<div class="job"><i class="dot" style="background:'+j.c+'"></i><div><div><strong>'+j.name+'</strong> · <span class="n">'+na[i]+(d>0?' → '+nb[i]:'')+'</span></div><p>'+j.type+'. '+j.p+'</p></div></div>';
+    }).join("");
+
+    renderHab();
+    renderCheck();
+
+    // table
+    document.getElementById("tbody").innerHTML = [14,15,16,17,18,19,20].map(function(l){
+      var r = LV[l], u = '<span class="unk">non publié</span>';
+      var tq = [r.title, r.quest].filter(Boolean).join(" · ") || "—";
+      return '<tr class="'+(l===T?'cur':'')+'"><td><strong>VR '+l+'</strong></td><td>'+fmt(r.hab)+'</td><td>'+r.F+'</td><td>'+r.W+'</td><td>'+r.M+'</td><td class="l">'+tq+'</td><td>'+(r.cost?fmt(r.cost):u)+'</td><td>'+(r.time||u)+'</td><td>'+r.cap+'</td></tr>';
+    }).join("");
+  }
+
+  function renderHab(){
+    var B = LV[cur+1];
+    var h = parseInt(document.getElementById("hab").value,10);
+    var out = document.getElementById("hab-res");
+    if (isNaN(h)) { out.textContent = "Entre ton score pour voir l'écart."; }
+    else {
+      var gap = B.hab - h;
+      if (gap <= 0) out.innerHTML = '<span class="ok">Seuil du VR '+(cur+1)+' atteint</span> ('+fmt(B.hab)+'). Il te reste '+fmt(Math.max(0,20000-h))+' points jusqu\'au maximum de 20 000.';
+      else {
+        var bath = Math.ceil(gap/1249), ludo = Math.ceil(gap/221);
+        out.innerHTML = 'Il te manque <strong>'+fmt(gap)+'</strong> points pour le VR '+(cur+1)+'. Par exemple : '+(bath<=5? '<strong>'+bath+'</strong> <i>Mige Pool Bathtub</i>' : 'le set <i>Harvest Moon</i> plus des baignoires')+', ou <strong>'+ludo+'</strong> <i>Aniimo Ludo</i> avec tes Bud Tickets.';
+      }
+    }
+    var c = parseInt(document.getElementById("coins").value,10);
+    var co = document.getElementById("coin-res");
+    if (!B.cost) co.textContent = "Le coût du VR "+(cur+1)+" n'est pas publié : vérifie-le dans le jeu.";
+    else if (isNaN(c)) co.innerHTML = "Le VR "+(cur+1)+" coûte <strong>"+fmt(B.cost)+"</strong> Pièces du Foyer.";
+    else if (c >= B.cost) co.innerHTML = '<span class="ok">Tu as assez de Pièces</span> pour le VR '+(cur+1)+'.';
+    else co.innerHTML = "Il te manque <strong>"+fmt(B.cost - c)+"</strong> Pièces sur "+fmt(B.cost)+". Mets tes meilleurs champs sur le cacao, la fleur d'oranger ou la noix de coco, les cultures qui rapportent le plus par heure.";
+  }
+  document.getElementById("hab").addEventListener("input", renderHab);
+  document.getElementById("coins").addEventListener("input", renderHab);
+
+  function steps(){
+    var A = LV[cur], B = LV[cur+1], T = cur+1, s = [];
+    s.push("Enregistre chaque bloc actuel en Combo, puis décale-les pour ouvrir la place des nouvelles parcelles.");
+    s.push("Pose "+(B.F-A.F)+" champs de plus (total "+B.F+") dans les blocs indiqués en pointillés sur la carte.");
+    s.push("Pose "+(B.W-A.W)+" bois de plus (total "+B.W+").");
+    if (B.M > A.M) s.push("Pose "+(B.M-A.M)+" mine de plus (total "+B.M+").");
+    s.push("Vérifie les portées des chauffages, refroidisseurs et lampes : aucun champ ne doit tomber dans la mauvaise bande.");
+    s.push("Monte l'habitabilité à "+fmt(B.hab)+" (baignoires, sets, Aniimo Ludo avec les Bud Tickets).");
+    if (B.title) s.push("Obtiens le titre "+B.title+" (progression du personnage).");
+    if (B.quest) s.push("Termine la quête « "+B.quest+" ».");
+    s.push(B.cost ? "Réunis "+fmt(B.cost)+" Pièces du Foyer et lance l'amélioration"+(B.time?" ("+B.time+")":"")+" juste avant une pause." : "Réunis les Pièces demandées et lance l'amélioration juste avant une pause.");
+    s.push("Une fois au VR "+T+", recrute "+(B.cap-A.cap)+" Aniimo de plus et place-les sur les postes qui coincent.");
+    return s;
+  }
+  function renderCheck(){
+    var key = "foyer-check-"+(cur+1), saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){}
+    var list = steps(), box = document.getElementById("check");
+    box.innerHTML = list.map(function(t,i){
+      var id = "st-"+(cur+1)+"-"+i;
+      return '<label for="'+id+'"><input type="checkbox" id="'+id+'" data-i="'+i+'"'+(saved[i]?' checked':'')+'><span>'+t+'</span></label>';
+    }).join("");
+    function prog(){
+      var n = box.querySelectorAll("input:checked").length;
+      document.getElementById("progress").textContent = n+" / "+list.length+" étapes faites pour le VR "+(cur+1);
+    }
+    box.querySelectorAll("input").forEach(function(inp){
+      inp.addEventListener("change", function(){
+        saved[inp.dataset.i] = inp.checked;
+        try { localStorage.setItem(key, JSON.stringify(saved)); } catch(e){}
+        prog();
+      });
+    });
+    prog();
+  }
+
+  render();
+})();
+</script>
