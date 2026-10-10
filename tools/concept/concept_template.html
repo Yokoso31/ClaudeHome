@@ -37,7 +37,25 @@ header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px
 /* the sheet */
 .sheet{background:var(--sheet);border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:0}
 @media (max-width:980px){.sheet{grid-template-columns:1fr}}
-.plan{padding:clamp(10px,2vw,22px);border-right:1px solid var(--line);min-width:0}
+.plan{padding:clamp(10px,2vw,22px);border-right:1px solid var(--line);min-width:0;position:relative}
+.tipc{position:absolute;z-index:3;max-width:min(300px,80%);background:var(--sheet);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;pointer-events:none;font-size:13.5px;line-height:1.4}
+.tipc img{width:46px;height:46px;object-fit:contain}
+.tipc b{display:block;font-size:14.5px}
+.tipc small{display:block;color:var(--muted)}
+.tipc .cat{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--indigo)}
+.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.lgd{display:flex;flex-direction:column;gap:18px}
+.lgd-grp{display:flex;flex-direction:column;gap:8px}
+.lgd-grp h3{font-size:16px}
+.lgd-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:8px}
+.lg{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;background:var(--sheet);border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;font:500 14px var(--body);color:var(--ink);cursor:pointer;min-width:0}
+.lg:hover{border-color:var(--indigo)}
+.lg[aria-pressed="true"]{border-color:#C9384F;background:color-mix(in srgb,#C9384F 9%,var(--sheet))}
+.lg:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.lg img,.lg .ph{width:34px;height:34px;object-fit:contain;border-radius:6px}
+.lg .ph{background:var(--paper);display:grid;place-items:center;font-family:var(--display);font-weight:800;color:var(--indigo)}
+.lg span{min-width:0;line-height:1.25}
+.lg em{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--muted)}
 @media (max-width:980px){.plan{border-right:0;border-bottom:1px solid var(--line)}}
 .plan svg{display:block;width:100%;height:auto;border-radius:3px}
 .phases{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
@@ -101,6 +119,15 @@ header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px
 .dev .sq{fill:none;stroke-width:.16;stroke-dasharray:.6 .35}
 .dev.sun .sq{stroke:#E0A800;fill:#F2C21F;fill-opacity:.12}.dev.heat .sq{stroke:#EF5F45;fill:#EF5F45;fill-opacity:.1}.dev.cool .sq{stroke:#1F9CC7;fill:#33B9E2;fill-opacity:.12}
 .tech{display:none}
+.zone{fill:transparent}
+.obj{cursor:pointer}
+.obj:hover{filter:brightness(1.08)}
+.zone:hover{fill:#FFFFFF;fill-opacity:.12}
+svg.hl .obj:not(.on):not(.zone){opacity:.2}
+svg.hl .obj.on:not(.zone){filter:drop-shadow(0 0 .3px #C9384F) drop-shadow(0 0 .3px #C9384F)}
+svg.hl .zone.on{fill:#FFFFFF;fill-opacity:.22;stroke:#C9384F;stroke-width:.3;stroke-dasharray:.6 .3}
+.nm{display:none;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:700;fill:#1E2B22;paint-order:stroke;stroke:#F7F8F3;stroke-width:.24;stroke-linejoin:round;pointer-events:none}
+svg.names-on .nm{display:inline}
 svg.tech-on .tech{display:inline}
 svg .ph16,svg .ph18{transition:opacity .25s}
 svg[data-ph="14"] .ph16,svg[data-ph="14"] .ph18,svg[data-ph="16"] .ph18{opacity:0;pointer-events:none}
@@ -165,15 +192,18 @@ ol{margin:0;padding-left:20px}
         <button class="ph-btn" type="button" data-ph="16" aria-pressed="false">VR 16 · tout ouvert</button>
         <button class="ph-btn" type="button" data-ph="18" aria-pressed="false">VR 18 · cerisiers</button>
         <span style="flex:1"></span>
+        <button class="ph-btn" type="button" id="namebtn" aria-pressed="true">Noms sur le plan</button>
         <button class="ph-btn" type="button" id="techbtn" aria-pressed="false">Vue technique</button>
       </div>
-      <svg id="plan" viewBox="-0.6 -0.6 81.2 61.2" data-ph="14" role="img" aria-label="Plan du jardin japonais, vue de dessus, 80 cases sur 60">
+      <svg id="plan" class="names-on" viewBox="-0.6 -0.6 81.2 61.2" data-ph="14" role="img" aria-label="Plan du jardin japonais, vue de dessus, 80 cases sur 60">
         /*PLAN*/
         <g stroke="#FFFFFF" stroke-opacity=".28" stroke-width=".08" fill="none">
           <path d="M20 0V60M40 0V60M60 0V60M0 15H80M0 30H80M0 45H80"/>
         </g>
         <rect x="0" y="0" width="80" height="60" fill="none" stroke="#203026" stroke-width=".3"/>
       </svg>
+      <div class="tipc" id="tipc" hidden></div>
+      <p class="hint">Touche ou survole un élément pour savoir ce que c'est. La liste juste en dessous fait ressortir chaque type d'objet sur le plan.</p>
     </div>
     <aside class="cart">
       <div>
@@ -199,6 +229,15 @@ ol{margin:0;padding-left:20px}
         <div><i class="sw" style="background:#7E63D6"></i>Générateur</div>
       </div>
     </aside>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px" aria-labelledby="lgd-title">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="eyebrow">Légende complète</div>
+      <h2 id="lgd-title">Ce qu'il y a sur le plan</h2>
+      <p class="lede">Clique une ligne : tous ses exemplaires ressortent sur le plan, le reste s'efface. Clique à nouveau pour tout réafficher.</p>
+    </div>
+    <div class="lgd" id="lgd"></div>
   </section>
 
   <section style="display:flex;flex-direction:column;gap:20px">
@@ -267,10 +306,48 @@ ol{margin:0;padding-left:20px}
   document.getElementById("buy").innerHTML=D.buy.map(function(b){ tot+=b.n*b.pr; cf+=b.n*b.cf;
     return '<div class="bi"><img src="'+document.querySelector("#i-"+b.ic+" image").getAttribute("href")+'" alt=""><div><b>'+b.n+' × '+b.fr+(b.ph>14?'<span class="tag">'+ph[b.ph]+'</span>':'')+'</b><small>'+b.fp[0]+' × '+b.fp[1]+' cases · '+fmt(b.pr)+' tickets pièce · '+fmt(b.cf)+' de confort</small></div></div>'; }).join("");
   document.getElementById("total").textContent="Total : "+fmt(tot)+" Tickets bourgeon pour "+fmt(cf)+" de confort.";
-  var svg=document.getElementById("plan"), tb=document.getElementById("techbtn");
+  var svg=document.getElementById("plan"), tb=document.getElementById("techbtn"), nb=document.getElementById("namebtn");
+  nb.addEventListener("click",function(){ var on=nb.getAttribute("aria-pressed")!=="true"; nb.setAttribute("aria-pressed",String(on)); svg.classList.toggle("names-on",on); });
+  var TY=D.types, tip=document.getElementById("tipc"), plan=document.querySelector(".plan"), hlKey=null;
+  var esc=function(t){ return String(t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); };
+  function iconOf(k){ if(!k) return null; var sy=document.getElementById("i-"+k.replace(/ /g,"_")); var im=sy&&sy.querySelector("image"); return im?im.getAttribute("href"):null; }
+  function phaseOk(el){ var ph=+svg.getAttribute("data-ph"); if(el.closest(".ph18")) return ph>=18; if(el.closest(".ph16")) return ph>=16; return true; }
+  function showTip(e){
+    var el=e.target.closest&&e.target.closest("[data-t]"); if(!el||!phaseOk(el)){ tip.hidden=true; return; }
+    var t=TY[el.dataset.t]||{}, ic=iconOf(t.ic), n=el.dataset.n;
+    tip.innerHTML=(ic?'<img src="'+ic+'" alt="">':'<span></span>')+'<div><span class="cat">'+esc(t.cat||"")+(t.size?' · '+esc(t.size)+' cases':'')+'</span><b>'+esc(n)+'</b>'+(n!==t.fr&&t.fr?'<small>'+esc(t.fr)+'</small>':'')+(t.role?'<small>'+esc(t.role)+'</small>':'')+'</div>';
+    tip.hidden=false;
+    var r=plan.getBoundingClientRect(), x=e.clientX-r.left+14, y=e.clientY-r.top+14;
+    if(x+tip.offsetWidth>r.width-8) x=Math.max(8,e.clientX-r.left-tip.offsetWidth-14);
+    if(y+tip.offsetHeight>r.height-8) y=Math.max(8,e.clientY-r.top-tip.offsetHeight-14);
+    tip.style.left=x+"px"; tip.style.top=y+"px";
+  }
+  svg.addEventListener("pointermove",showTip); svg.addEventListener("pointerdown",showTip);
+  svg.addEventListener("pointerleave",function(e){ if(e.pointerType==="mouse") tip.hidden=true; });
+  function applyHl(){ svg.classList.toggle("hl",!!hlKey); svg.querySelectorAll("[data-t]").forEach(function(el){ el.classList.toggle("on",el.dataset.t===hlKey); });
+    document.querySelectorAll(".lg").forEach(function(b){ b.setAttribute("aria-pressed",String(b.dataset.k===hlKey)); }); }
+  var CATS=["Lieux","Production","Ateliers","Stockage","Climat et énergie","Déco"];
+  function renderLegend(){
+    var html="";
+    CATS.forEach(function(c){
+      var keys=Object.keys(TY).filter(function(k){ return TY[k].cat===c; }).map(function(k){
+        var els=[].filter.call(svg.querySelectorAll('[data-t="'+k+'"]'),phaseOk); var n=c==="Lieux"?0:els.length;
+        if(c==="Lieux"&&!els.length) return null;
+        if(c!=="Lieux"&&!n) return null;
+        return {k:k,n:n}; }).filter(Boolean);
+      if(!keys.length) return;
+      keys.sort(function(a,b){ return b.n-a.n||TY[a.k].fr.localeCompare(TY[b.k].fr); });
+      html+='<div class="lgd-grp"><h3>'+esc(c)+'</h3><div class="lgd-list">'+keys.map(function(o){ var t=TY[o.k], ic=iconOf(t.ic);
+        return '<button class="lg" type="button" data-k="'+esc(o.k)+'" aria-pressed="'+(hlKey===o.k)+'">'+(ic?'<img src="'+ic+'" alt="">':'<span class="ph">庭</span>')+'<span>'+esc(t.fr)+'</span><em>'+(o.n?'× '+o.n:'')+'</em></button>'; }).join("")+'</div></div>';
+    });
+    document.getElementById("lgd").innerHTML=html;
+    document.querySelectorAll(".lg").forEach(function(b){ b.addEventListener("click",function(){ hlKey=hlKey===b.dataset.k?null:b.dataset.k; applyHl();
+      if(hlKey) document.querySelector(".sheet").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }); });
+  }
+  renderLegend();
   tb.addEventListener("click",function(){ var on=tb.getAttribute("aria-pressed")!=="true"; tb.setAttribute("aria-pressed",String(on)); svg.classList.toggle("tech-on",on); });
   document.querySelectorAll("button[data-ph]").forEach(function(b){
-    b.addEventListener("click",function(){ svg.setAttribute("data-ph",b.dataset.ph);
+    b.addEventListener("click",function(){ svg.setAttribute("data-ph",b.dataset.ph); renderLegend(); applyHl();
       document.querySelectorAll("button[data-ph]").forEach(function(x){ x.setAttribute("aria-pressed",String(x===b)); }); }); });
 })();
 </script>

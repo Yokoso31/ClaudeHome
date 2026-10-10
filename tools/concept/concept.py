@@ -130,6 +130,21 @@ def paint(i, x, y, w, h):
         return out
     return None
 
+TYPES = {}  # key -> {fr, cat, ic, size, role}
+def T(key, fr, cat, ic=None, size='', role=''):
+    if key not in TYPES:
+        TYPES[key] = {'fr': fr, 'cat': cat, 'ic': ic, 'size': size, 'role': role}
+    return key
+def tag(key, label=None):
+    lab = (label or TYPES[key]['fr']).replace('"', '&quot;')
+    return f' data-t="{key}" data-n="{lab}"'
+SHORT = {'Carousel Mill': 'Moulin', 'Chimney Kiln': 'Four', 'Joy Wheel Loom': 'Roue à tisser', 'Woodworking Bench': 'Menuiserie', 'Crafting Table': 'Établi',
+         'Jukebox Dryer': 'Séchoir', 'Simmering Pot': 'Marmite', 'Phonolfactory Table': 'Parfums', 'Pickling Jar': 'Bocal', 'Blazing Stove': 'Cuisinière',
+         'Bouncy Brew Keg': 'Tonneau', 'Claw Game Cooker': 'Attrape-popote', 'Aniipod Maker': 'Aniipod', 'Dance Pad Polisher': 'Polissoir',
+         'Nimbus Bed': 'Lit de Cumulaine', 'Starfall Hammock': 'Hamac', 'Tidewhisper Sandcastle': 'Château de sable', 'Dewy House': 'Plumiel'}
+NAMES = []  # (x, y, text, size, phase) labels shown with « Noms sur le plan »
+def nlabel(x, y, txt, size=.62, phase=14):
+    NAMES.append((x, y, txt, size, phase))
 used = {}   # decor counts for the shopping list
 PHYS = []   # (name, rect, phase) for the collision check
 CLEAR = []  # paths that must stay walkable
@@ -146,7 +161,9 @@ def deco(i, x, y, phase=14, rot=False, layer=6, draw=True):
     art = paint(i, x, y, w, h)
     if art is None:
         art = f'<use href="#i-{ic_jp(i)}" x="{x}" y="{y}" width="{w}" height="{h}"/>'
-    add(f'<g class="dc"><title>{JP[i]["fr"]} · {f(w)} × {f(h)} cases</title>{art}</g>', phase, layer)
+    j = JP[i]
+    T('jp' + i, j['fr'], 'Déco', ic_jp(i), f'{f(j["fp"][0])} × {f(j["fp"][1])}', f'Déco · {j["price"]} · {j["cf"]} de confort' + (f' · se débloque au VR {j["rv"]}' if j.get('rv') and j['rv'] > 14 else ''))
+    add(f'<g class="obj dc"{tag("jp" + i)}>{art}</g>', phase, layer)
     return w, h
 
 # ---------------- ground ----------------
@@ -181,7 +198,8 @@ num(34, 50, 2)
 # ---------------- 3 · courtyard of the great tree ----------------
 rect(34, 25, 12, 12, 'url(#gravel)', layer=2, rx=.6)
 add('<circle cx="40" cy="31" r="5.3" class="ring"/><circle cx="40" cy="31" r="5.8" class="ring"/>', 14, 3)
-add('<g class="bigtree"><title>Ton grand arbre violet (taille au sol à confirmer)</title>' + shadow(40, 31, 4) +
+T('bigtree', 'Grand arbre violet', 'Lieux', None, 'à confirmer', 'Ton grand arbre actuel, déplacé au centre de la cour. Sa taille au sol reste à mesurer.')
+add(f'<g class="obj bigtree"{tag("bigtree")}>' + shadow(40, 31, 4) +
     blob(40, 31, 4.3, 'wis', 12, .14, 3) + blob(38.6, 29.9, 2.3, 'wis-l', 8, .2, 4) + blob(41.8, 32.2, 2.2, 'wis-l', 8, .2, 5) + blob(40.6, 29.2, 1.4, 'wis-ll', 7, .2, 6) + '</g>', 14, 8)
 for x, y in ((34.4, 25.4), (43.85, 25.4), (34.4, 35.1), (43.85, 35.1)):
     deco('40600065', x, y)
@@ -218,7 +236,8 @@ num(2.2, 18, 4)
 KIOSK = {1: (17, 19.75), 2: (51, 19.75), 3: (17, 43), 4: (62, 44), 5: (58, 21)}
 for k, (x, y) in KIOSK.items():
     phys('stockage %d' % k, x, y, 2, 2)
-    add(f'<g class="kiosk"><title>Unité de stockage {k}</title><rect x="{x - .15}" y="{y - .15}" width="2.3" height="2.3" rx=".25" class="eave"/><rect x="{x + .15}" y="{y + .15}" width="1.7" height="1.7" class="roof"/>'
+    T('Storage Unit', FR.get('Storage Unit', 'Unité de stockage'), 'Stockage', ic_fac('Storage Unit'), '2 × 2', 'Les porteurs y déposent la production. Numérotés en vue technique.')
+    add(f'<g class="obj kiosk"{tag("Storage Unit", "Unité de stockage " + str(k))}><rect x="{x - .15}" y="{y - .15}" width="2.3" height="2.3" rx=".25" class="eave"/><rect x="{x + .15}" y="{y + .15}" width="1.7" height="1.7" class="roof"/>'
         f'<path d="M{x + .15} {y + .15}L{x + 1.85} {y + 1.85}M{x + 1.85} {y + .15}L{x + .15} {y + 1.85}" class="ridge"/>'
         f'<g class="tech"><circle cx="{x + 2}" cy="{y}" r=".6"/><text x="{x + 2}" y="{y + .25}" text-anchor="middle">{k}</text></g></g>', 14, 7)
 L14 = json.load(open(os.path.join(S, 'my_lay_in_rv14.json')))
@@ -261,7 +280,10 @@ for s in placed_shops:
     idle = s['wgt'] == 0
     x, y, w, h = s['x'], s['y'], s['w'], s['h']
     ridge = f'M{f(x + .35)} {f(y + h / 2)}H{f(x + w - .35)}' if w >= h else f'M{f(x + w / 2)} {f(y + .35)}V{f(y + h - .35)}'
-    add(f'<g class="shop{" idle" if idle else ""}"><title>{FR.get(s["n"], s["n"])}{" · inactif au VR 14" if idle else ""}</title>'
+    T(s['n'], FR.get(s['n'], s['n']), 'Ateliers', ic_fac(s['n']), f'{f(w)} × {f(h)}', 'Atelier de transformation, façade sur la rue des artisans.')
+    lab = FR.get(s['n'], s['n']) + (' · inactif au VR 14' if idle else f' · {round(s["wgt"])} trajets/h')
+    nlabel(x + w / 2, y + h / 2 + .2, SHORT.get(s['n'], s['n']), .5 if w < 3 else .6)
+    add(f'<g class="obj shop{" idle" if idle else ""}"{tag(s["n"], lab)}>'
         f'<rect x="{f(x + .25)}" y="{f(y + .3)}" width="{f(w)}" height="{f(h)}" rx=".3" class="shd"/>'
         f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx=".3" class="eave"/><rect x="{f(x + .25)}" y="{f(y + .25)}" width="{f(w - .5)}" height="{f(h - .5)}" rx=".2" class="roof"/>'
         f'<path d="{ridge}" class="ridge"/>'
@@ -277,7 +299,8 @@ def gap_spot(cx, y):
 GENS = [(gap_spot(20, 15.4), 15.4), (gap_spot(48, 19.6), 19.6)]
 for x, y in GENS:
     phys('générateur', x, y, 1, 1)
-    add(f'<g class="gen"><title>Générateur crépitant</title><rect x="{x}" y="{y}" width="1" height="1" rx=".2"/></g>', 14, 10)
+    T('Crackle Generator', FR.get('Crackle Generator', 'Générateur'), 'Climat et énergie', ic_fac('Crackle Generator'), '1 × 1', 'Alimente les machines dans un carré de 11 × 11. Tenu par un Aniimo Foudre.')
+    add(f'<g class="obj gen"{tag("Crackle Generator")}><rect x="{x}" y="{y}" width="1" height="1" rx=".2"/></g>', 14, 10)
 
 # ---------------- 5 · quarry under the mountain ----------------
 rect(60, 15, 20, 15, 'url(#stone)', layer=1, rx=.4)
@@ -285,7 +308,8 @@ mines = [(x, y) for y in (25, 20, 15) for x in (60, 65, 70, 75)]
 for k, (x, y) in enumerate(mines):
     if k < 7:
         phys('mine', x, y, 5, 5)
-        add(f'<g class="mine"><title>{FR.get("Mine")}</title>' + shadow(x + 2.5, y + 2.5, 2.1) + blob(x + 2.5, y + 2.5, 2.35, 'rock', 8, .22, k) +
+        T('Mine', FR.get('Mine', 'Mine'), 'Production', ic_fac('Mine'), '5 × 5', 'Mine de la carrière.')
+        add(f'<g class="obj mine"{tag("Mine")}>' + shadow(x + 2.5, y + 2.5, 2.1) + blob(x + 2.5, y + 2.5, 2.35, 'rock', 8, .22, k) +
             blob(x + 2.1, y + 2.1, 1.1, 'rock-l', 6, .3, k + 9) + f'<use href="#i-{ic_fac("Mine")}" x="{x + 1.1}" y="{y + 1.1}" width="2.8" height="2.8" class="sign"/></g>', 14, 6)
     else:
         add(f'<rect x="{x + .4}" y="{y + .4}" width="4.2" height="4.2" rx=".6" class="slot"><title>Emplacement de mine pour les VR suivants</title></rect>', 16 if k < 9 else 18, 6)
@@ -295,6 +319,10 @@ num(78.6, 16.6, 5)
 # ---------------- 6 · rice terraces ----------------
 for bx in (4, 20):
     rect(bx - .6, 37.4, 13.2, 13.2, 'url(#dike)', layer=1, rx=.5)
+T('Sunlamp', FR.get('Sunlamp'), 'Climat et énergie', ic_fac('Sunlamp'), '1 × 1', 'Éclaire les cultures dans un carré de 9 × 9 (vue technique). Tenue par un Aniimo Lumière.')
+T('Heat Furnace', FR.get('Heat Furnace'), 'Climat et énergie', ic_fac('Heat Furnace'), '1 × 1', 'Chauffe les cultures dans un carré de 9 × 9 (vue technique). Tenue par un Aniimo Feu.')
+T('Cooling Unit', FR.get('Cooling Unit'), 'Climat et énergie', ic_fac('Cooling Unit'), '2 × 2', 'Rafraîchit dans un carré de 9 × 9 (vue technique). Tenue par un Aniimo Glace.')
+DEVN = {'sun': 'Sunlamp', 'heat': 'Heat Furnace', 'cool': 'Cooling Unit'}
 def paddy(bx, by, crops, mode, phase=14):
     k = 0
     for j in range(6):
@@ -306,10 +334,13 @@ def paddy(bx, by, crops, mode, phase=14):
             k += 1
             cls = {'grape': 'pd grape', 'quick_rice': 'pd rice', None: 'pd fallow'}[c]
             rows = '' if c is None else ''.join(f'<line x1="{x + .35}" y1="{y + .55 + r * .45}" x2="{x + 1.65}" y2="{y + .55 + r * .45}" class="rowl"/>' for r in range(3))
-            add(f'<g><rect x="{x + .1}" y="{y + .1}" width="1.8" height="1.8" rx=".22" class="{cls}"/>{rows}</g>', phase, 4)
+            T('Farmland', FR.get('Farmland', 'Ferme'), 'Production', ic_fac('Farmland'), '2 × 2', 'Champ des rizières.')
+            crop = {'grape': 'Raisin, éclairé par la lampe', 'quick_rice': 'Riz (rapide)', None: 'emplacement libre pour les VR suivants'}[c]
+            key = 'Farmland' if c else T('free-farm', 'Emplacement de champ libre', 'Production', None, '2 × 2', 'Prévu pour les champs des VR suivants.')
+            add(f'<g class="obj"{tag(key, (FR.get("Farmland", "Ferme") + " · " + crop) if c else None)}><rect x="{x + .1}" y="{y + .1}" width="1.8" height="1.8" rx=".22" class="{cls}"/>{rows}</g>', phase, 4)
     add(f'<rect x="{bx + 4.2}" y="{by + 4.2}" width="3.6" height="3.6" rx=".5" class="pd-center"/>', phase, 4)
     if mode:
-        add(f'<g class="dev {mode}"><rect x="{bx + 5.5}" y="{by + 5.5}" width="1" height="1" rx=".2"/><rect x="{bx + 1.5}" y="{by + 1.5}" width="9" height="9" class="sq tech"/></g>', phase, 7)
+        add(f'<g class="obj dev {mode}"{tag(DEVN[mode])}><rect x="{bx + 5.5}" y="{by + 5.5}" width="1" height="1" rx=".2"/><rect x="{bx + 1.5}" y="{by + 1.5}" width="9" height="9" class="sq tech"/></g>', phase, 7)
     deco('40600066', bx + 4.5, by + 4.5, phase)
 phys('rizière 1', 4, 38, 12, 12); phys('rizière 2', 20, 38, 12, 12); phys('verger 1', 46, 37, 16, 16); phys('verger 2', 64, 37, 16, 16)
 phys('grand arbre', 37, 28, 6, 6); phys('étang', 28, 50.6, 10, 5); phys('étang', 42, 51.3, 4, 4.3)
@@ -331,15 +362,18 @@ def orchard(bx, by, trees, mode, phase=14):
             k += 1
             cx, cy = x + 2, y + 2
             if t == 'coco':
-                add(f'<g class="wood"><rect x="{x + .15}" y="{y + .15}" width="3.7" height="3.7" rx=".5" class="bed"/>' + shadow(cx, cy, 1.5) + star(cx, cy, 1.75, .55, 7, 'palm') + star(cx, cy, .9, .3, 7, 'palm-l') + '</g>', phase, 4)
+                T('Woodland', FR.get('Woodland', 'Pépinière'), 'Production', ic_fac('Woodland'), '4 × 4', 'Pépinière des vergers.')
+                add(f'<g class="obj wood"{tag("Woodland", FR.get("Woodland", "Pépinière") + " · Noix de coco, chauffée par la fournaise")}><rect x="{x + .15}" y="{y + .15}" width="3.7" height="3.7" rx=".5" class="bed"/>' + shadow(cx, cy, 1.5) + star(cx, cy, 1.75, .55, 7, 'palm') + star(cx, cy, .9, .3, 7, 'palm-l') + '</g>', phase, 4)
             elif t == 'lemon':
-                add(f'<g class="wood"><rect x="{x + .15}" y="{y + .15}" width="3.7" height="3.7" rx=".5" class="bed"/>' + shadow(cx, cy, 1.4) + blob(cx, cy, 1.55, 'citrus', 8, .18, k) +
+                T('Woodland', FR.get('Woodland', 'Pépinière'), 'Production', ic_fac('Woodland'), '4 × 4', 'Pépinière des vergers.')
+                add(f'<g class="obj wood"{tag("Woodland", FR.get("Woodland", "Pépinière") + " · Citron (rapide)")}><rect x="{x + .15}" y="{y + .15}" width="3.7" height="3.7" rx=".5" class="bed"/>' + shadow(cx, cy, 1.4) + blob(cx, cy, 1.55, 'citrus', 8, .18, k) +
                     ''.join(f'<circle cx="{f(cx + .8 * math.cos(a))}" cy="{f(cy + .8 * math.sin(a))}" r=".2" class="lemon"/>' for a in (0.4, 2.2, 4.1)) + '</g>', phase, 4)
             else:
-                add(f'<rect x="{x + .4}" y="{y + .4}" width="3.2" height="3.2" rx="1" class="slot"/>', phase, 4)
+                T('free-wood', 'Emplacement de pépinière libre', 'Production', None, '4 × 4', 'Prévu pour les pépinières des VR suivants.')
+                add(f'<rect x="{x + .4}" y="{y + .4}" width="3.2" height="3.2" rx="1" class="slot obj"{tag("free-wood")}/>', phase, 4)
     rect(bx + 4.3, by + 4.3, 7.4, 7.4, 'url(#gravel)', phase, 3, rx=1)
     if mode:
-        add(f'<g class="dev {mode}"><rect x="{bx + 7.5}" y="{by + 7.5}" width="1" height="1" rx=".2"/><rect x="{bx + 3.5}" y="{by + 3.5}" width="9" height="9" class="sq tech"/></g>', phase, 7)
+        add(f'<g class="obj dev {mode}"{tag(DEVN[mode])}><rect x="{bx + 7.5}" y="{by + 7.5}" width="1" height="1" rx=".2"/><rect x="{bx + 3.5}" y="{by + 3.5}" width="9" height="9" class="sq tech"/></g>', phase, 7)
 orchard(46, 37, ['coco'] * 12, 'heat')
 orchard(64, 37, ['lemon'] * 3, None)
 deco('40600027', 53.5, 44.5); deco('40700016', 56.6, 47.6); deco('40700016', 51.4, 41.4)
@@ -355,7 +389,8 @@ for i in range(4):
     for j in range(2):
         x, y = 48 + 2 * i, 55 + 2 * j
         phys('éclorateur', x, y, 2, 2)
-        add(f'<g class="hatch"><title>{FR.get("Incubateur", "Éclorateur")}</title>' + shadow(x + 1, y + 1, .85) + f'<circle cx="{x + 1}" cy="{y + 1}" r=".88" class="dome"/><circle cx="{x + .75}" cy="{y + .75}" r=".32" class="dome-l"/></g>', 14, 6)
+        T('Incubateur', FR.get('Incubateur', 'Éclorateur'), 'Production', ic_jp('10500001'), '2 × 2', 'Tes éclorateurs, regroupés en pavillon près de l\'entrée.')
+        add(f'<g class="obj hatch"{tag("Incubateur")}>' + shadow(x + 1, y + 1, .85) + f'<circle cx="{x + 1}" cy="{y + 1}" r=".88" class="dome"/><circle cx="{x + .75}" cy="{y + .75}" r=".32" class="dome-l"/></g>', 14, 6)
 num(57.8, 55, 8)
 
 # ---------------- 9 · dry garden ----------------
@@ -369,10 +404,12 @@ num(12.4, 51.4, 9)
 PAV = [('Nimbus Bed', 2, 2, 5), ('Starfall Hammock', 9, 2, 5), ('Tidewhisper Sandcastle', 27, 2, 5), ('Dewy House', 34, 3, 2)]
 for n, x, y, s in PAV:
     phys(n, x, y, s, s)
-    add(f'<g class="pav"><title>{FR.get(n, n)}</title><rect x="{x + .25}" y="{y + .3}" width="{s}" height="{s}" rx=".9" class="shd"/><rect x="{x}" y="{y}" width="{s}" height="{s}" rx=".9" class="eave"/>'
+    T(n, FR.get(n, n), 'Production', ic_fac(n), f'{s} × {s}', 'Bâtiment de matériaux, en pavillon au nord.')
+    nlabel(x + s / 2, y + s + .75, SHORT.get(n, n), .6)
+    add(f'<g class="obj pav"{tag(n)}><rect x="{x + .25}" y="{y + .3}" width="{s}" height="{s}" rx=".9" class="shd"/><rect x="{x}" y="{y}" width="{s}" height="{s}" rx=".9" class="eave"/>'
         f'<rect x="{x + .4}" y="{y + .4}" width="{s - .8}" height="{s - .8}" rx=".6" class="roof"/><use href="#i-{ic_fac(n)}" x="{x + s * .18}" y="{y + s * .18}" width="{s * .64}" height="{s * .64}" class="sign"/></g>', 14, 6)
 phys('climatisation', 14.5, 5, 2, 2)
-add('<g class="dev cool"><rect x="14.5" y="5" width="2" height="2" rx=".3"/><rect x="11" y="1.5" width="9" height="9" class="sq tech"/></g>', 14, 7)
+add(f'<g class="obj dev cool"{tag("Cooling Unit", FR.get("Cooling Unit") + " · réglée en Frais pour le Hamac")}><rect x="14.5" y="5" width="2" height="2" rx=".3"/><rect x="11" y="1.5" width="9" height="9" class="sq tech"/></g>', 14, 7)
 rect(17.5, 1, 8, 8.2, 'url(#raked)', layer=2, rx=.6)
 add('<g class="rakes">' + ''.join(f'<circle cx="21.5" cy="5" r="{r}"/>' for r in (1, 1.5, 2)) + '</g>', 14, 3)
 deco('40600027', 21, 4.5); deco('40700017', 18.6, 2.4)
@@ -380,7 +417,8 @@ for x in (2, 4.6, 22.6, 25.2):
     deco('40700001', x, 9.9)
 for x in (30, 33, 36):
     phys('puits', x, 8, 2, 2)
-    add(f'<g class="well"><title>{FR.get("Well")}</title><circle cx="{x + 1}" cy="{9}" r=".95" class="wellr"/><circle cx="{x + 1}" cy="{9}" r=".55" class="wellw"/></g>', 14, 6)
+    T('Well', FR.get('Well', 'Puits'), 'Production', ic_fac('Well'), '2 × 2', 'Puits, près de la rue pour l\'électricité.')
+    add(f'<g class="obj well"{tag("Well")}><circle cx="{x + 1}" cy="{9}" r=".95" class="wellr"/><circle cx="{x + 1}" cy="{9}" r=".55" class="wellw"/></g>', 14, 6)
 num(1.3, 1.3, 10)
 
 # ---------------- north-east, from RV16 / RV18: bamboo and cherry grove ----------------
@@ -391,6 +429,40 @@ deco('40300014', 41, 9.6, phase=16); deco('40300014', 58.4, 10.6, phase=16)
 for x in range(60, 79, 3):
     deco('40300002', x, 57.6)
 deco('40300014', 63.4, 54.2); deco('40300014', 72.6, 54.4)
+
+# ---------------- places of the garden: tap to identify, names on demand ----------------
+ZONES = [
+    ('z-allee', 'Allée des lanternes', 'Entrée du jardin : dalles moussues bordées de lampes en pierre.', [(38, 37, 4, 23)], 14, (40, 46.2)),
+    ('z-etang', 'Étang et pont', '10 bassins et un bassin incurvé, franchis par le pont en pierre.', [(28, 50.6, 10, 5), (42, 51.3, 4, 4.3)], 14, (32.6, 53.4)),
+    ('z-cour', 'Cour du grand arbre', 'Cour de gravier de 12 × 12 avec 4 grandes lampes et 4 haies coniques.', [(34, 25, 12, 12)], 14, (40, 36.3)),
+    ('z-mousse', 'Jardin de mousse', 'Pas japonais, érables rouges, un pin et une lampe.', [(20, 25.5, 14, 11.5)], 14, (26.6, 30.2)),
+    ('z-the', 'Jardin de thé', 'Clos de cordes, glycine, mortier, théière et pas japonais.', [(47, 26, 11, 10)], 14, (52.5, 29)),
+    ('z-rue', 'Rue des artisans', 'Rue pavée : les ateliers ont leur façade dessus, les plus fréquentés près des kiosques 1 et 2.', [(1, 16.5, 59, 3), (38, 19.5, 4, 5.5)], 14, (30, 18.35)),
+    ('z-carriere', 'Carrière', 'Bloc de 12 emplacements de mines 5 × 5 : 7 au VR 14, les autres pour la suite.', [(60, 15, 20, 15)], 14, (70, 29.3)),
+    ('z-riz1', 'Rizière 1', '6 × 6 champs autour de la lampe : 29 champs de raisin et 1 de riz au VR 14.', [(3.4, 37.4, 13.2, 13.2)], 14, (10, 36.9)),
+    ('z-riz2', 'Rizière 2', 'Même dessin, en réserve : elle se remplit à partir du VR 15.', [(19.4, 37.4, 13.2, 13.2)], 14, (26, 36.9)),
+    ('z-verger1', 'Verger des cocotiers', '12 pépinières autour d\'un jardin de gravier, la fournaise au centre.', [(46, 37, 16, 16)], 14, (54, 52.4)),
+    ('z-verger2', 'Verger 2', '3 citronniers au VR 14, il se remplit aux VR suivants.', [(64, 37, 16, 16)], 14, (72, 52.4)),
+    ('z-sec', 'Jardin sec', 'Gravier ratissé, grande roche, souche moussue et mortier en pierre.', [(12, 52, 15, 7.5), (2, 51, 9, 9)], 14, (19.5, 59.3)),
+    ('z-nord', 'Jardin ratissé du nord', 'Gravier ratissé entre les pavillons, avec une figurine en pierre.', [(17.5, 1, 8, 8.2)], 14, (21.5, 8.6)),
+    ('z-eclo', 'Pavillon des éclosions', 'Tes 8 éclorateurs sur un parvis de dalles.', [(47.4, 54.6, 9.2, 4.8)], 14, (52, 54.2)),
+    ('z-bosquet', 'Bosquet de bambous', 'Bambous dès le VR 16, deux cerisiers au VR 18.', [(40, 0, 20, 12)], 16, (50, 11.4)),
+    ('z-montagne', 'Montagne', 'Deux roches « Pics majestueux » derrière la carrière.', [(60, 0, 20, 13)], 16, (70, 12.4)),
+]
+for key, fr, role, rects, ph, (lx, ly) in ZONES:
+    T(key, fr, 'Lieux', None, '', role)
+    for (x, y, w, h) in rects:
+        add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" class="obj zone"{tag(key)}/>', ph, 2.5)
+    nlabel(lx, ly, fr, .82, ph)
+for k, (x, y) in KIOSK.items():
+    nlabel(x + 1, y + 2.75, f'Stockage {k}', .5)
+for x in (30, 33, 36):
+    nlabel(x + 1, 10.75, 'Puits', .5)
+nlabel(10, 43.3, 'Lampe', .5); nlabel(54, 44.3, 'Fournaise', .5); nlabel(15.5, 7.75, 'Clim', .5)
+for x, y in GENS:
+    nlabel(x + .5, y - .25, 'Générateur', .45)
+for x, y, txt, sz, ph in NAMES:
+    add(f'<text x="{f(x)}" y="{f(y)}" font-size="{sz}" text-anchor="middle" class="nm">{txt}</text>', ph, 13)
 
 # ---------------- collision check ----------------
 def ov(a, b):
@@ -451,7 +523,7 @@ body = body.replace('href="#i-', 'href="#i-').replace(' ', ' ')
 for k in ICON:
     if ' ' in k:
         body = body.replace(f'#i-{k}"', f'#i-{k.replace(" ", "_")}"')
-data = {'avg': round(avg, 2), 'avgPlan': 4.66, 'reserve': [FR.get(r, r) for r in reserve], 'buy': buy}
+data = {'types': TYPES, 'avg': round(avg, 2), 'avgPlan': 4.66, 'reserve': [FR.get(r, r) for r in reserve], 'buy': buy}
 tpl = open(os.path.join(S, 'concept_template.html')).read()
 html = tpl.replace('/*DEFS*/', defs).replace('/*PLAN*/', body).replace('/*DATA*/', json.dumps(data, ensure_ascii=False))
 open('/home/user/ClaudeHome/jardin-foyer-concept.html', 'w').write(html)
