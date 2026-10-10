@@ -14,8 +14,8 @@ def item(i):
     return {'id': i, 'w': w, 'h': h, 'cf': f['comfort'], 'pr': f['priceNum'] if cur != 'none' else 0, 'cur': cur, 'max': f['max'] or 1}
 
 CENTER = [item('40300022'), item('40500007'), item('40500002')]          # Laurier, Balançoire, Pavillon
-CORNER = [item('40700022'), item('40700025'), item('40700024')]          # Pluie d'étoiles, Pluie d'osmanthe, Lumille
-MID = [item('41100009'), item('40900018'), item('40700023')]             # Lune radieuse, Table ronde, Feuilles pourpres
+CORNER = [item('40700022'), item('40700025')]                          # Pluie d'étoiles (6 000 pts), Pluie d'osmanthe (60 000 pts)
+MID = [item('40900018'), item('41100011'), item('40700023')]             # Table ronde, Blé doré, Feuilles pourpres
 STOOLS = [item('40900020'), item('40900019')]                            # tabourets
 STALL = item('40500013')                                                 # Étal de marché 2x1
 BORDER = [item('40500012'), item('40200022')]                            # Charme d'osmanthe 2.5x.25, Vague de riz 1x.25
@@ -58,7 +58,7 @@ def compose(plazas, keep=None):
         if W >= 6.5 and H >= 6.5:
             spots = [(x0, y0), (x0 + W - 3, y0), (x0, y0 + H - 3), (x0 + W - 3, y0 + H - 3)]
             for j, (sx, sy) in enumerate(spots):
-                for it in CORNER[j % 3:] + CORNER[:j % 3]:
+                for it in CORNER[j % 2:] + CORNER[:j % 2]:
                     if tryput(it, sx, sy):
                         break
         # mid-edges: Lune radieuse / table ronde with stools
