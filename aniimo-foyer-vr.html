@@ -3,557 +3,802 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: carnet de route — sélecteur de niveau en tête, puis objectifs, carte du Foyer, Aniimo, habitabilité, checklist, tableau complet */
+/* Layout: atelier de construction — carte interactive à gauche, objectifs + inspecteur + palette à droite ; la carte garde un rendu "monde du jeu" fixe */
 :root{
-  --bg:#EDF1E8; --surface:#FAFCF7; --ink:#1A2923; --muted:#5B6B62; --line:#D2DBD0;
+  --bg:#EDF1E8; --surface:#FAFCF7; --surface-2:#F1F5EC; --ink:#1A2923; --muted:#5B6B62; --line:#D2DBD0;
   --accent:#DE9B12; --accent-ink:#7A5000; --accent-soft:#F6E5BA;
-  --hot:#D2502C; --cold:#2F7AC2; --warm:#E3842B; --sun:#D9B21C;
-  --farm:#B68856; --farm-new:#F4DDAE; --wood:#4C9858; --wood-dark:#2F6B3A; --mine:#878C9B;
-  --decor:#A962B6; --core:#2F3E48; --core-ink:#F2F5F0; --path:#E2D9C2; --map:#D7E4CE;
-  --good:#3B8A4E;
+  --good:#2F8A47; --good-soft:#DDF0E1; --bad:#C2412A; --bad-soft:#F8DED7;
   --f-display:"Fredoka","Trebuchet MS",system-ui,sans-serif;
   --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
   --f-data:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#111916; --surface:#18221E; --ink:#E4ECE6; --muted:#98AAA0; --line:#2B3832;
+  --bg:#111916; --surface:#18221E; --surface-2:#1E2A25; --ink:#E4ECE6; --muted:#98AAA0; --line:#2B3832;
   --accent:#F0B43C; --accent-ink:#F6D27E; --accent-soft:#3A3019;
-  --hot:#E8693F; --cold:#5A9DE0; --warm:#F09A45; --sun:#E8C843;
-  --farm:#9C7247; --farm-new:#5E4824; --wood:#5BAA67; --wood-dark:#3A7F46; --mine:#7A7F8D;
-  --decor:#C17FCC; --core:#0C1310; --core-ink:#E4ECE6; --path:#39372D; --map:#1D2A23;
-  --good:#5DB873; color-scheme:dark }}
+  --good:#5DB873; --good-soft:#1C3324; --bad:#EE7A5F; --bad-soft:#3A2019; color-scheme:dark }}
 :root[data-theme="dark"]{
-  --bg:#111916; --surface:#18221E; --ink:#E4ECE6; --muted:#98AAA0; --line:#2B3832;
+  --bg:#111916; --surface:#18221E; --surface-2:#1E2A25; --ink:#E4ECE6; --muted:#98AAA0; --line:#2B3832;
   --accent:#F0B43C; --accent-ink:#F6D27E; --accent-soft:#3A3019;
-  --hot:#E8693F; --cold:#5A9DE0; --warm:#F09A45; --sun:#E8C843;
-  --farm:#9C7247; --farm-new:#5E4824; --wood:#5BAA67; --wood-dark:#3A7F46; --mine:#7A7F8D;
-  --decor:#C17FCC; --core:#0C1310; --core-ink:#E4ECE6; --path:#39372D; --map:#1D2A23;
-  --good:#5DB873; color-scheme:dark }
+  --good:#5DB873; --good-soft:#1C3324; --bad:#EE7A5F; --bad-soft:#3A2019; color-scheme:dark }
 
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
-.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:flex;flex-direction:column;gap:40px}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14.5px;line-height:1.5}
+.wrap{max-width:1400px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;display:flex;flex-direction:column;gap:18px}
 h1,h2,h3{font-family:var(--f-display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
-h1{font-size:clamp(30px,5vw,44px)}
-h2{font-size:24px}
-h3{font-size:17px}
+h1{font-size:clamp(26px,4vw,36px)}
+h2{font-size:20px}
+h3{font-size:16px}
 p{margin:0}
-.eyebrow{font-family:var(--f-data);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.lede{max-width:64ch;color:var(--muted)}
-section{display:flex;flex-direction:column;gap:16px}
-.sec-head{display:flex;flex-direction:column;gap:6px}
-.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-data);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{max-width:72ch;color:var(--muted)}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* header */
-header{display:flex;flex-direction:column;gap:18px}
-.picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.picker .lbl{font-weight:600;margin-right:6px}
-.chip{font:600 15px var(--f-data);border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
-.chip:hover{border-color:var(--accent)}
-.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1A1405}
-.chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.route{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.route .big{font-family:var(--f-display);font-size:28px;font-weight:600}
-.route .arrow{color:var(--accent);font-family:var(--f-display);font-size:28px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl label{font-size:12px;font-weight:600;color:var(--muted)}
+select{background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0;max-width:100%}
+.btn{border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 13px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#1A1405}
+.btn.danger{color:var(--bad)}
 
-/* goals */
-.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.goal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.goal .k{font-size:12.5px;color:var(--muted)}
-.goal .v{font-family:var(--f-data);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.goal .d{font-size:12.5px;color:var(--muted)}
-.goal .d b{color:var(--accent-ink);font-weight:600}
-.unlocks{font-size:13.5px;color:var(--muted)}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+@media (max-width:980px){.app{grid-template-columns:1fr}}
+.stage{min-width:0;display:flex;flex-direction:column;gap:8px}
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tb{border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-weight:600;font-size:13px;display:inline-flex;gap:6px;align-items:center}
+.tb[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.tb kbd{font:600 10.5px var(--f-data);opacity:.6}
+.sep{width:1px;height:24px;background:var(--line);margin-inline:2px}
+.map-scroll{overflow:auto;border-radius:14px;border:1px solid var(--line);background:#33452F;max-height:80vh}
+#map{display:block;width:100%;min-width:760px;height:auto;user-select:none;-webkit-user-select:none}
+#map.t-select{touch-action:pan-x pan-y;cursor:default}
+#map.t-place,#map.t-path,#map.t-erase{touch-action:none;cursor:crosshair}
+.hint{font-size:13px;color:var(--muted);min-height:20px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block}
 
-/* map */
-.map-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px}
-.map-scroll{overflow-x:auto}
-.map-scroll svg{display:block;width:100%;min-width:640px;height:auto}
-.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted)}
-.legend span{display:inline-flex;align-items:center;gap:6px}
-.sw{width:14px;height:14px;border-radius:4px;display:inline-block}
-svg text{font-family:var(--f-body)}
-.t-title{font:700 12px var(--f-data);letter-spacing:.06em;fill:var(--muted)}
-.t-lbl{font:600 13px var(--f-body);fill:var(--ink)}
-.t-sub{font:500 11.5px var(--f-body);fill:var(--muted)}
-.t-core{font:600 12px var(--f-body);fill:var(--core-ink)}
-.t-decor{font:600 11px var(--f-body);fill:var(--surface)}
-.tile{fill:var(--farm);stroke:none}
-.tile.new{fill:var(--farm-new);stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3}
-.tree{fill:var(--wood)}
-.tree.new{fill:var(--farm-new);stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3}
-.trunk{fill:var(--wood-dark)}
-.minetile{fill:var(--mine)}
-.minetile.new{fill:var(--farm-new);stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3}
-.rng-hot{fill:var(--hot);fill-opacity:.10;stroke:var(--hot);stroke-width:1.5;stroke-dasharray:6 4}
-.rng-cold{fill:var(--cold);fill-opacity:.10;stroke:var(--cold);stroke-width:1.5;stroke-dasharray:6 4}
-.rng-sun{fill:var(--sun);fill-opacity:.12;stroke:var(--sun);stroke-width:1.5;stroke-dasharray:6 4}
-.tips-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-.tip{border-top:2px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.tip h3{font-size:15.5px}
-.tip p{font-size:14px;color:var(--muted)}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.req{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;font-size:14px}
+.req b{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-weight:600}
+.pill{font:600 11.5px var(--f-data);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.subline{font-size:12.5px;color:var(--muted)}
+.issues{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.issues li{color:var(--muted)}
+.issues ul{margin:0;padding-left:18px}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi div{background:var(--surface-2);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;min-width:0}
+.kpi span{font-size:11.5px;color:var(--muted)}
+.kpi b{font:600 17px var(--f-data);font-variant-numeric:tabular-nums}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12.5px;font-weight:600}
+input[type=number]{background:var(--surface-2);border:1.5px solid var(--line);border-radius:8px;padding:6px 9px;width:100%;font-family:var(--f-data)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.btnrow{display:flex;flex-wrap:wrap;gap:6px}
+.arrows{display:grid;grid-template-columns:repeat(4,40px);gap:6px}
+.arrows .tb{justify-content:center;padding:6px 0}
 
-/* workers */
-.bar{display:flex;height:34px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
-.bar div{display:flex;align-items:center;justify-content:center;font:600 13px var(--f-data);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);min-width:0;white-space:nowrap;overflow:hidden}
-.jobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.job{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
-.job .dot{width:12px;height:12px;border-radius:50%;margin-top:5px;flex:none}
-.job .n{font-family:var(--f-data);font-weight:600}
-.job p{font-size:13px;color:var(--muted)}
+.pal-group{display:flex;flex-direction:column;gap:6px}
+.pal-group h3{font-size:12px;font-family:var(--f-data);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.pal button{display:flex;gap:8px;align-items:center;text-align:left;border:1.5px solid var(--line);background:var(--surface-2);border-radius:10px;padding:5px 7px;min-width:0}
+.pal button:hover{border-color:var(--accent)}
+.pal button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.pal svg{width:34px;height:34px;flex:none;background:#8CC063;border-radius:7px}
+.pal .nm{font-size:12.5px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.pal .mt{font:500 10.5px var(--f-data);color:var(--muted)}
+.pal-text{display:flex;flex-direction:column;min-width:0}
 
-/* habitability */
-.hab-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px}
-@media (max-width:760px){.hab-grid{grid-template-columns:1fr}}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
-label{font-weight:600;font-size:14px}
-.field{display:flex;flex-direction:column;gap:6px}
-input[type=number]{font:600 18px var(--f-data);padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:100%;max-width:240px}
-.result{font-size:14px;color:var(--muted)}
-.result strong{color:var(--ink)}
-.ok{color:var(--good);font-weight:600}
-.items{display:flex;flex-direction:column;gap:8px}
-.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;font-size:14px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
-.item:last-child{border-bottom:0}
-.item .h{font-family:var(--f-data);font-weight:600;color:var(--decor);text-align:right}
-.item .s{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
+details.card summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:16px}
+textarea{width:100%;min-height:70px;font:12px var(--f-data);background:var(--surface-2);color:var(--ink);border:1.5px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
 
-/* checklist */
-.check{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 6px}
-.check label{display:flex;gap:12px;align-items:flex-start;padding:10px 10px;border-radius:10px;font-weight:500;cursor:pointer}
-.check label:hover{background:var(--bg)}
-.check input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex:none}
-.check input:checked + span{color:var(--muted);text-decoration:line-through}
-.progress{font-family:var(--f-data);font-size:13px;color:var(--muted)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.note{border-top:2px solid var(--line);padding-top:8px;font-size:13.5px;color:var(--muted)}
+.note b{color:var(--ink)}
+.sources{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.sources a{color:var(--accent-ink)}
 
-/* table */
-.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
-table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
-th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
-th:first-child,td:first-child,th.l,td.l{text-align:left}
-th{font:600 11.5px var(--f-data);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-td{font-variant-numeric:tabular-nums}
-tr:last-child td{border-bottom:0}
-tr.cur td{background:var(--accent-soft)}
-.unk{color:var(--muted);font-style:italic}
-
-.note{font-size:13px;color:var(--muted);max-width:75ch}
-.sources{font-size:13.5px;display:flex;flex-direction:column;gap:4px}
-.sources a{color:var(--cold)}
-@media (prefers-reduced-motion:no-preference){ .chip{transition:background .15s,border-color .15s} }
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-weight:600;font-size:13.5px;z-index:10;max-width:calc(100% - 32px)}
 </style>
 
 <div class="wrap">
-  <header>
-    <div class="eyebrow">Aniimo · Foyer · Camping-car (VR)</div>
-    <h1>Plan du Foyer VR, du niveau 14 au 20</h1>
-    <p class="lede">Choisis ton niveau actuel. La page affiche ce qu'il faut pour le palier suivant, la carte des zones à poser, la répartition de tes Aniimo et la route d'habitabilité. Les tuiles en pointillés sont celles à ajouter pour monter.</p>
-    <div class="picker" role="group" aria-label="Niveau actuel du VR">
-      <span class="lbl">Mon VR est niveau</span>
-      <div id="chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-    </div>
-    <div class="route"><span class="big" id="r-from">VR 14</span><span class="arrow">→</span><span class="big" id="r-to">VR 15</span><span class="eyebrow" id="r-note"></span></div>
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <div class="eyebrow">Aniimo · Foyer · Camping-car</div>
+    <h1>Plan du Foyer VR</h1>
+    <p class="lede">Un atelier pour dessiner ton Foyer. Choisis le palier visé et un style de déco, génère le plan optimisé, puis déplace, ajoute ou retire chaque élément. La carte calcule en direct la température de chaque parcelle, son rendement et ton habitabilité.</p>
   </header>
 
-  <section aria-labelledby="h-goals">
-    <div class="sec-head">
-      <div class="eyebrow">Objectifs du palier</div>
-      <h2 id="h-goals">Ce que l'écran « Améliorer le VR » va te demander</h2>
-    </div>
-    <div class="goals" id="goals"></div>
-    <p class="unlocks" id="unlocks"></p>
-  </section>
+  <div class="controls">
+    <div class="ctl"><label for="lvl">Palier visé</label><select id="lvl"></select></div>
+    <div class="ctl"><label for="theme">Style de déco</label><select id="theme"></select></div>
+    <div class="ctl"><label for="range">Portée des appareils</label><select id="range"></select></div>
+    <button class="btn primary" id="gen" type="button">Générer le plan optimisé</button>
+    <button class="btn" id="best" type="button">Meilleure culture partout</button>
+  </div>
 
-  <section aria-labelledby="h-map">
-    <div class="sec-head">
-      <div class="eyebrow">Carte des zones</div>
-      <h2 id="h-map">Le plan de ton Foyer</h2>
-      <p class="lede">Carte schématique : elle montre où placer chaque type de parcelle et combien en poser, pas la position exacte case par case. Le noyau au centre garde le stockage collé aux ateliers pour que les porteurs fassent les trajets les plus courts.</p>
-    </div>
-    <div class="map-box">
-      <div class="map-scroll"><svg id="map" viewBox="0 0 960 640" role="img" aria-label="Plan schématique du Foyer"></svg></div>
+  <div class="app">
+    <div class="stage">
+      <div class="toolbar" role="toolbar" aria-label="Outils">
+        <button class="tb" data-tool="select" type="button">Sélection <kbd>V</kbd></button>
+        <button class="tb" data-tool="path" type="button">Chemin <kbd>P</kbd></button>
+        <button class="tb" data-tool="erase" type="button">Gomme <kbd>E</kbd></button>
+        <span class="sep"></span>
+        <button class="tb" id="undo" type="button">Annuler <kbd>Ctrl Z</kbd></button>
+        <span class="sep"></span>
+        <button class="tb" id="tgrid" type="button">Grille</button>
+        <button class="tb" id="trange" type="button">Portées</button>
+        <span class="sep"></span>
+        <button class="tb" id="zout" type="button" aria-label="Dézoomer">−</button>
+        <button class="tb" id="zin" type="button" aria-label="Zoomer">+</button>
+      </div>
+      <div class="map-scroll">
+        <svg id="map" class="t-select" viewBox="0 0 952 588" role="img" aria-label="Carte interactive du Foyer">
+          <defs>
+            <pattern id="grass" width="56" height="56" patternUnits="userSpaceOnUse">
+              <rect width="56" height="56" fill="#8CC063"/>
+              <path d="M8 12 l2 -5 l2 5 M30 40 l2 -5 l2 5 M44 18 l2 -5 l2 5 M18 46 l2 -4 l2 4 M50 50 l1.5 -4 l1.5 4" stroke="#78AE51" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <circle cx="40" cy="44" r="1.4" fill="#F4F1C9"/><circle cx="14" cy="28" r="1.2" fill="#F7B6C8"/><circle cx="26" cy="8" r="1.1" fill="#FFFFFF"/>
+            </pattern>
+            <pattern id="gridp" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M14 0 H0 V14" fill="none" stroke="#000" stroke-opacity=".11" stroke-width="1"/></pattern>
+            <radialGradient id="vig" cx="50%" cy="50%" r="75%"><stop offset="70%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#1D3318" stop-opacity=".35"/></radialGradient>
+          </defs>
+          <g id="L-bg"></g>
+          <g id="L-paths"></g>
+          <g id="L-grid"></g>
+          <g id="L-range"></g>
+          <g id="L-items"></g>
+          <g id="L-badge"></g>
+          <g id="L-sel"></g>
+          <g id="L-ghost"></g>
+        </svg>
+      </div>
+      <div class="hint" id="hint"></div>
       <div class="legend">
-        <span><i class="sw" style="background:var(--farm)"></i>Champ déjà posé</span>
-        <span><i class="sw" style="background:var(--farm-new);outline:2px dashed var(--accent);outline-offset:-2px"></i>À poser pour le palier</span>
-        <span><i class="sw" style="background:var(--wood)"></i>Bois</span>
-        <span><i class="sw" style="background:var(--mine)"></i>Mine</span>
-        <span><i class="sw" style="background:var(--decor)"></i>Mobilier d'habitabilité</span>
-        <span><i class="sw" style="background:var(--hot)"></i>Portée chauffage</span>
-        <span><i class="sw" style="background:var(--cold)"></i>Portée refroidisseur</span>
-        <span><i class="sw" style="background:var(--sun)"></i>Portée lampe solaire</span>
+        <span><i class="dot" style="background:#3FAE5A"></i>Rendement 100 %</span>
+        <span><i class="dot" style="background:#E8C22E"></i>80 %</span>
+        <span><i class="dot" style="background:#F08A24"></i>50 %</span>
+        <span><i class="dot" style="background:#D9402B"></i>20 %</span>
+        <span><i class="dot" style="background:#E8452C;opacity:.6"></i>Portée chauffage</span>
+        <span><i class="dot" style="background:#3E86C4;opacity:.6"></i>Portée refroidisseur</span>
+        <span><i class="dot" style="background:#F2C200;opacity:.7"></i>Portée lampe solaire</span>
       </div>
     </div>
-    <div class="tips-grid">
-      <div class="tip"><h3>Une bande de température par bloc</h3><p>Une culture pousse à 100 % dans sa température, 80 % à un cran, 50 % à deux crans, 20 % au-delà. Un champ frais dans la portée d'un chauffage perd plus qu'un champ sans appareil. Active l'affichage des portées dans les réglages de construction.</p></div>
-      <div class="tip"><h3>Le chevauchement fait le tiède</h3><p>Torride + frais donne tiède là où les portées se croisent. Pose les 2 champs du milieu dans ce recoupement pour le cerisier, sans troisième appareil.</p></div>
-      <div class="tip"><h3>Le bon type au bon poste</h3><p>Un Aniimo dont le type correspond à l'installation travaille 20 % plus vite. Type Plante pour semer, Eau pour arroser, Ténèbres pour récolter et couper, Terre pour les mines.</p></div>
-      <div class="tip"><h3>Sauvegarde chaque bloc en Combo</h3><p>Sélection multiple puis « enregistrer en Combo » : à chaque palier tu déplaces un bloc entier d'un coup pour libérer la place des nouvelles parcelles, au lieu de tout reposer.</p></div>
-      <div class="tip"><h3>Lance l'amélioration avant de partir</h3><p>À partir du niveau 14, une amélioration dure 6 h et plus (12 h pour le niveau 20). Démarre-la juste avant une longue pause ou la nuit.</p></div>
-      <div class="tip"><h3>Garde une réserve libre</h3><p>Chaque palier ajoute 2 champs et 1 bois, et 1 mine tous les deux niveaux. Laisse la zone de réserve vide pour ne jamais devoir démonter.</p></div>
-    </div>
-  </section>
 
-  <section aria-labelledby="h-work">
-    <div class="sec-head">
-      <div class="eyebrow">Équipe</div>
-      <h2 id="h-work">Répartition des Aniimo</h2>
-      <p class="lede" id="work-lede"></p>
-    </div>
-    <div class="bar" id="bar" aria-hidden="true"></div>
-    <div class="jobs" id="jobs"></div>
-    <p class="note">C'est une base de départ, pas une valeur officielle. Regarde où la production s'accumule ou attend : s'il y a des produits qui traînent dans les installations, ajoute un porteur ; si des champs attendent d'être plantés ou arrosés, déplace un Aniimo vers ce poste.</p>
-  </section>
-
-  <section aria-labelledby="h-hab">
-    <div class="sec-head">
-      <div class="eyebrow">Habitabilité</div>
-      <h2 id="h-hab">Atteindre le seuil d'habitabilité</h2>
-      <p class="lede">Depuis le niveau 10, chaque palier demande un score d'habitabilité. De 15 000 au niveau 14, il faut monter jusqu'à 20 000 au niveau 20. Entre ton score actuel pour voir ce qu'il te manque.</p>
-    </div>
-    <div class="hab-grid">
-      <div class="panel">
-        <div class="field">
-          <label for="hab">Mon habitabilité actuelle</label>
-          <input type="number" id="hab" min="0" step="50" value="15000" inputmode="numeric">
-        </div>
-        <div class="result" id="hab-res"></div>
-        <div class="field">
-          <label for="coins">Mes Pièces du Foyer</label>
-          <input type="number" id="coins" min="0" step="10000" placeholder="ex. 2500000" inputmode="numeric">
-        </div>
-        <div class="result" id="coin-res"></div>
+    <aside class="side">
+      <div class="card" id="goal"></div>
+      <div class="card" id="insp"></div>
+      <div class="card">
+        <h2>Palette</h2>
+        <div id="palette" style="display:flex;flex-direction:column;gap:12px"></div>
       </div>
-      <div class="panel">
-        <h3>Les pièces qui rapportent le plus</h3>
-        <div class="items">
-          <div class="item"><span>Set <i>Harvest Moon</i> (26 pièces)</span><span class="h">+5 301</span><span class="s">Le plus gros total d'un set. À viser en premier si tu ne l'as pas.</span></div>
-          <div class="item"><span><i>Mige Pool Bathtub</i> · boutique de meubles</span><span class="h">1 249 ×5</span><span class="s">Jusqu'à 5 exemplaires, soit 6 245 au total.</span></div>
-          <div class="item"><span><i>Forest Whispers Wooden Bath</i> · boutique</span><span class="h">1 198 ×5</span><span class="s">Jusqu'à 5 exemplaires, soit 5 990 au total.</span></div>
-          <div class="item"><span>Set <i>Timber Serenity</i> (13 pièces)</span><span class="h">+2 449</span><span class="s">Emprise compacte de 7 × 4 × 6, idéal à l'intérieur du VR.</span></div>
-          <div class="item"><span><i>Sunlit Grove</i> · événement</span><span class="h">2 025 ×1</span><span class="s">La meilleure pièce unique. À récupérer dès qu'un événement la propose.</span></div>
-          <div class="item"><span><i>Aniimo Ludo</i> · Bud Tickets (dès VR 13)</span><span class="h">221</span><span class="s">Coûte autant de Bud Tickets qu'il donne d'habitabilité. Parfait pour combler un petit écart.</span></div>
-          <div class="item"><span>À éviter : <i>Storage Unit</i></span><span class="h">10</span><span class="s">210 Pièces pour 10 points : à poser pour le stockage, jamais pour le score.</span></div>
+      <details class="card">
+        <summary>Fond : ma capture du Foyer</summary>
+        <p class="subline">Importe une capture d'écran de ton Foyer vu de dessus pour calquer le plan sur ton vrai terrain. L'image reste dans ton navigateur.</p>
+        <input type="file" id="bgfile" accept="image/*">
+        <div class="field"><label for="bgop">Opacité</label><input type="range" id="bgop" min="0.1" max="1" step="0.05" value="0.6"></div>
+        <div class="field"><label for="bgsc">Échelle</label><input type="range" id="bgsc" min="0.4" max="2.5" step="0.02" value="1"></div>
+        <div class="field"><label for="bgdx">Décalage horizontal</label><input type="range" id="bgdx" min="-600" max="600" step="2" value="0"></div>
+        <div class="field"><label for="bgdy">Décalage vertical</label><input type="range" id="bgdy" min="-400" max="400" step="2" value="0"></div>
+        <button class="btn" id="bgclear" type="button">Revenir à la prairie</button>
+      </details>
+      <details class="card">
+        <summary>Sauvegarder et partager</summary>
+        <p class="subline">Ton plan est gardé automatiquement dans ce navigateur. Pour le copier ailleurs ou l'envoyer à un ami, utilise ce code.</p>
+        <textarea id="code" aria-label="Code du plan" spellcheck="false"></textarea>
+        <div class="btnrow">
+          <button class="btn" id="exp" type="button">Copier mon code</button>
+          <button class="btn" id="imp" type="button">Charger ce code</button>
+          <button class="btn danger" id="clear" type="button">Tout vider</button>
         </div>
-        <p class="note">Ces cinq grosses sources cumulent environ 22 000 points, de quoi couvrir tous les seuils jusqu'au niveau 20.</p>
-      </div>
-    </div>
-  </section>
+      </details>
+    </aside>
+  </div>
 
-  <section aria-labelledby="h-check">
-    <div class="sec-head">
-      <div class="eyebrow">Ordre d'action</div>
-      <h2 id="h-check">Checklist du palier</h2>
-      <p class="progress" id="progress"></p>
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <h2>À savoir</h2>
+    <div class="notes">
+      <p class="note"><b>Les visuels sont dessinés pour cet outil.</b> Ce ne sont pas les sprites officiels du jeu, qui appartiennent au studio et ne sont pas accessibles d'ici. Pour coller à ton vrai terrain, importe ta capture dans « Fond ».</p>
+      <p class="note"><b>Tailles et portées approchées.</b> Les guides ne publient pas les dimensions exactes en cases. Règle « Portée des appareils » jusqu'à ce que les cercles correspondent à ce que montre le jeu avec l'affichage des portées.</p>
+      <p class="note"><b>Calcul de température.</b> Chauffage modéré +1, extrême +2, refroidisseur modéré −1, extrême −2 ; les zones qui se croisent s'additionnent (torride + frais = tiède). Rendement : 100 % dans la bonne bande, 80 % à un cran, 50 % à deux, 20 % au-delà.</p>
+      <p class="note"><b>À vérifier en jeu.</b> La bande du cacao, de la noix de coco et du pommier varie selon les guides. Une culture de lumière sans lampe est comptée à 50 % (estimation). Le rendement en Pièces/h est indicatif et ne couvre que le cacao, la fleur d'oranger, la noix de coco et le blé.</p>
     </div>
-    <div class="check" id="check"></div>
-  </section>
-
-  <section aria-labelledby="h-all">
-    <div class="sec-head">
-      <div class="eyebrow">Tous les paliers</div>
-      <h2 id="h-all">Exigences du niveau 14 au 20</h2>
-      <p class="lede">La règle se lit d'un coup d'œil : au niveau N, il faut 2N champs, N bois et N/2 mines. La ligne surlignée est ton prochain palier.</p>
-    </div>
-    <div class="tbl">
-      <table>
-        <thead><tr><th>Niveau</th><th>Habitabilité</th><th>Champs</th><th>Bois</th><th>Mines</th><th class="l">Titre / quête</th><th>Coût (Pièces)</th><th>Durée</th><th>Aniimo max</th></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-    <p class="note">Les données viennent des guides communautaires, qui ne sont pas toujours d'accord entre eux. Les cases « non publié » ne figuraient dans aucune source fiable : vérifie-les dans l'écran d'amélioration du jeu. Les noms d'objets sont en anglais, comme dans les bases de données d'où ils viennent.</p>
-  </section>
-
-  <section aria-labelledby="h-src">
-    <div class="sec-head"><div class="eyebrow">Sources</div><h2 id="h-src">D'où viennent les chiffres</h2></div>
     <div class="sources">
-      <a href="https://metabot.gg/en/aniimo/guides/homeland" target="_blank" rel="noopener">Metabot : RV Upgrades, Facilities and the Best Workers</a>
-      <a href="https://questlog.gg/aniimo/en/homeland" target="_blank" rel="noopener">Questlog : Homeland &amp; RV</a>
-      <a href="https://www.aniimoverse.com/guides/homeland" target="_blank" rel="noopener">AniimoVerse : Homeland Guide</a>
-      <a href="https://aniimotools.dev/systems/homeland/rv-levels/" target="_blank" rel="noopener">AniimoTools : RV Levels</a>
-      <a href="https://aniimotools.dev/systems/homeland/home-index/" target="_blank" rel="noopener">AniimoTools : Home Index (habitabilité, sets)</a>
-      <a href="https://metaforge.app/aniimo/database/rv/rv-level-14" target="_blank" rel="noopener">MetaForge : RV Level 14</a>
-      <a href="https://ae-bii.github.io/aniimax/" target="_blank" rel="noopener">Aniimax : optimiseur de production (températures)</a>
-      <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3806795108" target="_blank" rel="noopener">Steam : RV / Homeland Guide</a>
-      <a href="https://mobi.gg/en/tips/aniimo-homeland/" target="_blank" rel="noopener">Mobi.gg : Work Abilities and Production</a>
-      <a href="https://aniimoguide.com/homeland" target="_blank" rel="noopener">AniimoGuide : Homeland &amp; RV Planner (calcul case par case)</a>
+      <span style="color:var(--muted)">Sources :</span>
+      <a href="https://metabot.gg/en/aniimo/guides/homeland" target="_blank" rel="noopener">Metabot</a>
+      <a href="https://questlog.gg/aniimo/en/homeland" target="_blank" rel="noopener">Questlog</a>
+      <a href="https://www.aniimoverse.com/guides/homeland" target="_blank" rel="noopener">AniimoVerse</a>
+      <a href="https://aniimotools.dev/systems/homeland/home-index/" target="_blank" rel="noopener">AniimoTools</a>
+      <a href="https://ae-bii.github.io/aniimax/" target="_blank" rel="noopener">Aniimax</a>
+      <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3806795108" target="_blank" rel="noopener">Guide Steam</a>
+      <a href="https://mobi.gg/en/tips/aniimo-homeland/" target="_blank" rel="noopener">Mobi.gg</a>
     </div>
   </section>
 </div>
+<div id="toast" hidden></div>
 
 <script>
 (function(){
-  // Exigences pour ATTEINDRE le niveau indiqué
-  var LV = {
-    14:{hab:15000,F:28,W:14,M:7, title:null, quest:"Facilities, Orders, and Life: Part 2", cost:2620000, time:"6 h", cap:36, unlocks:"Module d'énergie niv. 2, module écologique niv. 6, plafond des installations relevé"},
-    15:{hab:15500,F:30,W:15,M:7, title:"Wayfarer II", quest:null, cost:3760000, time:"7 h", cap:38},
-    16:{hab:16000,F:32,W:16,M:8, title:null, quest:null, cost:4900000, time:null, cap:40},
-    17:{hab:17000,F:34,W:17,M:8, title:null, quest:null, cost:null, time:null, cap:42},
-    18:{hab:18000,F:36,W:18,M:9, title:null, quest:null, cost:null, time:null, cap:43},
-    19:{hab:19000,F:38,W:19,M:9, title:"Wayfarer III", quest:null, cost:null, time:null, cap:44},
-    20:{hab:20000,F:40,W:20,M:10,title:null, quest:"Lucky Gift", cost:20800000, time:"12 h", cap:45, unlocks:"Niveau maximum, plafond des installations relevé"}
-  };
-  // Répartition des champs par bande (croissante d'un palier à l'autre)
-  var FARM = {
-    28:{hot:6,warm:2,cool:6,sun:6,neu:8},
-    30:{hot:6,warm:2,cool:6,sun:6,neu:10},
-    32:{hot:7,warm:2,cool:7,sun:6,neu:10},
-    34:{hot:7,warm:2,cool:7,sun:8,neu:10},
-    36:{hot:8,warm:2,cool:8,sun:8,neu:10},
-    38:{hot:8,warm:2,cool:8,sun:8,neu:12},
-    40:{hot:8,warm:2,cool:8,sun:8,neu:14}
-  };
-  var JOBS = [
-    {k:"plant", name:"Plantation", type:"type Plante", w:.22, c:"var(--wood)", p:"Sème les champs et les bois."},
-    {k:"water", name:"Arrosage", type:"type Eau", w:.20, c:"var(--cold)", p:"Arrose, puise l'eau, brasse."},
-    {k:"harv",  name:"Récolte et coupe", type:"type Ténèbres", w:.20, c:"#6A5A8C", p:"Récolte, coupe le bois, fait sécher."},
-    {k:"mine",  name:"Minage", type:"type Terre", w:.12, c:"var(--mine)", p:"Fait tourner les mines."},
-    {k:"carry", name:"Transport", type:"compétence Porter", w:.14, c:"var(--accent)", p:"Ramène la production au stockage."},
-    {k:"art",   name:"Artisanat", type:"compétence Artisanat", w:.12, c:"var(--decor)", p:"Meubles et objets du Foyer."}
-  ];
+var C=14, W=68, H=42;
+var $=function(id){return document.getElementById(id);};
+var fmt=function(n){return Math.round(n).toLocaleString("fr-FR");};
 
-  var fmt = function(n){ return n.toLocaleString("fr-FR"); };
-  var cur = 14;
-  try { var s = parseInt(localStorage.getItem("foyer-cur"),10); if (LV[s] && s < 20) cur = s; } catch(e){}
+var LV={
+  14:{hab:15000,F:28,W:14,M:7, title:null, quest:"Facilities, Orders, and Life: Part 2", cost:2620000, time:"6 h", cap:36},
+  15:{hab:15500,F:30,W:15,M:7, title:"Wayfarer II", quest:null, cost:3760000, time:"7 h", cap:38},
+  16:{hab:16000,F:32,W:16,M:8, title:null, quest:null, cost:4900000, time:null, cap:40},
+  17:{hab:17000,F:34,W:17,M:8, title:null, quest:null, cost:null, time:null, cap:42},
+  18:{hab:18000,F:36,W:18,M:9, title:null, quest:null, cost:null, time:null, cap:43},
+  19:{hab:19000,F:38,W:19,M:9, title:"Wayfarer III", quest:null, cost:null, time:null, cap:44},
+  20:{hab:20000,F:40,W:20,M:10,title:null, quest:"Lucky Gift", cost:20800000, time:"12 h", cap:45}
+};
+var FARM={28:{hot:6,warm:2,cool:6,sun:6,neu:8},30:{hot:6,warm:2,cool:6,sun:6,neu:10},32:{hot:7,warm:2,cool:7,sun:6,neu:10},34:{hot:7,warm:2,cool:7,sun:8,neu:10},36:{hot:8,warm:2,cool:8,sun:8,neu:10},38:{hot:8,warm:2,cool:8,sun:8,neu:12},40:{hot:8,warm:2,cool:8,sun:8,neu:14}};
+var CROPS={
+  ble:{n:"Blé",band:0,coin:2240,col:"#E8C547",on:"champ"},
+  cacao:{n:"Cacao",band:0,coin:2790,col:"#7A4A2A",on:"champ"},
+  coco:{n:"Noix de coco",band:0,coin:2640,col:"#C9A27A",on:"champ"},
+  canne:{n:"Canne à sucre",band:2,col:"#B6E36A",on:"champ"},
+  cerisier:{n:"Cerisier",band:1,col:"#F4A7C0",on:"champ"},
+  fraise:{n:"Fraise",band:-1,col:"#E0413A",on:"champ"},
+  rose:{n:"Rose",band:-1,col:"#D94B7A",on:"champ"},
+  ginseng:{n:"Ginseng",band:-1,col:"#E8BE84",on:"champ"},
+  canneberge:{n:"Canneberge",band:-2,col:"#B0243B",on:"champ"},
+  lavande:{n:"Lavande",band:"sun",col:"#9B7FD4",on:"champ"},
+  oranger:{n:"Fleur d'oranger",band:"sun",coin:2760,col:"#F7A23B",on:"champ"},
+  bois:{n:"Bois",band:0,col:"#3E8E41",on:"bois"},
+  bambou:{n:"Bambou",band:0,col:"#86C25A",on:"bois"},
+  pommier:{n:"Pommier",band:0,col:"#3E8E41",fruit:"#E0413A",on:"bois"},
+  erable:{n:"Érable",band:-2,col:"#D9572A",on:"bois"},
+  noyer:{n:"Noyer",band:"sun",col:"#5F8A36",fruit:"#8B6A3E",on:"bois"},
+  raisin:{n:"Raisin",band:"sun",col:"#5E8E3A",fruit:"#7B4FA8",on:"bois"}
+};
+var BANDS={"-2":"Glacial","-1":"Frais","0":"Neutre","1":"Tiède","2":"Torride"};
+var EFFC={100:"#3FAE5A",80:"#E8C22E",50:"#F08A24",20:"#D9402B"};
+var THEMES={
+  prairie:{n:"Prairie",path:"#D9BF8B",edge:"#C1A270",flower:["#F28FB0","#FFD45C","#FFFFFF"],fence:"#B9874E",fenceD:"#87592B",tree:"#4C9A4A"},
+  zen:{n:"Jardin zen",path:"#CFCBC0",edge:"#AFA99C",flower:["#F6C1D0","#FFFFFF","#D9C2F0"],fence:"#8E8A80",fenceD:"#6C685F",tree:"#F2B3C6"},
+  moisson:{n:"Fête des moissons",path:"#C9965A",edge:"#A0713D",flower:["#F39A33","#E8C22E","#D9572A"],fence:"#A86E36",fenceD:"#7A4C22",tree:"#D98B3A"}
+};
+var T={
+  champ:{n:"Champ",w:3,h:3,g:"prod"},
+  bois:{n:"Bois",w:3,h:3,g:"prod"},
+  mine:{n:"Mine",w:4,h:4,g:"prod"},
+  vr:{n:"Camping-car",w:8,h:4,g:"prod",max:1},
+  stockage:{n:"Stockage",w:3,h:3,g:"prod"},
+  moulin:{n:"Moulin",w:4,h:4,g:"prod"},
+  etabli:{n:"Établi",w:3,h:2,g:"prod"},
+  puits:{n:"Puits",w:2,h:2,g:"prod"},
+  heat:{n:"Chauffage",w:1,h:1,g:"clim"},
+  cool:{n:"Refroidisseur",w:1,h:1,g:"clim"},
+  lamp:{n:"Lampe solaire",w:1,h:1,g:"clim"},
+  harvest:{n:"Set Harvest Moon",w:8,h:6,g:"hab",hab:5301,max:1},
+  mige:{n:"Mige Pool Bathtub",w:4,h:3,g:"hab",hab:1249,max:5},
+  forest:{n:"Forest Whispers Bath",w:4,h:3,g:"hab",hab:1198,max:5},
+  timber:{n:"Set Timber Serenity",w:7,h:4,g:"hab",hab:2449,max:1},
+  sunlit:{n:"Sunlit Grove",w:6,h:6,g:"hab",hab:2025,max:1},
+  ludo:{n:"Aniimo Ludo",w:3,h:3,g:"hab",hab:221},
+  books:{n:"Book Stack I",w:1,h:1,g:"hab",hab:71},
+  pond:{n:"Pond",w:3,h:3,g:"hab",hab:33},
+  sunit:{n:"Storage Unit",w:2,h:2,g:"hab",hab:10},
+  fence:{n:"Clôture",w:1,h:1,g:"deco"},
+  flowers:{n:"Fleurs",w:1,h:1,g:"deco"},
+  lantern:{n:"Lanterne",w:1,h:1,g:"deco"},
+  bench:{n:"Banc",w:2,h:1,g:"deco"},
+  dtree:{n:"Arbre décoratif",w:2,h:2,g:"deco"}
+};
+var GROUPS=[["prod","Production"],["clim","Climat"],["hab","Habitabilité"],["deco","Habillage"]];
 
-  // ---------- chips ----------
-  var chips = document.getElementById("chips");
-  [14,15,16,17,18,19].forEach(function(l){
-    var b = document.createElement("button");
-    b.className = "chip"; b.type = "button"; b.textContent = l; b.dataset.l = l;
-    b.addEventListener("click", function(){ cur = l; try{localStorage.setItem("foyer-cur", l);}catch(e){} render(); });
-    chips.appendChild(b);
+var S={level:15,theme:"prairie",R:3,other:0,items:[],nid:1,grid:true,ranges:true,zoom:1};
+var paths=new Set();
+var bg={src:null,op:.6,sc:1,dx:0,dy:0};
+var tool="select", placeType=null, rotNext=0, selId=null, drag=null, painting=null, erasing=false, hist=[];
+var svg=$("map");
+
+function load(){
+  try{ var s=JSON.parse(localStorage.getItem("foyer-atelier-v1")); if(s&&s.items){ Object.assign(S,s); paths=new Set(s.paths||[]); delete S.paths; } }catch(e){}
+  try{ var b=JSON.parse(localStorage.getItem("foyer-atelier-bg")); if(b) Object.assign(bg,b); }catch(e){}
+  if(!LV[S.level]) S.level=15;
+  if(!THEMES[S.theme]) S.theme="prairie";
+}
+function save(){
+  var o=Object.assign({},S,{paths:Array.from(paths)});
+  try{ localStorage.setItem("foyer-atelier-v1",JSON.stringify(o)); }catch(e){}
+}
+function saveBg(){
+  try{ localStorage.setItem("foyer-atelier-bg",JSON.stringify(bg)); }catch(e){ toast("Image trop lourde pour être mémorisée : elle reste affichée jusqu'à la fermeture."); }
+}
+function snapshot(){ hist.push(JSON.stringify({i:S.items,p:Array.from(paths),n:S.nid})); if(hist.length>80) hist.shift(); }
+function undo(){ var h=hist.pop(); if(!h){toast("Rien à annuler");return;} h=JSON.parse(h); S.items=h.i; paths=new Set(h.p); S.nid=h.n; if(!byId(selId)) selId=null; changed(); }
+
+function dims(o){ var t=T[o.t]; return o.r?{w:t.h,h:t.w}:{w:t.w,h:t.h}; }
+function byId(id){ for(var i=0;i<S.items.length;i++) if(S.items[i].id===id) return S.items[i]; return null; }
+function count(t){ return S.items.filter(function(o){return o.t===t;}).length; }
+function fits(type,x,y,r,ex){
+  var t=T[type], w=r?t.h:t.w, h=r?t.w:t.h;
+  if(x<0||y<0||x+w>W||y+h>H) return false;
+  for(var i=0;i<S.items.length;i++){ var o=S.items[i]; if(o.id===ex) continue; var d=dims(o);
+    if(x<o.x+d.w && o.x<x+w && y<o.y+d.h && o.y<y+h) return false; }
+  return true;
+}
+function defaults(t){ if(t==="champ") return {c:"ble"}; if(t==="bois") return {c:"bois"}; if(t==="heat"||t==="cool") return {m:1}; return {}; }
+function add(type,x,y,r,extra){
+  if(!fits(type,x,y,r)) return null;
+  var it=Object.assign({id:S.nid++,t:type,x:x,y:y,r:r?1:0},defaults(type),extra||{});
+  S.items.push(it); return it;
+}
+function itemAt(cx,cy){ for(var i=S.items.length-1;i>=0;i--){ var o=S.items[i],d=dims(o); if(cx>=o.x&&cx<o.x+d.w&&cy>=o.y&&cy<o.y+d.h) return o; } return null; }
+
+function evalAll(){
+  var em=S.items.filter(function(o){return o.t==="heat"||o.t==="cool"||o.t==="lamp";});
+  var res={};
+  S.items.forEach(function(o){
+    if(o.t!=="champ"&&o.t!=="bois") return;
+    var d=dims(o), cx=o.x+d.w/2, cy=o.y+d.h/2, temp=0, lit=false;
+    em.forEach(function(e){ if(Math.hypot(e.x+.5-cx,e.y+.5-cy)<=S.R){ if(e.t==="heat") temp+=e.m||1; else if(e.t==="cool") temp-=e.m||1; else lit=true; } });
+    temp=Math.max(-2,Math.min(2,temp));
+    var cr=CROPS[o.c]||CROPS.ble, eff;
+    if(cr.band==="sun") eff=lit?100:50; else eff=[100,80,50,20][Math.min(3,Math.abs(cr.band-temp))];
+    res[o.id]={temp:temp,lit:lit,eff:eff};
   });
+  return res;
+}
+function idleEmitters(){
+  var f=S.items.filter(function(o){return o.t==="champ"||o.t==="bois";});
+  return S.items.filter(function(e){
+    if(e.t!=="heat"&&e.t!=="cool"&&e.t!=="lamp") return false;
+    return !f.some(function(o){var d=dims(o);return Math.hypot(e.x+.5-o.x-d.w/2,e.y+.5-o.y-d.h/2)<=S.R;});
+  });
+}
 
-  function alloc(arr, total){
-    var raw = arr.map(function(j){ return j.w*total; });
-    var base = raw.map(Math.floor);
-    var left = total - base.reduce(function(a,b){return a+b;},0);
-    raw.map(function(r,i){return [r-base[i], i];}).sort(function(a,b){return b[0]-a[0];}).slice(0,left).forEach(function(x){ base[x[1]]++; });
-    return base;
-  }
-
-  // ---------- SVG map ----------
-  var NS = "http://www.w3.org/2000/svg";
-  function el(tag, attrs, parent, text){
-    var e = document.createElementNS(NS, tag);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (text != null) e.textContent = text;
-    (parent || svg).appendChild(e); return e;
-  }
-  var svg = document.getElementById("map");
-
-  function tiles(x, y, cols, have, target, pitch, size){
-    for (var i=0;i<target;i++){
-      var cx = x + (i%cols)*pitch, cy = y + Math.floor(i/cols)*pitch;
-      el("rect",{x:cx,y:cy,width:size,height:size,rx:5,"class":"tile"+(i>=have?" new":"")});
-    }
-  }
-  function plus(n){ return n>0 ? " (+"+n+")" : ""; }
-
-  function drawMap(){
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    var A = LV[cur], B = LV[cur+1];
-    var fa = FARM[A.F], fb = FARM[B.F];
-    el("rect",{x:0,y:0,width:960,height:640,rx:14,style:"fill:var(--map)"});
-    // chemins
-    el("rect",{x:0,y:300,width:960,height:34,style:"fill:var(--path)"});
-    el("rect",{x:463,y:0,width:34,height:640,style:"fill:var(--path)"});
-
-    // ----- NW : chaud / tiède / frais -----
-    el("text",{x:26,y:30,"class":"t-title"},null,"CHAMPS À TEMPÉRATURE");
-    el("rect",{x:18,y:44,width:250,height:132,rx:12,"class":"rng-hot"});
-    el("rect",{x:168,y:44,width:250,height:132,rx:12,"class":"rng-cold"});
-    tiles(28,56,4,fa.hot,fb.hot,34,28);
-    tiles(184,56,2,fa.warm,fb.warm,34,28);
-    tiles(272,56,4,fa.cool,fb.cool,34,28);
-    el("circle",{cx:44,cy:152,r:11,style:"fill:var(--hot)"});
-    el("text",{x:60,y:156,"class":"t-sub"},null,"chauffage");
-    el("circle",{cx:290,cy:152,r:11,style:"fill:var(--cold)"});
-    el("text",{x:306,y:156,"class":"t-sub"},null,"refroidisseur");
-    el("text",{x:26,y:198,"class":"t-lbl"},null,"Torride ×"+fb.hot+plus(fb.hot-fa.hot));
-    el("text",{x:26,y:214,"class":"t-sub"},null,"Canne à sucre");
-    el("text",{x:184,y:198,"class":"t-lbl"},null,"Tiède ×"+fb.warm);
-    el("text",{x:184,y:214,"class":"t-sub"},null,"Cerisier");
-    el("text",{x:310,y:198,"class":"t-lbl"},null,"Frais ×"+fb.cool+plus(fb.cool-fa.cool));
-    el("text",{x:310,y:214,"class":"t-sub"},null,"Fraise, rose, ginseng");
-    el("text",{x:26,y:244,"class":"t-sub"},null,"Garde ce bloc loin de la lampe solaire et des bois d'érable.");
-
-    // ----- NE : bois -----
-    el("text",{x:516,y:30,"class":"t-title"},null,"BOIS");
-    for (var i=0;i<B.W;i++){
-      var tx = 534 + (i%10)*41, ty = 66 + Math.floor(i/10)*48;
-      var isNew = i >= A.W;
-      el("rect",{x:tx-3,y:ty+10,width:6,height:14,"class":"trunk"});
-      el("circle",{cx:tx,cy:ty,r:15,"class":"tree"+(isNew?" new":"")});
-    }
-    el("text",{x:516,y:186,"class":"t-lbl"},null,"Bois ×"+B.W+plus(B.W-A.W));
-    el("text",{x:516,y:204,"class":"t-sub"},null,"Bois, bambou, fruitiers · Plante + Ténèbres");
-    el("text",{x:516,y:222,"class":"t-sub"},null,"Érable : au bout, avec un refroidisseur extrême");
-    // réserve
-    el("rect",{x:800,y:170,width:144,height:76,rx:10,style:"fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4"});
-    el("text",{x:872,y:204,"text-anchor":"middle","class":"t-sub"},null,"Réserve libre");
-    el("text",{x:872,y:220,"text-anchor":"middle","class":"t-sub"},null,"paliers suivants");
-
-    // ----- bande centrale : noyau + déco -----
-    el("rect",{x:380,y:244,width:200,height:148,rx:16,style:"fill:var(--core)"});
-    // camping-car
-    el("rect",{x:432,y:256,width:96,height:40,rx:9,style:"fill:var(--accent)"});
-    el("rect",{x:500,y:262,width:20,height:14,rx:3,style:"fill:var(--core)"});
-    el("rect",{x:442,y:262,width:44,height:12,rx:3,style:"fill:var(--core)"});
-    el("circle",{cx:452,cy:298,r:7,style:"fill:var(--core-ink)"});
-    el("circle",{cx:508,cy:298,r:7,style:"fill:var(--core-ink)"});
-    var cells = [["Stockage",392,316],["Établi",484,316],["Moulin",392,352],["Ateliers",484,352]];
-    cells.forEach(function(c){
-      el("rect",{x:c[1],y:c[2],width:84,height:30,rx:6,style:"fill:none;stroke:var(--core-ink);stroke-opacity:.5"});
-      el("text",{x:c[1]+42,y:c[2]+19,"text-anchor":"middle","class":"t-core"},null,c[0]);
-    });
-    // baignoires
-    for (var b=0;b<5;b++){
-      el("rect",{x:26+b*68,y:252,width:58,height:40,rx:10,style:"fill:var(--decor)"});
-      el("text",{x:55+b*68,y:276,"text-anchor":"middle","class":"t-decor"},null,"Mige");
-      el("rect",{x:596+b*70,y:252,width:60,height:40,rx:10,style:"fill:var(--decor)"});
-      el("text",{x:626+b*70,y:276,"text-anchor":"middle","class":"t-decor"},null,"Forest");
-    }
-    el("rect",{x:26,y:344,width:330,height:40,rx:10,style:"fill:var(--decor);fill-opacity:.85"});
-    el("text",{x:191,y:368,"text-anchor":"middle","class":"t-decor"},null,"Set Harvest Moon · +5 301");
-    el("rect",{x:596,y:344,width:340,height:40,rx:10,style:"fill:var(--decor);fill-opacity:.85"});
-    el("text",{x:766,y:368,"text-anchor":"middle","class":"t-decor"},null,"Set Timber Serenity · +2 449 (ou dans le VR)");
-
-    // ----- SW : lumière + neutre -----
-    el("text",{x:26,y:420,"class":"t-title"},null,"CHAMPS LUMIÈRE ET NEUTRES");
-    el("rect",{x:18,y:432,width:152,height:124,rx:12,"class":"rng-sun"});
-    tiles(28,444,4,fa.sun,fb.sun,34,28);
-    el("circle",{cx:94,cy:534,r:11,style:"fill:var(--sun)"});
-    tiles(186,444,8,fa.neu,fb.neu,34,28);
-    el("text",{x:26,y:580,"class":"t-lbl"},null,"Lumière ×"+fb.sun+plus(fb.sun-fa.sun));
-    el("text",{x:26,y:596,"class":"t-sub"},null,"Fleur d'oranger, lavande,");
-    el("text",{x:26,y:611,"class":"t-sub"},null,"raisin, noyer");
-    el("text",{x:186,y:580,"class":"t-lbl"},null,"Neutre ×"+fb.neu+plus(fb.neu-fa.neu));
-    el("text",{x:186,y:596,"class":"t-sub"},null,"Blé (formule rapide) et cultures");
-    el("text",{x:186,y:611,"class":"t-sub"},null,"sans exigence de température");
-
-    // ----- SE : mines -----
-    el("text",{x:516,y:420,"class":"t-title"},null,"MINES");
-    for (var m=0;m<B.M;m++){
-      var mx = 526 + (m%5)*58, my = 440 + Math.floor(m/5)*58;
-      var mn = m >= A.M;
-      el("rect",{x:mx,y:my,width:48,height:48,rx:8,"class":"minetile"+(mn?" new":"")});
-      el("path",{d:"M"+(mx+10)+" "+(my+38)+" L"+(mx+24)+" "+(my+12)+" L"+(mx+38)+" "+(my+38)+" Z",style:"fill:var(--surface);fill-opacity:"+(mn?".9":".55")});
-    }
-    el("text",{x:516,y:580,"class":"t-lbl"},null,"Mines ×"+B.M+plus(B.M-A.M));
-    el("text",{x:516,y:596,"class":"t-sub"},null,"Équipe type Terre. Près du chemin");
-    el("text",{x:516,y:611,"class":"t-sub"},null,"pour des porteurs rapides.");
-    el("rect",{x:830,y:436,width:114,height:110,rx:10,style:"fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4"});
-    el("text",{x:887,y:488,"text-anchor":"middle","class":"t-sub"},null,"Réserve");
-    el("text",{x:887,y:504,"text-anchor":"middle","class":"t-sub"},null,"mines");
-  }
-
-  // ---------- render ----------
-  function render(){
-    var A = LV[cur], B = LV[cur+1], T = cur+1;
-    Array.prototype.forEach.call(chips.children, function(c){ c.setAttribute("aria-pressed", String(+c.dataset.l === cur)); });
-    document.getElementById("r-from").textContent = "VR " + cur;
-    document.getElementById("r-to").textContent = "VR " + T;
-    document.getElementById("r-note").textContent = T === 20 ? "dernier palier" : "";
-
-    var g = [
-      ["Habitabilité", fmt(B.hab), "+"+fmt(B.hab - A.hab)+" par rapport au VR "+cur],
-      ["Champs", B.F, "<b>+"+(B.F-A.F)+"</b> à poser"],
-      ["Bois", B.W, "<b>+"+(B.W-A.W)+"</b> à poser"],
-      ["Mines", B.M, B.M>A.M ? "<b>+"+(B.M-A.M)+"</b> à poser" : "rien à ajouter"],
-      ["Titre requis", B.title || "aucun", B.title ? "titre de personnage, hors Foyer" : "&nbsp;"],
-      ["Coût", B.cost ? fmt(B.cost) : "non publié", B.time ? "Pièces du Foyer · "+B.time+" de travaux" : (B.cost ? "Pièces du Foyer · durée non publiée" : "voir l'écran d'amélioration")],
-      ["Aniimo max", B.cap, "<b>+"+(B.cap-A.cap)+"</b> places"]
-    ];
-    if (B.quest) g.splice(5,0,["Quête", B.quest, "à terminer avant"]);
-    document.getElementById("goals").innerHTML = g.map(function(x){
-      return '<div class="goal"><span class="k">'+x[0]+'</span><span class="v">'+x[1]+'</span><span class="d">'+x[2]+'</span></div>';
-    }).join("");
-    document.getElementById("unlocks").textContent = B.unlocks ? "Débloque : " + B.unlocks + "." : "Les déblocages de ce palier ne sont pas encore documentés : regarde l'écran d'amélioration.";
-
-    drawMap();
-
-    // workers
-    var na = alloc(JOBS, A.cap), nb = alloc(JOBS, B.cap);
-    document.getElementById("work-lede").textContent = "Avec "+A.cap+" places aujourd'hui, puis "+B.cap+" au VR "+T+". Chaque nombre indique combien d'Aniimo mettre sur ce poste ; le « + » est la place gagnée au palier.";
-    document.getElementById("bar").innerHTML = JOBS.map(function(j,i){
-      return '<div style="flex:'+nb[i]+';background:'+j.c+'">'+nb[i]+'</div>';
-    }).join("");
-    document.getElementById("jobs").innerHTML = JOBS.map(function(j,i){
-      var d = nb[i]-na[i];
-      return '<div class="job"><i class="dot" style="background:'+j.c+'"></i><div><div><strong>'+j.name+'</strong> · <span class="n">'+na[i]+(d>0?' → '+nb[i]:'')+'</span></div><p>'+j.type+'. '+j.p+'</p></div></div>';
-    }).join("");
-
-    renderHab();
-    renderCheck();
-
-    // table
-    document.getElementById("tbody").innerHTML = [14,15,16,17,18,19,20].map(function(l){
-      var r = LV[l], u = '<span class="unk">non publié</span>';
-      var tq = [r.title, r.quest].filter(Boolean).join(" · ") || "—";
-      return '<tr class="'+(l===T?'cur':'')+'"><td><strong>VR '+l+'</strong></td><td>'+fmt(r.hab)+'</td><td>'+r.F+'</td><td>'+r.W+'</td><td>'+r.M+'</td><td class="l">'+tq+'</td><td>'+(r.cost?fmt(r.cost):u)+'</td><td>'+(r.time||u)+'</td><td>'+r.cap+'</td></tr>';
-    }).join("");
-  }
-
-  function renderHab(){
-    var B = LV[cur+1];
-    var h = parseInt(document.getElementById("hab").value,10);
-    var out = document.getElementById("hab-res");
-    if (isNaN(h)) { out.textContent = "Entre ton score pour voir l'écart."; }
-    else {
-      var gap = B.hab - h;
-      if (gap <= 0) out.innerHTML = '<span class="ok">Seuil du VR '+(cur+1)+' atteint</span> ('+fmt(B.hab)+'). Il te reste '+fmt(Math.max(0,20000-h))+' points jusqu\'au maximum de 20 000.';
-      else {
-        var bath = Math.ceil(gap/1249), ludo = Math.ceil(gap/221);
-        out.innerHTML = 'Il te manque <strong>'+fmt(gap)+'</strong> points pour le VR '+(cur+1)+'. Par exemple : '+(bath<=5? '<strong>'+bath+'</strong> <i>Mige Pool Bathtub</i>' : 'le set <i>Harvest Moon</i> plus des baignoires')+', ou <strong>'+ludo+'</strong> <i>Aniimo Ludo</i> avec tes Bud Tickets.';
-      }
-    }
-    var c = parseInt(document.getElementById("coins").value,10);
-    var co = document.getElementById("coin-res");
-    if (!B.cost) co.textContent = "Le coût du VR "+(cur+1)+" n'est pas publié : vérifie-le dans le jeu.";
-    else if (isNaN(c)) co.innerHTML = "Le VR "+(cur+1)+" coûte <strong>"+fmt(B.cost)+"</strong> Pièces du Foyer.";
-    else if (c >= B.cost) co.innerHTML = '<span class="ok">Tu as assez de Pièces</span> pour le VR '+(cur+1)+'.';
-    else co.innerHTML = "Il te manque <strong>"+fmt(B.cost - c)+"</strong> Pièces sur "+fmt(B.cost)+". Mets tes meilleurs champs sur le cacao, la fleur d'oranger ou la noix de coco, les cultures qui rapportent le plus par heure.";
-  }
-  document.getElementById("hab").addEventListener("input", renderHab);
-  document.getElementById("coins").addEventListener("input", renderHab);
-
-  function steps(){
-    var A = LV[cur], B = LV[cur+1], T = cur+1, s = [];
-    s.push("Enregistre chaque bloc actuel en Combo, puis décale-les pour ouvrir la place des nouvelles parcelles.");
-    s.push("Pose "+(B.F-A.F)+" champs de plus (total "+B.F+") dans les blocs indiqués en pointillés sur la carte.");
-    s.push("Pose "+(B.W-A.W)+" bois de plus (total "+B.W+").");
-    if (B.M > A.M) s.push("Pose "+(B.M-A.M)+" mine de plus (total "+B.M+").");
-    s.push("Vérifie les portées des chauffages, refroidisseurs et lampes : aucun champ ne doit tomber dans la mauvaise bande.");
-    s.push("Monte l'habitabilité à "+fmt(B.hab)+" (baignoires, sets, Aniimo Ludo avec les Bud Tickets).");
-    if (B.title) s.push("Obtiens le titre "+B.title+" (progression du personnage).");
-    if (B.quest) s.push("Termine la quête « "+B.quest+" ».");
-    s.push(B.cost ? "Réunis "+fmt(B.cost)+" Pièces du Foyer et lance l'amélioration"+(B.time?" ("+B.time+")":"")+" juste avant une pause." : "Réunis les Pièces demandées et lance l'amélioration juste avant une pause.");
-    s.push("Une fois au VR "+T+", recrute "+(B.cap-A.cap)+" Aniimo de plus et place-les sur les postes qui coincent.");
+/* ---------- dessins ---------- */
+function draw(t,o,pw,ph){
+  var th=THEMES[S.theme], s="", i, cr;
+  switch(t){
+  case "champ":
+    cr=CROPS[o.c]||CROPS.ble;
+    s='<rect x="1" y="1" width="'+(pw-2)+'" height="'+(ph-2)+'" rx="4" fill="#87562F"/><rect x="3" y="3" width="'+(pw-6)+'" height="'+(ph-6)+'" rx="3" fill="#9C6A3F"/>';
+    for(i=1;i<3;i++) s+='<line x1="4" x2="'+(pw-4)+'" y1="'+(i*ph/3)+'" y2="'+(i*ph/3)+'" stroke="#7A4C2B" stroke-width="1.5"/>';
+    for(var r=0;r<3;r++)for(var c=0;c<3;c++){ var x=(c+.5)*pw/3, y=(r+.5)*ph/3+1;
+      s+='<path d="M'+x+' '+(y+3)+' q-4 -2 -4.5 -6 q3.5 0 4.5 4 q1 -4 4.5 -4 q-.5 4 -4.5 6z" fill="#5FA845"/><circle cx="'+x+'" cy="'+(y-2.5)+'" r="2.6" fill="'+cr.col+'"/>'; }
     return s;
+  case "bois":
+    cr=CROPS[o.c]||CROPS.bois;
+    s='<rect x="1" y="1" width="'+(pw-2)+'" height="'+(ph-2)+'" rx="5" fill="#5E9E45" stroke="#4A833A" stroke-width="1.5"/>';
+    if(o.c==="bambou"){ for(i=0;i<5;i++){ var bx=7+i*(pw-14)/4; s+='<rect x="'+(bx-1.5)+'" y="5" width="3" height="'+(ph-10)+'" rx="1.5" fill="#A6DA74"/><line x1="'+(bx-1.5)+'" x2="'+(bx+1.5)+'" y1="'+(ph/2)+'" y2="'+(ph/2)+'" stroke="#6E9F45"/><path d="M'+bx+' 12 l5 -3" stroke="#7DBE4B" stroke-width="1.5"/>'; } return s; }
+    [[.3,.34],[.72,.4],[.46,.72]].forEach(function(p){ var cx=p[0]*pw, cy=p[1]*ph;
+      s+='<ellipse cx="'+(cx+2)+'" cy="'+(cy+6)+'" rx="8" ry="3" fill="#00000026"/><rect x="'+(cx-1.5)+'" y="'+cy+'" width="3" height="7" fill="#6B4A2B"/><circle cx="'+cx+'" cy="'+(cy-1)+'" r="8.5" fill="'+cr.col+'"/><circle cx="'+(cx-3)+'" cy="'+(cy-4)+'" r="3" fill="#ffffff33"/>';
+      if(cr.fruit) s+='<circle cx="'+(cx+3)+'" cy="'+cy+'" r="1.8" fill="'+cr.fruit+'"/><circle cx="'+(cx-4)+'" cy="'+(cy+1)+'" r="1.8" fill="'+cr.fruit+'"/>'; });
+    return s;
+  case "mine":
+    return '<ellipse cx="'+(pw/2)+'" cy="'+(ph-6)+'" rx="'+(pw/2-3)+'" ry="6" fill="#00000026"/><path d="M4 '+(ph-6)+' L12 20 L24 7 L36 13 L46 10 L'+(pw-4)+' '+(ph-6)+' Z" fill="#8F8B85"/><path d="M24 7 L36 13 L30 '+(ph-6)+' L12 20 Z" fill="#A9A59E"/><path d="M'+(pw/2-9)+' '+(ph-6)+' q9 -24 18 0 z" fill="#3B3633"/><rect x="'+(pw/2-12)+'" y="'+(ph-8)+'" width="24" height="3" fill="#7A5A3A"/><path d="M9 '+(ph-14)+' l3 -10 l3 10z M42 '+(ph-16)+' l2.5 -9 l2.5 9z M36 '+(ph-12)+' l2 -6 l2 6z" fill="#7FD3E6"/>';
+  case "vr":
+    return '<ellipse cx="56" cy="51" rx="52" ry="4" fill="#00000026"/><rect x="16" y="1" width="14" height="7" rx="3" fill="#2F2F2F"/><rect x="78" y="1" width="14" height="7" rx="3" fill="#2F2F2F"/><rect x="16" y="'+(ph-8)+'" width="14" height="7" rx="3" fill="#2F2F2F"/><rect x="78" y="'+(ph-8)+'" width="14" height="7" rx="3" fill="#2F2F2F"/><rect x="4" y="5" width="104" height="46" rx="12" fill="#F4E8CC" stroke="#C7B184" stroke-width="2"/><rect x="8" y="23" width="70" height="10" rx="3" fill="#E3A21A"/><rect x="80" y="10" width="24" height="36" rx="8" fill="#EADBB8"/><rect x="98" y="14" width="5" height="28" rx="2" fill="#6FA3CF"/><rect x="14" y="11" width="16" height="8" rx="2" fill="#6FA3CF"/><rect x="38" y="11" width="16" height="8" rx="2" fill="#6FA3CF"/><rect x="58" y="38" width="12" height="8" rx="2" fill="#6FA3CF"/><circle cx="24" cy="41" r="3.5" fill="#E3A21A"/><circle cx="24" cy="41" r="1.5" fill="#F4E8CC"/>';
+  case "stockage":
+    return '<rect x="5" y="6" width="34" height="34" rx="3" fill="#00000022"/><rect x="4" y="4" width="34" height="34" rx="3" fill="#C08A4B" stroke="#8A5C2C" stroke-width="2"/><rect x="4" y="18" width="34" height="6" fill="#A8743B"/><path d="M6 6 L36 36 M36 6 L6 36" stroke="#8A5C2C" stroke-width="2"/>';
+  case "moulin":
+    s='<ellipse cx="29" cy="50" rx="20" ry="4" fill="#00000026"/><circle cx="28" cy="30" r="19" fill="#E9D6AA" stroke="#B89A62" stroke-width="2"/>';
+    for(i=0;i<4;i++) s+='<rect x="25.5" y="4" width="5" height="24" rx="1.5" fill="#F7F1E3" stroke="#7A5A3A" stroke-width="1.2" transform="rotate('+(45+i*90)+' 28 28)"/>';
+    return s+'<circle cx="28" cy="28" r="6" fill="#C8553D" stroke="#8E3A28" stroke-width="1.5"/>';
+  case "etabli":
+    return '<rect x="2" y="5" width="38" height="19" rx="3" fill="#C9935A" stroke="#8D5F31" stroke-width="2"/><rect x="6" y="9" width="11" height="3" fill="#7D858F"/><rect x="14" y="7" width="3" height="9" fill="#8D5F31"/><path d="M23 15 h13 l-2 5 h-11z" fill="#9AA3AD"/>';
+  case "puits":
+    return '<circle cx="14" cy="15" r="12" fill="#00000022"/><circle cx="14" cy="14" r="12" fill="#A9A39A" stroke="#857F76" stroke-width="2"/><circle cx="14" cy="14" r="7" fill="#4F8FC6"/><rect x="2" y="12.5" width="24" height="3" fill="#8D5F31"/>';
+  case "heat":
+    return (o.m===2?'<circle cx="7" cy="7" r="7" fill="#E8452C" opacity=".45"/>':'')+'<circle cx="7" cy="8" r="5" fill="#3B2E2A"/><path d="M7 1.5 q4.5 4 1.2 8.5 q-.8 -2 -1.2 -3 q-2 2 -1 3.5 q-3.5 -3 1 -9z" fill="'+(o.m===2?"#FF5A1F":"#F7931E")+'"/><circle cx="7" cy="8" r="1.4" fill="#FFE27A"/>';
+  case "cool":
+    return '<rect x="1.5" y="1.5" width="11" height="11" rx="2.5" fill="'+(o.m===2?"#7DBDEB":"#D3ECF9")+'" stroke="#2C6FA8" stroke-width="1.2"/><path d="M7 3 V11 M3.5 5 L10.5 9 M10.5 5 L3.5 9" stroke="#2C6FA8" stroke-width="1.2"/>';
+  case "lamp":
+    return '<circle cx="7" cy="7" r="6.5" fill="#FFE27A" opacity=".6"/><circle cx="7" cy="7" r="3.6" fill="#F2B705" stroke="#B88400"/>';
+  case "mige":
+    return '<ellipse cx="29" cy="38" rx="25" ry="3.5" fill="#00000022"/><rect x="3" y="4" width="50" height="32" rx="15" fill="#FFFFFF" stroke="#E3B6CF" stroke-width="2.5"/><rect x="9" y="9" width="38" height="22" rx="10" fill="#9ED8F0"/><circle cx="17" cy="15" r="3" fill="#ffffffd0"/><circle cx="23" cy="21" r="2" fill="#ffffffd0"/><circle cx="14" cy="23" r="1.5" fill="#ffffffd0"/><circle cx="38" cy="19" r="4" fill="#FFD84D"/><circle cx="40.5" cy="18" r="1.4" fill="#F28A2E"/>';
+  case "forest":
+    s='<ellipse cx="29" cy="38" rx="25" ry="3.5" fill="#00000022"/><rect x="3" y="4" width="50" height="32" rx="8" fill="#A8743F" stroke="#7B5028" stroke-width="2.5"/>';
+    for(i=0;i<6;i++) s+='<line x1="'+(10+i*7)+'" x2="'+(10+i*7)+'" y1="5" y2="35" stroke="#8C5D30" stroke-width="1"/>';
+    return s+'<rect x="8" y="9" width="40" height="22" rx="5" fill="#68C2B5"/><path d="M38 12 q7 0 7 7 q-7 0 -7 -7z" fill="#5FA845"/><circle cx="16" cy="18" r="2.5" fill="#ffffffaa"/>';
+  case "sunlit":
+    s='<circle cx="42" cy="44" r="38" fill="#A6D877" stroke="#7FB956" stroke-width="2"/>';
+    for(i=0;i<8;i++){ var a=i*Math.PI/4; s+='<line x1="'+(42+Math.cos(a)*14)+'" y1="'+(32+Math.sin(a)*14)+'" x2="'+(42+Math.cos(a)*21)+'" y2="'+(32+Math.sin(a)*21)+'" stroke="#FFD84D" stroke-width="3" stroke-linecap="round"/>'; }
+    s+='<circle cx="42" cy="32" r="10" fill="#FFD84D"/>';
+    [[18,56,"#F28FB0"],[28,66,"#FFFFFF"],[56,66,"#F7A23B"],[66,54,"#9B7FD4"],[42,72,"#F28FB0"]].forEach(function(f){ s+='<circle cx="'+f[0]+'" cy="'+f[1]+'" r="3.2" fill="'+f[2]+'"/><circle cx="'+f[0]+'" cy="'+f[1]+'" r="1.1" fill="#FFE27A"/>'; });
+    return s+'<circle cx="16" cy="38" r="7" fill="#4C9A4A"/><circle cx="68" cy="36" r="7" fill="#4C9A4A"/>';
+  case "harvest":
+    s='<rect x="4" y="4" width="104" height="76" rx="12" fill="#EDC587" stroke="#C99A55" stroke-width="2"/><rect x="36" y="27" width="40" height="28" rx="4" fill="#9A6537"/><circle cx="56" cy="41" r="8" fill="#FFE38A"/><circle cx="59.5" cy="38" r="7" fill="#9A6537"/>';
+    [[16,16],[96,16],[16,68],[96,68],[30,70],[82,70]].forEach(function(p){ s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="7" fill="#F08A24" stroke="#C4661A" stroke-width="1.2"/><rect x="'+(p[0]-1)+'" y="'+(p[1]-9)+'" width="2" height="4" fill="#5F8A36"/>'; });
+    s+='<rect x="42" y="8" width="28" height="11" rx="2" fill="#E6C65A" stroke="#C3A23A"/><rect x="42" y="64" width="28" height="11" rx="2" fill="#E6C65A" stroke="#C3A23A"/>';
+    [[28,40],[86,40]].forEach(function(p){ s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#FFD066" stroke="#8A5C2C"/>'; });
+    return s;
+  case "timber":
+    return '<rect x="3" y="3" width="92" height="50" rx="10" fill="#DCC6A2" stroke="#B49870" stroke-width="2"/><ellipse cx="34" cy="34" rx="22" ry="12" fill="#C99C6B"/><rect x="10" y="9" width="36" height="11" rx="4" fill="#9C6B3E"/><circle cx="64" cy="30" r="9" fill="#B9844E" stroke="#8A5C2C"/><rect x="58" y="43" width="12" height="6" rx="2" fill="#9C6B3E"/><rect x="58" y="11" width="12" height="6" rx="2" fill="#9C6B3E"/><circle cx="86" cy="12" r="5" fill="#5FA845"/><circle cx="86" cy="44" r="5" fill="#5FA845"/>';
+  case "ludo":
+    s='<rect x="2" y="2" width="38" height="38" rx="5" fill="#F3E2C0" stroke="#C9A97A" stroke-width="1.5"/>';
+    var cols=["#F28FB0","#7CC4E8","#FFD45C","#8ED081"];
+    for(i=0;i<9;i++) s+='<rect x="'+(6+(i%3)*10.5)+'" y="'+(6+Math.floor(i/3)*10.5)+'" width="9" height="9" rx="2" fill="'+cols[i%4]+'"/>';
+    return s+'<circle cx="33" cy="33" r="4" fill="#E0413A" stroke="#FFFFFF" stroke-width="1.2"/>';
+  case "books":
+    return '<rect x="2" y="9" width="10" height="3" fill="#C8553D"/><rect x="3" y="6" width="9" height="3" fill="#3E7CB1"/><rect x="2" y="3" width="10" height="3" fill="#5FA845"/>';
+  case "pond":
+    return '<ellipse cx="21" cy="22" rx="19" ry="16" fill="#B8B2A7"/><ellipse cx="21" cy="22" rx="16" ry="13" fill="#5FAFD8"/><ellipse cx="15" cy="19" rx="4" ry="3" fill="#6DBB55"/><circle cx="27" cy="26" r="2" fill="#F7B6C8"/><path d="M24 15 q3 -1 5 1" stroke="#ffffffaa" fill="none"/>';
+  case "sunit":
+    return '<rect x="3" y="5" width="22" height="19" rx="3" fill="#A4ADB7" stroke="#7A838D" stroke-width="2"/><rect x="3" y="5" width="22" height="5" fill="#8A939D"/>';
+  case "fence":
+    return '<rect x="0" y="4" width="14" height="2" fill="'+th.fence+'"/><rect x="0" y="8.5" width="14" height="2" fill="'+th.fence+'"/><rect x="5.5" y="2" width="3" height="10.5" rx="1" fill="'+th.fenceD+'"/>';
+  case "flowers":
+    return '<path d="M4 9 l1 4 M10 10 l-1 3 M7 12 v2" stroke="#4E8F3A" stroke-width="1.2"/><circle cx="4" cy="5" r="2.3" fill="'+th.flower[0]+'"/><circle cx="10.5" cy="6" r="2.3" fill="'+th.flower[1]+'"/><circle cx="7" cy="10" r="2.3" fill="'+th.flower[2]+'"/><circle cx="4" cy="5" r=".8" fill="#E8A21A"/><circle cx="10.5" cy="6" r=".8" fill="#E8A21A"/><circle cx="7" cy="10" r=".8" fill="#E8A21A"/>';
+  case "lantern":
+    return '<circle cx="7" cy="6" r="6" fill="#FFE27A" opacity=".45"/><rect x="5" y="2.5" width="4" height="7" rx="1" fill="#FFD066" stroke="#6B4A2B"/><rect x="6" y="9.5" width="2" height="4" fill="#6B4A2B"/>';
+  case "bench":
+    return '<rect x="2" y="3" width="24" height="8" rx="2" fill="#B5824A" stroke="#7E5629"/><line x1="2" x2="26" y1="7" y2="7" stroke="#7E5629"/>';
+  case "dtree":
+    return '<ellipse cx="15" cy="24" rx="11" ry="3.5" fill="#00000030"/><circle cx="14" cy="13" r="11" fill="'+th.tree+'"/><circle cx="10" cy="9" r="4" fill="#ffffff35"/><circle cx="18" cy="16" r="3" fill="#00000014"/>';
   }
-  function renderCheck(){
-    var key = "foyer-check-"+(cur+1), saved = {};
-    try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){}
-    var list = steps(), box = document.getElementById("check");
-    box.innerHTML = list.map(function(t,i){
-      var id = "st-"+(cur+1)+"-"+i;
-      return '<label for="'+id+'"><input type="checkbox" id="'+id+'" data-i="'+i+'"'+(saved[i]?' checked':'')+'><span>'+t+'</span></label>';
-    }).join("");
-    function prog(){
-      var n = box.querySelectorAll("input:checked").length;
-      document.getElementById("progress").textContent = n+" / "+list.length+" étapes faites pour le VR "+(cur+1);
-    }
-    box.querySelectorAll("input").forEach(function(inp){
-      inp.addEventListener("change", function(){
-        saved[inp.dataset.i] = inp.checked;
-        try { localStorage.setItem(key, JSON.stringify(saved)); } catch(e){}
-        prog();
-      });
-    });
-    prog();
-  }
+  return s;
+}
+function itemSvg(o,opacity){
+  var t=T[o.t], d=dims(o), pw=t.w*C, ph=t.h*C, tr;
+  if(o.r) tr='translate('+(o.x*C+d.w*C/2)+','+(o.y*C+d.h*C/2)+') rotate(90) translate('+(-pw/2)+','+(-ph/2)+')';
+  else tr='translate('+(o.x*C)+','+(o.y*C)+')';
+  return '<g transform="'+tr+'"'+(opacity?' opacity="'+opacity+'"':'')+'>'+draw(o.t,o,pw,ph)+'</g>';
+}
 
-  render();
+/* ---------- rendu ---------- */
+function renderBg(){
+  var s='<rect width="952" height="588" fill="url(#grass)"/>';
+  if(bg.src) s='<rect width="952" height="588" fill="#33452F"/><image href="'+bg.src+'" x="'+bg.dx+'" y="'+bg.dy+'" width="'+(952*bg.sc)+'" height="'+(588*bg.sc)+'" opacity="'+bg.op+'" preserveAspectRatio="xMidYMid meet"/>';
+  s+='<rect width="952" height="588" fill="url(#vig)" pointer-events="none"/>';
+  $("L-bg").innerHTML=s;
+}
+function renderMap(){
+  var th=THEMES[S.theme], ps="";
+  paths.forEach(function(k){ var a=k.split(","), x=+a[0]*C, y=+a[1]*C;
+    ps+='<rect x="'+x+'" y="'+y+'" width="'+C+'" height="'+C+'" fill="'+th.path+'"/>';
+    if(S.theme==="zen") ps+='<rect x="'+(x+1)+'" y="'+(y+1)+'" width="'+(C-2)+'" height="'+(C-2)+'" rx="3" fill="none" stroke="'+th.edge+'" stroke-width=".8"/>';
+    else if(S.theme==="moisson") ps+='<line x1="'+x+'" x2="'+(x+C)+'" y1="'+(y+C/2)+'" y2="'+(y+C/2)+'" stroke="'+th.edge+'" stroke-width=".8"/>';
+    else if(((+a[0])*7+(+a[1])*13)%5===0) ps+='<circle cx="'+(x+4)+'" cy="'+(y+9)+'" r="1.3" fill="'+th.edge+'"/>';
+  });
+  $("L-paths").innerHTML=ps;
+  $("L-grid").innerHTML=S.grid?'<rect width="952" height="588" fill="url(#gridp)" pointer-events="none"/>':'';
+  var rs="";
+  if(S.ranges) S.items.forEach(function(o){
+    var col=o.t==="heat"?"#E8452C":o.t==="cool"?"#3E86C4":o.t==="lamp"?"#F2C200":null; if(!col) return;
+    rs+='<circle cx="'+((o.x+.5)*C)+'" cy="'+((o.y+.5)*C)+'" r="'+(S.R*C)+'" fill="'+col+'" fill-opacity=".13" stroke="'+col+'" stroke-width="1.4" stroke-dasharray="5 4"/>';
+  });
+  $("L-range").innerHTML=rs;
+  var ev=evalAll(), is="", bs="";
+  S.items.forEach(function(o){
+    is+=itemSvg(o);
+    var e=ev[o.id];
+    if(e && e.eff<100){ var d=dims(o), bx=(o.x+d.w)*C-6, by=o.y*C+6;
+      bs+='<circle cx="'+bx+'" cy="'+by+'" r="7" fill="'+EFFC[e.eff]+'" stroke="#fff" stroke-width="1.5"/><text x="'+bx+'" y="'+(by+2.6)+'" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" font-family="IBM Plex Mono,monospace">'+e.eff+'</text>'; }
+  });
+  $("L-items").innerHTML=is;
+  $("L-badge").innerHTML=bs;
+  var sel=byId(selId), ss="";
+  if(sel){ var d=dims(sel); ss='<rect x="'+(sel.x*C-2)+'" y="'+(sel.y*C-2)+'" width="'+(d.w*C+4)+'" height="'+(d.h*C+4)+'" rx="5" fill="none" stroke="#FFFFFF" stroke-width="3"/><rect x="'+(sel.x*C-2)+'" y="'+(sel.y*C-2)+'" width="'+(d.w*C+4)+'" height="'+(d.h*C+4)+'" rx="5" fill="none" stroke="#1A1405" stroke-width="1.5" stroke-dasharray="5 4"/>'; }
+  $("L-sel").innerHTML=ss;
+}
+
+function reqRow(label,have,need){
+  var ok=have>=need;
+  return '<div class="req"><span>'+label+'</span><b>'+fmt(have)+' / '+fmt(need)+'</b><span class="pill '+(ok?'ok':'no')+'">'+(ok?'OK':'manque '+fmt(need-have))+'</span></div>';
+}
+function renderGoal(){
+  var L=LV[S.level], ev=evalAll();
+  var habPlan=S.items.reduce(function(a,o){return a+(T[o.t].hab||0);},0);
+  var fields=S.items.filter(function(o){return o.t==="champ"||o.t==="bois";});
+  var good=fields.filter(function(o){return ev[o.id].eff===100;}).length, coin=0;
+  fields.forEach(function(o){ var c=CROPS[o.c]; if(c&&c.coin) coin+=c.coin*ev[o.id].eff/100; });
+  var groups={};
+  fields.forEach(function(o){ var e=ev[o.id]; if(e.eff===100) return; var k=o.c+"|"+e.temp+"|"+e.eff; groups[k]=(groups[k]||0)+1; });
+  var probs=Object.keys(groups).map(function(k){ var a=k.split("|"), c=CROPS[a[0]];
+    return '<li>'+groups[k]+' × '+c.n+' à '+a[2]+' % ('+(c.band==="sun"?"sans lampe":"zone "+BANDS[a[1]]+", veut "+BANDS[c.band])+')</li>'; });
+  var idle=idleEmitters().length;
+  if(idle) probs.push('<li>'+idle+' appareil'+(idle>1?'s':'')+' de climat ne touche'+(idle>1?'nt':'')+' aucune parcelle</li>');
+  if(!count("vr")) probs.push('<li>Le camping-car n\'est pas posé</li>');
+  var meta=[L.cost?fmt(L.cost)+" Pièces":"coût non publié", L.time||null, L.title?"titre "+L.title:null, L.quest?"quête « "+L.quest+" »":null].filter(Boolean).join(" · ");
+  $("goal").innerHTML='<div><div class="eyebrow">Objectif</div><h2>VR '+S.level+'</h2><p class="subline">'+meta+' · '+L.cap+' Aniimo</p></div>'+
+    reqRow("Champs",count("champ"),L.F)+reqRow("Bois",count("bois"),L.W)+reqRow("Mines",count("mine"),L.M)+
+    reqRow("Habitabilité",habPlan+(+S.other||0),L.hab)+
+    '<div class="field"><label for="other">Habitabilité hors plan (intérieur du VR…)</label><input type="number" id="other" min="0" step="50" value="'+(S.other||0)+'"></div>'+
+    '<div class="kpi"><div><span>Parcelles à 100 %</span><b>'+good+' / '+fields.length+'</b></div><div><span>Pièces/h indicatif</span><b>≈ '+fmt(coin)+'</b></div><div><span>Habitabilité du plan</span><b>'+fmt(habPlan)+'</b></div><div><span>Objets posés</span><b>'+S.items.length+'</b></div></div>'+
+    (probs.length?'<div class="issues"><b>À corriger</b><ul>'+probs.join("")+'</ul></div>':'<p class="subline" style="color:var(--good);font-weight:600">Aucun problème de température ni d\'appareil inutile.</p>');
+  $("other").addEventListener("change",function(){ S.other=Math.max(0,+this.value||0); save(); renderGoal(); });
+}
+function renderInsp(){
+  var box=$("insp"), o=byId(selId);
+  if(!o){ box.innerHTML='<h2>Sélection</h2><p class="subline">Clique un élément de la carte pour changer sa culture, son réglage, le pivoter ou le supprimer. Choisis un objet dans la palette pour le poser.</p>'; return; }
+  var t=T[o.t], d=dims(o), h='<h2>'+t.n+'</h2><p class="subline">'+d.w+' × '+d.h+' cases'+(t.hab?' · '+fmt(t.hab)+' habitabilité':'')+'</p>';
+  if(o.t==="champ"||o.t==="bois"){
+    var e=evalAll()[o.id];
+    h+='<div class="field"><label for="i-crop">Culture</label><select id="i-crop">'+Object.keys(CROPS).filter(function(k){return CROPS[k].on===o.t;}).map(function(k){var c=CROPS[k];return '<option value="'+k+'"'+(k===o.c?' selected':'')+'>'+c.n+' · '+(c.band==="sun"?"Lumière":BANDS[c.band])+'</option>';}).join("")+'</select></div>';
+    h+='<p>Zone <b>'+BANDS[e.temp]+'</b>'+(e.lit?' + lumière':'')+' · rendement <b style="color:'+(e.eff===100?'var(--good)':'var(--bad)')+'">'+e.eff+' %</b></p>';
+  }
+  if(o.t==="heat"||o.t==="cool"){
+    h+='<div class="field"><label for="i-mode">Réglage</label><select id="i-mode"><option value="1"'+(o.m!==2?' selected':'')+'>Modéré ('+(o.t==="heat"?"Tiède, +1":"Frais, −1")+')</option><option value="2"'+(o.m===2?' selected':'')+'>Extrême ('+(o.t==="heat"?"Torride, +2":"Glacial, −2")+')</option></select></div>';
+  }
+  h+='<div class="btnrow"><button class="btn" id="i-rot" type="button">Pivoter</button><button class="btn danger" id="i-del" type="button">Supprimer</button></div>';
+  h+='<div class="arrows" role="group" aria-label="Déplacer"><button class="tb" type="button" data-mv="-1,0" aria-label="Gauche">←</button><button class="tb" type="button" data-mv="0,-1" aria-label="Haut">↑</button><button class="tb" type="button" data-mv="0,1" aria-label="Bas">↓</button><button class="tb" type="button" data-mv="1,0" aria-label="Droite">→</button></div>';
+  box.innerHTML=h;
+  if($("i-crop")) $("i-crop").addEventListener("change",function(){ snapshot(); o.c=this.value; changed(); });
+  if($("i-mode")) $("i-mode").addEventListener("change",function(){ snapshot(); o.m=+this.value; changed(); });
+  $("i-rot").addEventListener("click",rotateSel);
+  $("i-del").addEventListener("click",deleteSel);
+  box.querySelectorAll("[data-mv]").forEach(function(b){ b.addEventListener("click",function(){ var m=b.dataset.mv.split(","); moveSel(+m[0],+m[1]); }); });
+}
+function rotateSel(){ var o=byId(selId); if(!o) return; if(fits(o.t,o.x,o.y,1-o.r,o.id)){ snapshot(); o.r=1-o.r; changed(); } else toast("Pas la place de pivoter ici"); }
+function deleteSel(){ var o=byId(selId); if(!o) return; snapshot(); S.items=S.items.filter(function(i){return i!==o;}); selId=null; changed(); }
+function moveSel(dx,dy){ var o=byId(selId); if(!o) return; if(fits(o.t,o.x+dx,o.y+dy,o.r,o.id)){ snapshot(); o.x+=dx; o.y+=dy; changed(); } }
+
+function buildPalette(){
+  var box=$("palette"), h="";
+  GROUPS.forEach(function(g){
+    h+='<div class="pal-group"><h3>'+g[1]+'</h3><div class="pal">';
+    Object.keys(T).filter(function(k){return T[k].g===g[0];}).forEach(function(k){
+      var t=T[k], pw=t.w*C, ph=t.h*C, o=Object.assign({t:k},defaults(k));
+      h+='<button type="button" data-type="'+k+'" aria-pressed="false"><svg viewBox="-2 -2 '+(pw+4)+' '+(ph+4)+'" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'+draw(k,o,pw,ph)+'</svg><span class="pal-text"><span class="nm">'+t.n+'</span><span class="mt" data-meta="'+k+'"></span></span></button>';
+    });
+    h+='</div></div>';
+  });
+  box.innerHTML=h;
+  box.querySelectorAll("button[data-type]").forEach(function(b){
+    b.addEventListener("click",function(){ var k=b.dataset.type; if(tool==="place"&&placeType===k){ setTool("select"); return; } placeType=k; rotNext=0; setTool("place"); });
+  });
+}
+function renderPalette(){
+  document.querySelectorAll("[data-meta]").forEach(function(sp){ var k=sp.dataset.meta, t=T[k], n=count(k);
+    sp.textContent=t.w+"×"+t.h+(t.hab?" · "+fmt(t.hab)+" hab":"")+" · "+n+(t.max?"/"+t.max:""); });
+  document.querySelectorAll("#palette button[data-type]").forEach(function(b){ b.setAttribute("aria-pressed",String(tool==="place"&&placeType===b.dataset.type)); });
+}
+var HINTS={select:"Clique un objet pour le sélectionner, glisse-le pour le déplacer. Flèches du clavier pour l'ajuster, R pour pivoter, Suppr pour le retirer.",
+  path:"Clique ou glisse pour tracer un chemin ; repasse sur un chemin existant pour l'effacer.",
+  erase:"Clique ou glisse sur un objet ou un chemin pour le retirer."};
+function setTool(t){
+  tool=t; svg.setAttribute("class","t-"+t);
+  document.querySelectorAll("[data-tool]").forEach(function(b){ b.setAttribute("aria-pressed",String(b.dataset.tool===t)); });
+  $("hint").textContent= t==="place" ? "Clique sur la carte pour poser « "+T[placeType].n+" ». R pour pivoter avant de poser, Échap pour arrêter." : HINTS[t];
+  $("L-ghost").innerHTML="";
+  renderPalette();
+}
+function changed(){ save(); renderMap(); renderGoal(); renderInsp(); renderPalette(); }
+
+/* ---------- génération ---------- */
+function generate(){
+  snapshot();
+  S.items=[]; S.nid=1; paths=new Set(); selId=null;
+  var L=LV[S.level], fa=FARM[L.F], th=S.theme;
+  function P(x,y){ if(x>=0&&y>=0&&x<W&&y<H) paths.add(x+","+y); }
+  var x,y,i;
+  for(x=23;x<=44;x++){P(x,14);P(x,27);}
+  for(y=14;y<=27;y++){P(23,y);P(44,y);}
+  for(x=0;x<23;x++){P(x,20);P(x,21);}
+  for(x=45;x<W;x++){P(x,20);P(x,21);}
+  for(y=0;y<14;y++){P(33,y);P(34,y);}
+  for(y=28;y<H;y++){P(33,y);P(34,y);}
+  // noyau logistique : stockage collé aux ateliers
+  add("vr",30,15,0); add("stockage",25,15,0); add("etabli",39,15,0); add("puits",40,18,0); add("moulin",25,20,0); add("timber",31,21,0); add("ludo",39,22,0);
+  function block(x0,y0,n,type,crops,emT,m){
+    var cols=Math.ceil(n/2);
+    for(var i=0;i<n;i++){ var c=Math.floor(i/2), r=i%2; add(type,x0+c*3,y0+r*4,0,{c:crops[i%crops.length]}); }
+    if(emT) for(var j=0;j<cols;j+=2){ var pair=Math.min(2,cols-j); add(emT,pair===2?x0+j*3+2:x0+j*3+1,y0+3,0,{m:m}); }
+    return {x0:x0,y0:y0,x1:x0+cols*3-1,y1:y0+6};
+  }
+  function grid(x0,y0,n,rows,type,crops){
+    var cols=Math.ceil(n/rows);
+    for(var i=0;i<n;i++){ add(type,x0+Math.floor(i/rows)*3,y0+(i%rows)*3,0,{c:crops[i%crops.length]}); }
+    return {x0:x0,y0:y0,x1:x0+cols*3-1,y1:y0+rows*3-1};
+  }
+  block(1,2,fa.hot,"champ",["canne"],"heat",2);
+  block(15,2,fa.warm,"champ",["cerisier"],"heat",1);
+  var bCool=block(20,2,fa.cool,"champ",["fraise","rose","ginseng"],"cool",1);
+  var bSun=block(1,30,fa.sun,"champ",["oranger","oranger","lavande"],"lamp",1);
+  var bNeu=grid(15,30,fa.neu,3,"champ",["cacao","cacao","ble","coco"]);
+  var bWood=grid(36,2,L.W-2,2,"bois",["bois","bambou","bois","pommier"]);
+  var bIce=block(37,31,2,"bois",["erable"],"cool",2);
+  for(i=0;i<L.M;i++) add("mine",46+Math.floor(i/2)*4,i%2?22:15,0);
+  // habitabilité
+  for(i=0;i<5;i++){ add("mige",1+i*5,10,0); add("forest",36+i*5,10,0); }
+  add("harvest",1,13,0); add("sunlit",11,13,0);
+  for(i=0;i<4;i++) add("books",18+i,15,0);
+  add("pond",2,23,0);
+  // habillage selon le style
+  function ring(b){
+    var x0=b.x0-1,y0=b.y0-1,x1=b.x1+1,y1=b.y1+1, mid=Math.floor((x0+x1)/2);
+    for(var x=x0;x<=x1;x++){ add("fence",x,y0,0); if(x!==mid&&x!==mid+1) add("fence",x,y1,0); }
+    for(var y=y0+1;y<y1;y++){ add("fence",x0,y,1); add("fence",x1,y,1); }
+  }
+  var corners=[[22,13],[45,13],[22,28],[45,28]];
+  if(th==="prairie"||th==="moisson"){
+    ring({x0:1,y0:2,x1:bCool.x1,y1:8}); ring(bSun); ring(bNeu); ring(bWood); ring(bIce);
+  }
+  if(th==="prairie"){
+    for(x=0;x<23;x+=2){ add("flowers",x,19,0); add("flowers",x,22,0); }
+    for(y=0;y<H;y+=3){ add("flowers",32,y,0); add("flowers",35,y,0); }
+    corners.forEach(function(c){ add("lantern",c[0],c[1],0); });
+    add("pond",46,32,0); add("bench",51,37,0); add("bench",46,37,0); add("dtree",56,31,0); add("dtree",60,35,0); add("dtree",63,30,0);
+    for(i=0;i<6;i++) add("flowers",52+i,32,0);
+    add("bench",7,24,0); add("dtree",11,23,0); add("dtree",16,24,0);
+  } else if(th==="zen"){
+    for(x=1;x<22;x+=5){ add("dtree",x,22,0); }
+    for(x=24;x<=44;x+=4){ add("lantern",x,13,0); add("lantern",x,28,0); }
+    for(y=1;y<13;y+=4){ add("lantern",32,y,0); add("lantern",35,y,0); }
+    add("pond",44,31,0); add("pond",50,34,0); add("pond",57,30,0); add("bench",48,38,0); add("bench",55,38,0);
+    add("dtree",61,34,0); add("dtree",64,31,0); add("dtree",42,37,0); add("dtree",62,38,0);
+    for(i=0;i<5;i++) add("flowers",50+i,31,0);
+  } else {
+    for(x=0;x<23;x+=3){ add("lantern",x,19,0); add("lantern",x,22,0); }
+    for(x=45;x<W;x+=3){ add("lantern",x,19,0); }
+    for(y=0;y<H;y+=3){ add("lantern",32,y,0); add("lantern",35,y,0); }
+    for(x=24;x<=44;x+=2){ add("flowers",x,13,0); add("flowers",x,28,0); }
+    add("bench",46,33,0); add("bench",50,33,0); add("bench",46,37,0); add("bench",50,37,0);
+    add("dtree",56,31,0); add("dtree",60,35,0); add("dtree",63,30,0); add("dtree",56,38,0);
+    add("dtree",8,24,0); add("dtree",13,24,0); add("bench",17,25,0);
+  }
+  changed();
+  toast("Plan VR "+S.level+" généré · « Annuler » pour revenir en arrière");
+}
+function bestCrops(){
+  snapshot();
+  var ev=evalAll(), n=0;
+  S.items.forEach(function(o){
+    if(o.t!=="champ"&&o.t!=="bois") return;
+    var e=ev[o.id]; if(e.eff===100) return;
+    var c;
+    if(o.t==="champ") c=e.lit?"oranger":({"2":"canne","1":"cerisier","0":"cacao","-1":"fraise","-2":"canneberge"})[e.temp];
+    else c=e.lit?"noyer":(e.temp===-2?"erable":(e.temp===0?"bois":null));
+    if(c&&c!==o.c){ o.c=c; n++; }
+  });
+  changed();
+  toast(n? n+" parcelle"+(n>1?"s":"")+" passée"+(n>1?"s":"")+" à la culture adaptée à sa zone" : "Toutes les parcelles ont déjà la bonne culture");
+}
+
+/* ---------- interactions ---------- */
+function cellAt(e){
+  var pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  var p=pt.matrixTransform(svg.getScreenCTM().inverse());
+  return {x:Math.floor(p.x/C),y:Math.floor(p.y/C),fx:p.x/C,fy:p.y/C};
+}
+function placePos(p){ var t=T[placeType], w=rotNext?t.h:t.w, h=rotNext?t.w:t.h; return {x:Math.round(p.fx-w/2),y:Math.round(p.fy-h/2),w:w,h:h}; }
+function eraseAt(p){
+  var o=itemAt(p.x,p.y);
+  if(o){ S.items=S.items.filter(function(i){return i!==o;}); if(selId===o.id) selId=null; return true; }
+  var k=p.x+","+p.y; if(paths.has(k)){ paths.delete(k); return true; }
+  return false;
+}
+svg.addEventListener("pointerdown",function(e){
+  if(e.button>0) return;
+  var p=cellAt(e);
+  if(tool==="place"){
+    var t=T[placeType], q=placePos(p);
+    if(t.max&&count(placeType)>=t.max){ toast("Maximum "+t.max+" « "+t.n+" » dans le Foyer"); return; }
+    if(!fits(placeType,q.x,q.y,rotNext)){ toast("Pas de place ici"); return; }
+    snapshot(); var it=add(placeType,q.x,q.y,rotNext); selId=it.id; changed(); return;
+  }
+  if(tool==="path"){
+    if(p.x<0||p.y<0||p.x>=W||p.y>=H) return;
+    snapshot(); var k=p.x+","+p.y; painting=paths.has(k)?"del":"add";
+    if(painting==="add") paths.add(k); else paths.delete(k);
+    svg.setPointerCapture(e.pointerId); renderMap(); return;
+  }
+  if(tool==="erase"){ snapshot(); erasing=true; eraseAt(p); svg.setPointerCapture(e.pointerId); renderMap(); return; }
+  var o=itemAt(p.x,p.y);
+  if(o){ selId=o.id; drag={id:o.id,ox:p.fx-o.x,oy:p.fy-o.y,moved:false}; svg.setPointerCapture(e.pointerId); }
+  else selId=null;
+  renderMap(); renderInsp();
+});
+svg.addEventListener("pointermove",function(e){
+  var p=cellAt(e);
+  if(drag){
+    var o=byId(drag.id), nx=Math.round(p.fx-drag.ox), ny=Math.round(p.fy-drag.oy);
+    if((nx!==o.x||ny!==o.y)&&fits(o.t,nx,ny,o.r,o.id)){ if(!drag.moved){snapshot();drag.moved=true;} o.x=nx; o.y=ny; renderMap(); }
+    return;
+  }
+  if(painting){ if(p.x>=0&&p.y>=0&&p.x<W&&p.y<H){ var k=p.x+","+p.y; if(painting==="add"&&!paths.has(k)){paths.add(k);renderMap();} else if(painting==="del"&&paths.has(k)){paths.delete(k);renderMap();} } return; }
+  if(erasing){ if(eraseAt(p)) renderMap(); return; }
+  if(tool==="place"){
+    var q=placePos(p), ok=fits(placeType,q.x,q.y,rotNext)&&!(T[placeType].max&&count(placeType)>=T[placeType].max);
+    $("L-ghost").innerHTML='<rect x="'+(q.x*C)+'" y="'+(q.y*C)+'" width="'+(q.w*C)+'" height="'+(q.h*C)+'" rx="4" fill="'+(ok?"#3FAE5A":"#D9402B")+'" fill-opacity=".3" stroke="'+(ok?"#2E8A45":"#B3301E")+'" stroke-width="1.5"/>'+itemSvg(Object.assign({t:placeType,x:q.x,y:q.y,r:rotNext},defaults(placeType)),.75);
+  }
+});
+function endPointer(){
+  if(drag){ if(drag.moved) changed(); drag=null; }
+  if(painting||erasing){ painting=null; erasing=false; changed(); }
+}
+svg.addEventListener("pointerup",endPointer);
+svg.addEventListener("pointercancel",endPointer);
+svg.addEventListener("pointerleave",function(){ if(tool==="place") $("L-ghost").innerHTML=""; });
+
+document.addEventListener("keydown",function(e){
+  var tg=e.target.tagName; if(tg==="INPUT"||tg==="SELECT"||tg==="TEXTAREA") return;
+  var k=e.key;
+  if((e.ctrlKey||e.metaKey)&&k.toLowerCase()==="z"){ e.preventDefault(); undo(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(k==="Escape"){ setTool("select"); return; }
+  if(k==="v"||k==="V") setTool("select");
+  else if(k==="p"||k==="P") setTool("path");
+  else if(k==="e"||k==="E") setTool("erase");
+  else if(k==="r"||k==="R"){ if(tool==="place"){ rotNext=1-rotNext; $("L-ghost").innerHTML=""; toast(rotNext?"Pivoté":"Orientation d'origine"); } else rotateSel(); }
+  else if((k==="Delete"||k==="Backspace")&&selId){ e.preventDefault(); deleteSel(); }
+  else if(selId&&k.indexOf("Arrow")===0){ e.preventDefault(); moveSel(k==="ArrowLeft"?-1:k==="ArrowRight"?1:0,k==="ArrowUp"?-1:k==="ArrowDown"?1:0); }
+});
+
+var tt;
+function toast(m){ var t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(tt); tt=setTimeout(function(){t.hidden=true;},2600); }
+
+/* ---------- contrôles ---------- */
+[14,15,16,17,18,19,20].forEach(function(l){ var o=document.createElement("option"); o.value=l; o.textContent="VR "+l+" · "+LV[l].F+" champs, "+LV[l].W+" bois, "+LV[l].M+" mines"; $("lvl").appendChild(o); });
+Object.keys(THEMES).forEach(function(k){ var o=document.createElement("option"); o.value=k; o.textContent=THEMES[k].n; $("theme").appendChild(o); });
+[2,3,4,5,6,8].forEach(function(r){ var o=document.createElement("option"); o.value=r; o.textContent=r+" cases"; $("range").appendChild(o); });
+$("lvl").addEventListener("change",function(){ S.level=+this.value; save(); renderGoal(); toast("Clique « Générer » pour adapter le plan au VR "+S.level); });
+$("theme").addEventListener("change",function(){ S.theme=this.value; save(); renderMap(); buildPalette(); renderPalette(); toast("Style appliqué · « Générer » pour replacer l'habillage"); });
+$("range").addEventListener("change",function(){ S.R=+this.value; changed(); });
+$("gen").addEventListener("click",generate);
+$("best").addEventListener("click",bestCrops);
+document.querySelectorAll("[data-tool]").forEach(function(b){ b.addEventListener("click",function(){ setTool(b.dataset.tool); }); });
+$("undo").addEventListener("click",undo);
+$("tgrid").addEventListener("click",function(){ S.grid=!S.grid; this.setAttribute("aria-pressed",String(S.grid)); save(); renderMap(); });
+$("trange").addEventListener("click",function(){ S.ranges=!S.ranges; this.setAttribute("aria-pressed",String(S.ranges)); save(); renderMap(); });
+function applyZoom(){ svg.style.width=(S.zoom*100)+"%"; }
+$("zin").addEventListener("click",function(){ S.zoom=Math.min(3,+(S.zoom+.25).toFixed(2)); applyZoom(); save(); });
+$("zout").addEventListener("click",function(){ S.zoom=Math.max(1,+(S.zoom-.25).toFixed(2)); applyZoom(); save(); });
+
+$("bgfile").addEventListener("change",function(){
+  var f=this.files&&this.files[0]; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){ var img=new Image(); img.onload=function(){
+      var m=1600, s=Math.min(1,m/Math.max(img.width,img.height)), cv=document.createElement("canvas");
+      cv.width=Math.round(img.width*s); cv.height=Math.round(img.height*s);
+      cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+      bg.src=cv.toDataURL("image/jpeg",.82); renderBg(); saveBg(); toast("Capture importée · règle l'échelle et le décalage pour l'aligner");
+    }; img.onerror=function(){ toast("Image illisible : essaie un PNG ou un JPG"); }; img.src=rd.result; };
+  rd.readAsDataURL(f);
+});
+[["bgop","op"],["bgsc","sc"],["bgdx","dx"],["bgdy","dy"]].forEach(function(a){
+  $(a[0]).addEventListener("input",function(){ bg[a[1]]=+this.value; renderBg(); });
+  $(a[0]).addEventListener("change",saveBg);
+});
+$("bgclear").addEventListener("click",function(){ bg.src=null; renderBg(); saveBg(); $("bgfile").value=""; });
+
+function encode(){
+  var o={v:1,l:S.level,t:S.theme,r:S.R,i:S.items.map(function(o){return [o.t,o.x,o.y,o.r,o.c||o.m||0];}),p:Array.from(paths)};
+  return btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+}
+$("exp").addEventListener("click",function(){
+  var c=encode(), ta=$("code"); ta.value=c;
+  function fallback(){ ta.focus(); ta.select(); toast("Code sélectionné : copie-le avec Ctrl C"); }
+  try{ navigator.clipboard.writeText(c).then(function(){toast("Code copié");},fallback); }catch(e){ fallback(); }
+});
+$("imp").addEventListener("click",function(){
+  try{
+    var o=JSON.parse(decodeURIComponent(escape(atob($("code").value.trim()))));
+    snapshot(); S.items=[]; S.nid=1; paths=new Set(o.p||[]);
+    if(LV[o.l]) S.level=o.l; if(THEMES[o.t]) S.theme=o.t; if(o.r) S.R=o.r;
+    (o.i||[]).forEach(function(a){ if(!T[a[0]]) return; var ex={};
+      if((a[0]==="champ"||a[0]==="bois")&&CROPS[a[4]]) ex.c=a[4];
+      if(a[0]==="heat"||a[0]==="cool") ex.m=a[4]===2?2:1;
+      add(a[0],a[1],a[2],a[3],ex); });
+    syncControls(); buildPalette(); selId=null; changed(); toast("Plan chargé");
+  }catch(e){ toast("Code illisible : vérifie qu'il est complet"); }
+});
+var clearArm=false;
+$("clear").addEventListener("click",function(){
+  var b=this;
+  if(!clearArm){ clearArm=true; b.textContent="Confirmer : tout vider"; setTimeout(function(){clearArm=false;b.textContent="Tout vider";},4000); return; }
+  clearArm=false; b.textContent="Tout vider";
+  snapshot(); S.items=[]; paths=new Set(); selId=null; changed(); toast("Carte vidée · « Annuler » pour revenir");
+});
+function syncControls(){
+  $("lvl").value=S.level; $("theme").value=S.theme; $("range").value=S.R;
+  $("tgrid").setAttribute("aria-pressed",String(S.grid)); $("trange").setAttribute("aria-pressed",String(S.ranges));
+  $("bgop").value=bg.op; $("bgsc").value=bg.sc; $("bgdx").value=bg.dx; $("bgdy").value=bg.dy;
+}
+
+/* ---------- démarrage ---------- */
+load();
+syncControls(); applyZoom(); buildPalette(); renderBg(); setTool("select");
+if(!S.items.length){ generate(); hist=[]; $("toast").hidden=true; } else changed();
 })();
 </script>
