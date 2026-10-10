@@ -18,6 +18,7 @@ const MOVEC = +(process.env.MOVEC || 60);
 const prevL = PREVFILE ? JSON.parse(fs.readFileSync(PREVFILE)) : null;
 
 const PFX = process.env.PREFIX || '';
+const FIXED = new Set((process.env.FIXED || 'Incubateur').split(','));
 const inp = JSON.parse(fs.readFileSync(path.join(root, `${PFX}lay_in_rv${lvl}.json`)));
 const cells = inp.cells;
 const pieces = inp.pieces;
@@ -74,7 +75,7 @@ function evaluate(out) {
 let best = null;
 let hubIdx = null;
 if (prevL) {
-  stores = prevL.stores.map(r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 }));
+  stores = (process.env.STORES ? JSON.parse(fs.readFileSync(process.env.STORES)) : prevL.stores).map(r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 }));
   hubIdx = prevL.hubIdx || null;
   const prevMap = {};
   prevL.items.filter(i => i.kind === 'piece').forEach(i => { const k = i.n + '|' + i.w + 'x' + i.h; (prevMap[k] = prevMap[k] || []).push({ x: i.x + i.w / 2, y: i.y + i.h / 2 }); });
@@ -85,6 +86,7 @@ if (prevL) {
   pieces.map((p, i) => ({ p, i })).filter(o => !o.p.cluster).sort((a, b) => (b.p.members[0].weight || 0) - (a.p.members[0].weight || 0)).forEach(({ p, i }) => {
     const m = p.members[0];
     const fit = q => !q.used && q.n === m.facility && ((q.w === m.w && q.h === m.h) || (q.w === m.h && q.h === m.w));
+    if (process.env.NOPIN && !process.env.NOPIN.split(',').includes('*') && !FIXED.has(m.facility) && !(process.env.PIN_IDLE && !(m.weight > 0))) return;
     const q = pool.find(q => fit(q) && (q.item || '') === (m.item || m.crop || '')) || pool.find(fit);
     if (q) { q.used = true; pins[i] = { x: q.x, y: q.y, w: q.w, h: q.h }; }
   });
@@ -137,12 +139,13 @@ items.forEach(it => {
 const storeRects = stores.map(s => ({ x: s.x - 1, y: s.y - 1, w: 2, h: 2 }));
 
 // ---------- power ----------
-const occupied = [...items.map(i => ({ x: i.x, y: i.y, w: i.w, h: i.h })), ...storeRects];
+let occupied = [...items.map(i => ({ x: i.x, y: i.y, w: i.w, h: i.h })), ...storeRects];
+const occ0 = occupied.slice();
 const freeRect = r => insideCells(r) && !occupied.some(o => ov(r, o));
 const targets = items.filter(i => i.kind === 'piece' && EMODE.has(i.n));
 const area = (p, size) => ({ x: p.x + p.w / 2 - size / 2, y: p.y + p.h / 2 - size / 2, w: size, h: size });
-const gens = [], poles = [], areas = [];
-const powered = new Set();
+let gens = [], poles = [], areas = [];
+let powered = new Set();
 const val = t => (t.weight > 0 ? 100 + t.weight : 1); // active machines first
 const gain = a => targets.reduce((s, t, k) => s + (!powered.has(k) && ov(a, t) > 0 ? val(t) : 0), 0);
 const mark = a => targets.forEach((t, k) => { if (ov(a, t) > 0) powered.add(k); });
@@ -159,40 +162,66 @@ for (let i = 0; i < singles.length; i++) for (let j = GENS > 1 ? i + 1 : i; j < 
   const v = [...u].reduce((s2, k) => s2 + val(targets[k]), 0);
   if (v > pv) { pv = v; pair = GENS > 1 ? [singles[i].c, singles[j].c] : [singles[i].c]; }
 }
-if (prevL && !process.env.POWER_FRESH && prevL.gens.every(freeRect)) pair = prevL.gens.map(g => ({ x: g.x, y: g.y, w: g.w, h: g.h }));
-(pair || []).forEach(g => { gens.push(g); occupied.push(g); const a = area(g, 11); areas.push({ ...a, src: 'gen' }); mark(a); });
-if (prevL && !process.env.POWER_FRESH) {
-  let added = true;
-  const pending = prevL.poles.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h }));
-  while (added) { added = false;
-    for (let k = 0; k < pending.length; k++) { const c = pending[k]; if (!c || !freeRect(c)) continue; const pa = area(c, 7);
-      if (!areas.some(a => ov(pa, a) > 0)) continue;
-      poles.push(c); occupied.push(c); areas.push({ ...pa, src: 'pole' }); mark(pa); pending[k] = null; added = true; } }
-}
-const connected = pa => areas.some(a => ov(pa, a) > 0);
-const distTo = (a, t) => { const dx = Math.max(0, t.x - (a.x + a.w), a.x - (t.x + t.w)); const dy = Math.max(0, t.y - (a.y + a.h), a.y - (t.y + t.h)); return Math.hypot(dx, dy); };
-const activeGain = pa => targets.reduce((s2, t, k) => s2 + (!powered.has(k) && t.weight > 0 && ov(pa, t) > 0 ? 100 + t.weight : 0), 0);
-for (let p = poles.length; p < POLES; p++) {
-  const left = targets.filter((t, k) => !powered.has(k) && t.weight > 0);
-  const cands = poleCandAll.filter(c => freeRect(c) && connected(area(c, 7)));
-  if (!cands.length) break;
-  let pick = null;
-  if (left.length) {
-    let bv = 0;
-    for (const c of cands) { const v = activeGain(area(c, 7)) + gain(area(c, 7)) * 1e-3; if (v > bv) { bv = v; pick = c; } }
-    if (bv < 100) {
-      pick = null;
-      const cur = Math.min(...left.map(t => Math.min(...areas.map(a => distTo(a, t)))));
-      let bd = cur - 0.25;
-      for (const c of cands) { const d = Math.min(...left.map(t => distTo(area(c, 7), t))); if (d < bd) { bd = d; pick = c; } }
-    }
-  } else {
-    let bv = 0;
-    for (const c of cands) { const v = gain(area(c, 7)); if (v > bv) { bv = v; pick = c; } }
+if (prevL && !process.env.POWER_FRESH && prevL.gens.every(freeRect)) {
+  const keep = prevL.gens.map(g => ({ x: g.x, y: g.y, w: g.w, h: g.h }));
+  // fewer generators than allowed in the previous layout: add the best spot for each missing one
+  while (keep.length < GENS) {
+    const have = new Set(keep.flatMap(g => [...covers({ c: g })]));
+    let bc = null, bv = -1;
+    for (const o of singles) { if (keep.some(g => ov(g, o.c) > 0)) continue; const v = [...covers(o)].filter(k => !have.has(k)).reduce((s2, k) => s2 + val(targets[k]), 0); if (v > bv) { bv = v; bc = o.c; } }
+    if (!bc) break; keep.push(bc);
   }
-  if (!pick) break;
-  poles.push(pick); occupied.push(pick); const a = area(pick, 7); areas.push({ ...a, src: 'pole' }); mark(a);
+  pair = keep;
 }
+function powerWith(genList) {
+  occupied = occ0.slice(); gens = []; poles = []; areas = []; powered = new Set();
+  (genList || []).forEach(g => { gens.push(g); occupied.push(g); const a = area(g, 11); areas.push({ ...a, src: 'gen' }); mark(a); });
+  if (prevL && !process.env.POWER_FRESH) {
+    let added = true;
+    const pending = prevL.poles.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h }));
+    while (added) { added = false;
+      for (let k = 0; k < pending.length; k++) { const c = pending[k]; if (!c || !freeRect(c)) continue; const pa = area(c, 7);
+        if (!areas.some(a => ov(pa, a) > 0)) continue;
+        poles.push(c); occupied.push(c); areas.push({ ...pa, src: 'pole' }); mark(pa); pending[k] = null; added = true; } }
+  }
+  const connected = pa => areas.some(a => ov(pa, a) > 0);
+  const distTo = (a, t) => { const dx = Math.max(0, t.x - (a.x + a.w), a.x - (t.x + t.w)); const dy = Math.max(0, t.y - (a.y + a.h), a.y - (t.y + t.h)); return Math.hypot(dx, dy); };
+  const activeGain = pa => targets.reduce((s2, t, k) => s2 + (!powered.has(k) && t.weight > 0 && ov(pa, t) > 0 ? 100 + t.weight : 0), 0);
+  for (let p = poles.length; p < POLES; p++) {
+    const left = targets.filter((t, k) => !powered.has(k) && t.weight > 0);
+    const cands = poleCandAll.filter(c => freeRect(c) && connected(area(c, 7)));
+    if (!cands.length) break;
+    let pick = null;
+    if (left.length) {
+      let bv = 0;
+      for (const c of cands) { const v = activeGain(area(c, 7)) + gain(area(c, 7)) * 1e-3; if (v > bv) { bv = v; pick = c; } }
+      if (bv < 100) {
+        pick = null;
+        const cur = Math.min(...left.map(t => Math.min(...areas.map(a => distTo(a, t)))));
+        let bd = cur - 0.25;
+        for (const c of cands) { const d = Math.min(...left.map(t => distTo(area(c, 7), t))); if (d < bd) { bd = d; pick = c; } }
+      }
+    } else {
+      let bv = 0;
+      for (const c of cands) { const v = gain(area(c, 7)); if (v > bv) { bv = v; pick = c; } }
+    }
+    if (!pick) break;
+    poles.push(pick); occupied.push(pick); const a = area(pick, 7); areas.push({ ...a, src: 'pole' }); mark(a);
+  }
+  return targets.filter((t, k) => t.weight > 0 && powered.has(k)).length * 1000 + powered.size;
+}
+let genPick = pair;
+if (prevL && !process.env.POWER_FRESH && GENS > 1 && pair && prevL.gens.length < GENS) {
+  // the missing generator: try the strongest spots, each with its poles, and keep the one that powers most
+  const base = pair.slice(0, prevL.gens.length);
+  const have = new Set(base.flatMap(g => [...covers({ c: g })]));
+  const tries = singles.filter(o => !base.some(g => ov(g, o.c) > 0))
+    .map(o => ({ c: o.c, v: [...covers(o)].filter(k => !have.has(k)).reduce((s2, k) => s2 + val(targets[k]), 0) }))
+    .sort((x, y) => y.v - x.v).slice(0, 25);
+  let bs = powerWith(pair);
+  for (const t of tries) { const sc = powerWith([...base, t.c]); if (sc > bs) { bs = sc; genPick = [...base, t.c]; } }
+}
+powerWith(genPick);
 const unpowered = targets.filter((t, k) => !powered.has(k)).map(t => ({ n: t.n, idle: !t.weight }));
 
 // ---------- room for decor ----------
@@ -268,5 +297,5 @@ const res = {
   walk, plazas, freeCount, plots: ref.plots,
   metrics: { weight: best.ev.w, avg: +best.ev.avg.toFixed(2), refAvg, unplaced: out.unplaced.map(i => pieces[i].cluster ? 'cluster' : pieces[i].members[0].facility) },
 };
-fs.writeFileSync(path.join(root, prevL ? `${PFX}evo_rv${lvl}${process.env.POWER_FRESH ? '_pf' : ''}.json` : `${PFX}multi_rv${lvl}_k${K}_g${GAP}_h${HUBN}_e${GAPE}.json`), JSON.stringify(res));
+fs.writeFileSync(process.env.OUT ? path.join(root, process.env.OUT) : path.join(root, prevL ? `${PFX}evo_rv${lvl}${process.env.POWER_FRESH ? '_pf' : ''}.json` : `${PFX}multi_rv${lvl}_k${K}_g${GAP}_h${HUBN}_e${GAPE}.json`), JSON.stringify(res));
 console.log(JSON.stringify({ diff: diff && diff.sum, lvl, stores: stores.length, avg: res.metrics.avg, refAvg, unplaced: res.metrics.unplaced, powered: `${powered.size}/${targets.length}`, activeUnpowered: unpowered.filter(u=>!u.idle).length, gens: gens.length, poles: poles.length, plazas: plazas.map(p => p.w + 'x' + p.h), free: freeCount }));

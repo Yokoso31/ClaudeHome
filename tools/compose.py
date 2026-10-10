@@ -112,36 +112,40 @@ def occupied_rects(d):
     rs += [dict(x=x, y=y, w=1, h=1) for x, y in d['walk']]
     return rs
 
-out = {}
-evo = {}
-for lvl in range(14, 21):
-    cands = []
-    for f in glob.glob(os.path.join(S, f'{PFX}multi_rv{lvl}_k5_g1_h*_e1.5.json')):
-        d = json.load(open(f))
-        act = sum(1 for u in d['unpowered'] if not u['idle'])
-        cands.append((act, d['metrics']['avg'], -d['powered'], f, d))
-    cands.sort(key=lambda c: c[:3])
-    act, avg, _, f, d = cands[0]
-    if lvl == 14:
-        f = os.path.join(S, os.environ.get('BASE14', f'{PFX}multi_rv14_k5_g1_h4_e1.5.json')); d = json.load(open(f))
-    placed, used, tot = compose(d['plazas'][:4])
-    d['deco'] = placed; d['decoTot'] = tot; d['choice'] = os.path.basename(f)
-    out[lvl] = d
-    print('opt', lvl, os.path.basename(f), 'avg', d['metrics']['avg'], 'deco', len(placed), tot)
-    # evolving chain: keep the previous decor where it still fits
-    if lvl == 14:
-        e = json.loads(json.dumps(d))
-    else:
-        e = json.load(open(os.path.join(S, f'{PFX}evo_rv{lvl}.json')))
-        occ = occupied_rects(e)
-        keep = [k for k in evo[lvl - 1]['deco'] if not any(overlap(k, r) for r in occ)]
-        placed, used, tot = compose(e['plazas'][:4], keep)
-        prev_ids = {(k['id'], k['x'], k['y']) for k in evo[lvl - 1]['deco']}
-        for pz in placed:
-            pz['st0'] = 'ok' if (pz['id'], pz['x'], pz['y']) in prev_ids else 'new'
-        e['deco'] = placed; e['decoTot'] = tot
-        e['decoKept'] = len(keep); e['decoDropped'] = len(evo[lvl - 1]['deco']) - len(keep)
-        print('evo', lvl, 'avg', e['metrics']['avg'], 'deco kept', len(keep), 'dropped', e['decoDropped'], 'total', len(placed))
-    evo[lvl] = e
-json.dump(out, open(os.path.join(S, f'{PFX}final_layouts.json'), 'w'))
-json.dump(evo, open(os.path.join(S, f'{PFX}final_evo.json'), 'w'))
+def main():
+    out = {}
+    evo = {}
+    for lvl in range(14, 21):
+        cands = []
+        for f in glob.glob(os.path.join(S, f'{PFX}multi_rv{lvl}_k5_g1_h*_e1.5.json')):
+            d = json.load(open(f))
+            act = sum(1 for u in d['unpowered'] if not u['idle'])
+            cands.append((act, d['metrics']['avg'], -d['powered'], f, d))
+        cands.sort(key=lambda c: c[:3])
+        act, avg, _, f, d = cands[0]
+        if lvl == 14:
+            f = os.path.join(S, os.environ.get('BASE14', f'{PFX}multi_rv14_k5_g1_h4_e1.5.json')); d = json.load(open(f))
+        placed, used, tot = compose(d['plazas'][:4])
+        d['deco'] = placed; d['decoTot'] = tot; d['choice'] = os.path.basename(f)
+        out[lvl] = d
+        print('opt', lvl, os.path.basename(f), 'avg', d['metrics']['avg'], 'deco', len(placed), tot)
+        # evolving chain: keep the previous decor where it still fits
+        if lvl == 14:
+            e = json.loads(json.dumps(d))
+        else:
+            e = json.load(open(os.path.join(S, f'{PFX}evo_rv{lvl}.json')))
+            occ = occupied_rects(e)
+            keep = [k for k in evo[lvl - 1]['deco'] if not any(overlap(k, r) for r in occ)]
+            placed, used, tot = compose(e['plazas'][:4], keep)
+            prev_ids = {(k['id'], k['x'], k['y']) for k in evo[lvl - 1]['deco']}
+            for pz in placed:
+                pz['st0'] = 'ok' if (pz['id'], pz['x'], pz['y']) in prev_ids else 'new'
+            e['deco'] = placed; e['decoTot'] = tot
+            e['decoKept'] = len(keep); e['decoDropped'] = len(evo[lvl - 1]['deco']) - len(keep)
+            print('evo', lvl, 'avg', e['metrics']['avg'], 'deco kept', len(keep), 'dropped', e['decoDropped'], 'total', len(placed))
+        evo[lvl] = e
+    json.dump(out, open(os.path.join(S, f'{PFX}final_layouts.json'), 'w'))
+    json.dump(evo, open(os.path.join(S, f'{PFX}final_evo.json'), 'w'))
+
+if __name__ == '__main__':
+    main()
