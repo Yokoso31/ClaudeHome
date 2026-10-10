@@ -7,6 +7,22 @@ let HUBSET = null;
 function distFor(m, x, y) { if (HUBS && m && HUBSET.has(m.facility)) { let b = Infinity; for (const s of HUBS) { const d = Math.hypot(x - s.x, y - s.y); if (d < b) b = d; } return b; } return dist(x, y); }
 function dist(x, y) { let b = Infinity; for (const s of STORES) { const d = Math.hypot(x - s.x, y - s.y); if (d < b) b = d; } return b; }
 let CURG = 0;
+let PREV = null;      // facility|wxh -> [{x,y}] centers of the previous level's layout
+let PREV_ENV = null;  // [{x,y}] centers of the previous climate buildings
+let MOVEC = 0;        // cost of moving a piece off its previous spot
+function anchorCost(fac, w, h, cx, cy) {
+  if (!PREV) return 0;
+  const list = PREV.get(fac + '|' + w + 'x' + h) || PREV.get(fac + '|' + h + 'x' + w);
+  if (!list) return 0;
+  for (const p of list) if (Math.abs(p.x - cx) < 0.05 && Math.abs(p.y - cy) < 0.05) return 0;
+  return MOVEC;
+}
+function envAnchor(b) {
+  if (!PREV_ENV) return 0;
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  for (const p of PREV_ENV) if (Math.abs(p.x - cx) < 0.05 && Math.abs(p.y - cy) < 0.05) return 0;
+  return MOVEC * 0.25;
+}
 let GAPE = 0;
 const grow = r => (CURG ? { x: r.x - CURG, y: r.y - CURG, w: r.w + 2 * CURG, h: r.h + 2 * CURG } : r);
 // Places a whole homeland around a single Storage Unit, so the Aniimo hauling each finished batch
@@ -59,6 +75,9 @@ export function layOut(pieces, options = {}) {
     GAP = gap;
     HUBS = options.hubs || null;
     HUBSET = new Set(options.hubSet || []);
+    PREV = options.prev ? new Map(Object.entries(options.prev)) : null;
+    PREV_ENV = options.prevEnv || null;
+    MOVEC = options.moveCost || 0;
     GAPE = options.gapE || gap;
     CURG = gap;
     const storageRect = { x: -storage.w / 2, y: -storage.h / 2, w: storage.w, h: storage.h };
@@ -129,6 +148,23 @@ export function layOut(pieces, options = {}) {
 
     const placeRigid = i => {
         let best = null;
+        if (PREV) {
+            CURG = shapes[i][0].members.some(m => HUBSET.has(m.facility) && m.weight > 0) ? GAPE : GAP;
+            for (const shape of shapes[i]) {
+                const m0 = shape.members[0];
+                const list = PREV.get(m0.facility + '|' + m0.w + 'x' + m0.h) || [];
+                for (const pc of list) {
+                    const x = snap(pc.x - m0.w / 2 - m0.x), y = snap(pc.y - m0.h / 2 - m0.y);
+                    tried++;
+                    const rects = shape.members.map(m => ({ x: m.x + x, y: m.y + y, w: m.w, h: m.h }));
+                    if (!rects.every(r => free(r, i))) continue;
+                    const touchy = rects.filter((r, j) => shape.members[j].sensitive);
+                    if (touchy.some(r => inOtherSquare(r, i))) continue;
+                    const cost = shape.members.reduce((sum, m) => sum + m.weight * centerDistance(m, x, y) + anchorCost(m.facility, m.w, m.h, m.x + x + m.w / 2, m.y + y + m.h / 2), 0) + EPSILON * dist(shape.cx + x, shape.cy + y);
+                    if (!best || cost < best.cost - EPSILON) best = { cost, x, y, shape, rects, sensitive: touchy };
+                }
+            }
+        }
         CURG = shapes[i][0].members.some(m => HUBSET.has(m.facility) && m.weight > 0) ? GAPE : GAP;
         for (const shape of shapes[i]) {
             let firstFit = null;
@@ -142,7 +178,7 @@ export function layOut(pieces, options = {}) {
                 const touchy = rects.filter((r, j) => shape.members[j].sensitive);
                 if (touchy.some(r => inOtherSquare(r, i))) continue;
                 if (firstFit === null) firstFit = distance;
-                const cost = shape.members.reduce((sum, m) => sum + m.weight * centerDistance(m, x, y), 0)
+                const cost = shape.members.reduce((sum, m) => sum + m.weight * centerDistance(m, x, y) + anchorCost(m.facility, m.w, m.h, m.x + x + m.w / 2, m.y + y + m.h / 2), 0)
                     // Pieces nobody visits still go as close as they can, to keep the homeland tight.
                     + EPSILON * dist(shape.cx + x, shape.cy + y);
                 if (!best || cost < best.cost - EPSILON) best = { cost, x, y, shape, rects, sensitive: touchy };
@@ -164,7 +200,7 @@ export function layOut(pieces, options = {}) {
             const outside = shape.pair ? [[1], [], [0]][zone] : [];
             return inside.every(k => overlaps(r, own[k])) && outside.every(k => !overlaps(r, own[k])) && !inOtherSquare(r, i);
         };
-        const costOf = rects => shape.plots.reduce((sum, p, j) => sum + p.weight * dist(rects[j].x + p.w / 2, rects[j].y + p.h / 2), 0);
+        const costOf = rects => shape.plots.reduce((sum, p, j) => sum + p.weight * dist(rects[j].x + p.w / 2, rects[j].y + p.h / 2) + anchorCost(p.facility, rects[j].w, rects[j].h, rects[j].x + rects[j].w / 2, rects[j].y + rects[j].h / 2), 0) + buildings.reduce((sum, b) => sum + envAnchor(b), 0);
         let plots = null;
         const slots = shape.plots.map((p, j) => ({ x: shape.planned[j].x + x, y: shape.planned[j].y + y, w: p.w, h: p.h }));
         if (slots.every(r => free(r, i) && !buildings.some(b => overlaps(r, b)))) {
@@ -197,11 +233,24 @@ export function layOut(pieces, options = {}) {
             }
             return known.get(key);
         };
+        if (PREV_ENV) for (const pe of PREV_ENV) {
+            let found = false;
+            for (let r = 0; r <= 3 && !found; r++) {
+                for (const shape of shapes[i]) {
+                    const b0 = shape.buildings[0];
+                    for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+                        const spot = tryCluster(i, shape, Math.round(pe.x - b0.w / 2 - b0.x) + dx, Math.round(pe.y - b0.h / 2 - b0.y) + dy, true, clear);
+                        if (spot) { found = true; if (!best || spot.cost < best.cost - EPSILON) best = spot; }
+                    }
+                }
+            }
+        }
         for (const shape of shapes[i]) {
             let fits = 0;
             for (const [ox, oy] of clusterOffsets) {
                 if (fits >= CLUSTER_TRIES) break;
-                const pack = fits < CLUSTER_PACKS && shape.plots.length <= CLUSTER_PACK_MOST;
+                const pack = fits < (PREV ? 4 : CLUSTER_PACKS) && (PREV || shape.plots.length <= CLUSTER_PACK_MOST);
                 const spot = tryCluster(i, shape, Math.round(ox - shape.cx), Math.round(oy - shape.cy), pack, clear);
                 if (!spot) continue;
                 fits++;
@@ -218,7 +267,26 @@ export function layOut(pieces, options = {}) {
     // room, no later one of that shape will: they're skipped rather than searched for again.
     const noRoom = new Set();
     const shapeOf = i => (pieces[i].cluster ? null : JSON.stringify(pieces[i].members.map(m => [m.x, m.y, m.w, m.h, !!m.sensitive])));
+    if (options.pins) {
+        for (const [key, r] of Object.entries(options.pins)) {
+            const i = +key;
+            for (const shape of shapes[i]) {
+                const m0 = shape.members[0];
+                if (Math.abs(m0.w - r.w) > 1e-6 || Math.abs(m0.h - r.h) > 1e-6) continue;
+                const x = snap(r.x - m0.x), y = snap(r.y - m0.y);
+                const rects = shape.members.map(m => ({ x: m.x + x, y: m.y + y, w: m.w, h: m.h }));
+                CURG = 0;
+                if (!rects.every(rr => free(rr, i))) continue;
+                const cost = shape.members.reduce((sum, m) => sum + m.weight * centerDistance(m, x, y), 0);
+                const spot = { cost, x, y, shape, rects, sensitive: [] };
+                placed.set(i, spot);
+                occupy(i, spot);
+                break;
+            }
+        }
+    }
     for (const i of order) {
+        if (placed.has(i)) continue;
         const shape = shapeOf(i);
         const spot = shape !== null && noRoom.has(shape) ? null : place(i);
         if (!spot) {
@@ -333,13 +401,13 @@ function packPlots(plots, squares, allowed, free, buildings) {
     const order = plots.map((p, j) => j).sort((a, b) => plots[b].weight - plots[a].weight);
     // Every spot a plot of each size could take, nearest the Storage Unit first.
     const spots = new Map();
-    const spotsFor = (w, h) => {
-        const key = `${w}x${h}`;
+    const spotsFor = (w, h, fac) => {
+        const key = `${w}x${h}|${fac}`;
         if (!spots.has(key)) {
             const list = [];
             for (let x = snap(minX - w + STEP); x <= maxX - STEP + EPSILON; x += STEP) {
                 for (let y = snap(minY - h + STEP); y <= maxY - STEP + EPSILON; y += STEP) {
-                    list.push({ x, y, w, h, distance: dist(x + w / 2, y + h / 2) });
+                    list.push({ x, y, w, h, distance: dist(x + w / 2, y + h / 2) + (PREV ? (anchorCost(fac, w, h, x + w / 2, y + h / 2) ? 0 : -1000) : 0) });
                 }
             }
             spots.set(key, list.sort((a, b) => a.distance - b.distance));
@@ -348,7 +416,7 @@ function packPlots(plots, squares, allowed, free, buildings) {
     };
     for (const j of order) {
         const p = plots[j];
-        const r = spotsFor(p.w, p.h).find(r => allowed(r, p.zone) && !taken.some(t => overlaps(r, t)) && free(r));
+        const r = spotsFor(p.w, p.h, p.facility).find(r => allowed(r, p.zone) && !taken.some(t => overlaps(r, t)) && free(r));
         if (!r) return null;
         result[j] = { x: r.x, y: r.y, w: r.w, h: r.h };
         taken.push(result[j]);

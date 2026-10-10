@@ -13,6 +13,9 @@ const GENS = +(process.argv[5] || 2);
 const POLES = +(process.argv[6] || 12);
 const HUBN = +(process.argv[7] || 0);
 const GAPE = +(process.argv[8] || GAP);
+const PREVFILE = process.env.PREV || null;
+const MOVEC = +(process.env.MOVEC || 60);
+const prevL = PREVFILE ? JSON.parse(fs.readFileSync(PREVFILE)) : null;
 
 const inp = JSON.parse(fs.readFileSync(path.join(root, `lay_in_rv${lvl}.json`)));
 const cells = inp.cells;
@@ -69,7 +72,25 @@ function evaluate(out) {
 
 let best = null;
 let hubIdx = null;
-for (let iter = 0; iter < (HUBN ? 7 : 5); iter++) {
+if (prevL) {
+  stores = prevL.stores.map(r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 }));
+  hubIdx = prevL.hubIdx || null;
+  const prevMap = {};
+  prevL.items.filter(i => i.kind === 'piece').forEach(i => { const k = i.n + '|' + i.w + 'x' + i.h; (prevMap[k] = prevMap[k] || []).push({ x: i.x + i.w / 2, y: i.y + i.h / 2 }); });
+  const prevEnv = prevL.items.filter(i => i.kind === 'env').map(i => ({ x: i.x + i.w / 2, y: i.y + i.h / 2 }));
+  const hubs = hubIdx ? hubIdx.map(k => stores[k]).filter(Boolean) : null;
+  const pool = prevL.items.filter(i => i.kind === 'piece' || (i.kind === 'env' && i.group == null)).map(i => ({ ...i, used: false }));
+  const pins = {};
+  pieces.map((p, i) => ({ p, i })).filter(o => !o.p.cluster).sort((a, b) => (b.p.members[0].weight || 0) - (a.p.members[0].weight || 0)).forEach(({ p, i }) => {
+    const m = p.members[0];
+    const fit = q => !q.used && q.n === m.facility && ((q.w === m.w && q.h === m.h) || (q.w === m.h && q.h === m.w));
+    const q = pool.find(q => fit(q) && (q.item || '') === (m.item || m.crop || '')) || pool.find(fit);
+    if (q) { q.used = true; pins[i] = { x: q.x, y: q.y, w: q.w, h: q.h }; }
+  });
+  const out0 = layOut(pieces, { cells, storages: stores, gap: GAP, passes: 4, hubs, hubSet: [...EMODE], gapE: GAPE, prev: prevMap, prevEnv, moveCost: MOVEC, pins });
+  best = { out: out0, ev: evaluate(out0), stores: stores.map(s => ({ ...s })) };
+}
+for (let iter = 0; !prevL && iter < (HUBN ? 7 : 5); iter++) {
   stores = fixStores(stores);
   const t0 = Date.now();
   const hubs = HUBN && hubIdx ? hubIdx.map(k => stores[k]).filter(Boolean) : null;
@@ -137,11 +158,20 @@ for (let i = 0; i < singles.length; i++) for (let j = GENS > 1 ? i + 1 : i; j < 
   const v = [...u].reduce((s2, k) => s2 + val(targets[k]), 0);
   if (v > pv) { pv = v; pair = GENS > 1 ? [singles[i].c, singles[j].c] : [singles[i].c]; }
 }
+if (prevL && !process.env.POWER_FRESH && prevL.gens.every(freeRect)) pair = prevL.gens.map(g => ({ x: g.x, y: g.y, w: g.w, h: g.h }));
 (pair || []).forEach(g => { gens.push(g); occupied.push(g); const a = area(g, 11); areas.push({ ...a, src: 'gen' }); mark(a); });
+if (prevL && !process.env.POWER_FRESH) {
+  let added = true;
+  const pending = prevL.poles.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h }));
+  while (added) { added = false;
+    for (let k = 0; k < pending.length; k++) { const c = pending[k]; if (!c || !freeRect(c)) continue; const pa = area(c, 7);
+      if (!areas.some(a => ov(pa, a) > 0)) continue;
+      poles.push(c); occupied.push(c); areas.push({ ...pa, src: 'pole' }); mark(pa); pending[k] = null; added = true; } }
+}
 const connected = pa => areas.some(a => ov(pa, a) > 0);
 const distTo = (a, t) => { const dx = Math.max(0, t.x - (a.x + a.w), a.x - (t.x + t.w)); const dy = Math.max(0, t.y - (a.y + a.h), a.y - (t.y + t.h)); return Math.hypot(dx, dy); };
 const activeGain = pa => targets.reduce((s2, t, k) => s2 + (!powered.has(k) && t.weight > 0 && ov(pa, t) > 0 ? 100 + t.weight : 0), 0);
-for (let p = 0; p < POLES; p++) {
+for (let p = poles.length; p < POLES; p++) {
   const left = targets.filter((t, k) => !powered.has(k) && t.weight > 0);
   const cands = poleCandAll.filter(c => freeRect(c) && connected(area(c, 7)));
   if (!cands.length) break;
@@ -208,12 +238,34 @@ for (let k = 0; k < 6; k++) {
 }
 let freeCount = 0; for (let i = 0; i < W * H; i++) if (open[i] && !occ[i]) freeCount++;
 
+// ---------- what changes since the previous level ----------
+let diff = null;
+if (prevL) {
+  const same = (a, b) => Math.abs(a.x - b.x) < 0.05 && Math.abs(a.y - b.y) < 0.05 && a.n === b.n && ((a.w === b.w && a.h === b.h) || (a.w === b.h && a.h === b.w));
+  const prevItems = prevL.items.map(i => ({ ...i, used: false }));
+  const cnt = {}; prevL.items.forEach(i => { cnt[i.n] = (cnt[i.n] || 0) + 1; });
+  const now = {}; items.forEach(i => { now[i.n] = (now[i.n] || 0) + 1; });
+  items.forEach(it => {
+    const m = prevItems.find(p => !p.used && same(p, it));
+    if (m) { m.used = true; it.st0 = (it.kind === 'env' ? (m.mode !== it.mode ? 'reglage' : 'ok') : ((m.item || '') !== (it.item || '') ? 'replant' : 'ok')); it.was = m.item || m.mode || ''; }
+    else if (it.kind === 'env') {
+      const m2 = prevItems.find(p => !p.used && p.kind === 'env' && Math.abs(p.x + p.w / 2 - it.x - it.w / 2) < 0.05 && Math.abs(p.y + p.h / 2 - it.y - it.h / 2) < 0.05);
+      if (m2) { m2.used = true; it.st0 = 'remplace'; it.was = m2.n; } else it.st0 = 'move';
+    } else it.st0 = 'move';
+  });
+  // among the off-spot pieces of a type, the extra count is new, the rest moved
+  const extra = {}; Object.keys(now).forEach(n => { extra[n] = Math.max(0, now[n] - (cnt[n] || 0)); });
+  items.filter(i => i.st0 === 'move').sort((a, b) => (b.weight || 0) - (a.weight || 0)).forEach(i => { if (extra[i.n] > 0) { i.st0 = 'new'; extra[i.n]--; } });
+  const sum = {}; items.forEach(i => { sum[i.st0] = (sum[i.st0] || 0) + 1; });
+  const keptP = poles.filter(p => prevL.poles.some(q => Math.abs(q.x - p.x) < 0.05 && Math.abs(q.y - p.y) < 0.05)).length;
+  diff = { sum, polesKept: keptP, polesNew: poles.length - keptP, removed: prevItems.filter(p => !p.used && p.kind === 'piece' && !(now[p.n] >= (cnt[p.n] || 0))).length };
+}
 const refAvg = (() => { const m = /([\d.]+) tiles each/.exec(ref.summary || ''); return m ? +m[1] : null; })();
 const res = {
-  lvl: +lvl, K: stores.length, gap: GAP, gapE: GAPE, hubs: HUBN,
+  lvl: +lvl, K: stores.length, gap: GAP, gapE: GAPE, hubs: HUBN, hubIdx, diff, evolved: !!prevL,
   stores: storeRects, items, squares, gens, poles, areas, unpowered, powered: powered.size, targets: targets.length,
   walk, plazas, freeCount, plots: ref.plots,
   metrics: { weight: best.ev.w, avg: +best.ev.avg.toFixed(2), refAvg, unplaced: out.unplaced.map(i => pieces[i].cluster ? 'cluster' : pieces[i].members[0].facility) },
 };
-fs.writeFileSync(path.join(root, `multi_rv${lvl}_k${K}_g${GAP}_h${HUBN}_e${GAPE}.json`), JSON.stringify(res));
-console.log(JSON.stringify({ lvl, stores: stores.length, avg: res.metrics.avg, refAvg, unplaced: res.metrics.unplaced, powered: `${powered.size}/${targets.length}`, activeUnpowered: unpowered.filter(u=>!u.idle).length, gens: gens.length, poles: poles.length, plazas: plazas.map(p => p.w + 'x' + p.h), free: freeCount }));
+fs.writeFileSync(path.join(root, prevL ? `evo_rv${lvl}${process.env.POWER_FRESH ? '_pf' : ''}.json` : `multi_rv${lvl}_k${K}_g${GAP}_h${HUBN}_e${GAPE}.json`), JSON.stringify(res));
+console.log(JSON.stringify({ diff: diff && diff.sum, lvl, stores: stores.length, avg: res.metrics.avg, refAvg, unplaced: res.metrics.unplaced, powered: `${powered.size}/${targets.length}`, activeUnpowered: unpowered.filter(u=>!u.idle).length, gens: gens.length, poles: poles.length, plazas: plazas.map(p => p.w + 'x' + p.h), free: freeCount }));
