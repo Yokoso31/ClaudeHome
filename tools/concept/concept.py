@@ -181,19 +181,39 @@ for y in (39.5, 43.5, 47.5, 57.2):
     deco('40600066', 37.1, y); deco('40600066', 42.15, y)
 num(40, 59.4, 1)
 
-# ---------------- 2 · pond and bridge ----------------
-add('<path d="M27.6 52.2 Q28 50.6 30.5 50.7 L37.4 50.6 Q38 50.7 38 51.8 L38 54.6 Q38 55.4 37.2 55.4 L31 55.6 Q28.4 55.8 27.8 54.6 Z" class="water"/>', 14, 2)
-add('<path d="M42 52.4 Q42.1 51.3 43.5 51.4 Q46 51.2 46 53.4 Q46 55.6 43.8 55.5 Q42 55.5 42 54 Z" class="water"/>', 14, 2)
-for k in range(10):
-    used[('40700003', 14)] = used.get(('40700003', 14), 0) + 1
-used[('40700005', 14)] = used.get(('40700005', 14), 0) + 1
-for px, py in ((28.4, 50.6), (31.2, 55.6), (34.6, 50.4), (37.2, 55.7), (44.6, 51.1), (45.9, 54.6), (29.2, 55.3)):
-    add(blob(px, py, .32, 'pebble', 5, .3, int(px * 10)), 14, 3)
+# ---------------- 2 · dry stream, round pond and bridge ----------------
+# A kare-nagare: a winding bed of raked gravel and river stones that stands for water, laid with
+# 2 x 2 gravel floor tiles, rising from a real round pond and crossed by the stone bridge.
+STREAM = [(26, 52), (28, 52.5), (30, 53), (32, 53), (34, 52.5), (36, 52), (38, 52), (40, 52), (42, 52.5)]
+pts = [(x + 1, y + 1) for x, y in STREAM]
+d = 'M' + ' '.join(f'{f(px)} {f(py)}' for px, py in pts)
+add(f'<path d="{d}" class="stream-edge"/><path d="{d}" class="stream"/>', 14, 2)
+for x, y in STREAM:
+    used[('40100008', 14)] = used.get(('40100008', 14), 0) + 1
+    phys('Sol en gravier', x, y, 2, 2)
+for k, (px, py) in enumerate(pts[:-1]):
+    qx, qy = pts[k + 1]
+    for t in (.3, .75):
+        add(blob(px + (qx - px) * t + (.45 if k % 2 else -.45), py + (qy - py) * t + (.3 if k % 3 else -.35), .2 + .08 * (k % 3), 'pebble', 5, .3, k * 7 + int(t * 10)), 14, 3)
+T('z-stream', 'Rivière sèche', 'Lieux', None, '', '')
+def pond(x, y, phase=14):
+    """The game's round pond: grassy rim, stones, water lilies (2 x 2 on the shop sheet)."""
+    cx, cy = x + 1, y + 1
+    used[('40700003', phase)] = used.get(('40700003', phase), 0) + 1
+    phys('Bassin', x, y, 2, 2, phase)
+    j = JP['40700003']
+    T('jp40700003', j['fr'], 'Déco', ic_jp('40700003'), '2 × 2', f'Petit étang rond complet, avec son bord d\'herbe · {j["price"]} · {j["cf"]} de confort')
+    art = (shadow(cx, cy, 1) + f'<circle cx="{cx}" cy="{cy}" r="1.02" class="pond-rim"/><ellipse cx="{f(cx + .05)}" cy="{f(cy + .05)}" rx=".68" ry=".62" class="pond-w"/>'
+           f'<circle cx="{f(cx - .1)}" cy="{f(cy - .05)}" r=".2" class="lily"/><circle cx="{f(cx + .3)}" cy="{f(cy + .25)}" r=".11" class="lily"/><circle cx="{f(cx - .35)}" cy="{f(cy + .2)}" r=".13" class="lily"/>'
+           + blob(cx + .2, cy - .7, .26, 'pebble', 5, .3, int(x)) + blob(cx + .75, cy - .15, .16, 'pebble', 5, .3, int(y)) + blob(cx - .3, cy + .78, .14, 'pebble', 5, .3, 3)
+           + f'<circle cx="{f(cx - .45)}" cy="{f(cy - .62)}" r=".14" class="whitef"/>')
+    add(f'<g class="obj dc"{tag("jp40700003")}>{art}</g>', phase, 6)
+pond(44, 52.2)            # the source of the dry stream
 deco('40500003', 38.5, 50.5, rot=True, layer=7)
-for x, y in ((25.8, 50.4), (43.8, 48.6), (30.2, 56.4)):
+for x, y in ((23.9, 50.6), (43.8, 48.6), (30.6, 55.6)):
     deco('40300014', x, y)
-deco('40700017', 46.6, 56.2)
-num(34, 50, 2)
+deco('40700017', 46.6, 56.2); deco('40700016', 33.4, 50.6); deco('40700016', 35.6, 55.2)
+num(31, 50.2, 2)
 
 # ---------------- 3 · courtyard of the great tree ----------------
 rect(34, 25, 12, 12, 'url(#gravel)', layer=2, rx=.6)
@@ -212,6 +232,7 @@ for x, y in ((31.5, 30.5), (29.5, 31.6), (27.5, 32.7), (25.5, 33.8), (23.5, 34.9
     deco('40100006', x, y, layer=3)
 deco('40300014', 21.5, 26.6); deco('40300014', 29, 26.4); deco('40300014', 31.6, 34.6)
 deco('40300007', 23.6, 28.4)
+pond(27.6, 29)
 deco('40600065', 30.4, 28.4)
 deco('40700016', 27.6, 35.4); deco('40700016', 33, 28.6); deco('40700017', 20.6, 31.6)
 
@@ -343,7 +364,7 @@ def paddy(bx, by, crops, mode, phase=14):
         add(f'<g class="obj dev {mode}"{tag(DEVN[mode])}><rect x="{bx + 5.5}" y="{by + 5.5}" width="1" height="1" rx=".2"/><rect x="{bx + 1.5}" y="{by + 1.5}" width="9" height="9" class="sq tech"/></g>', phase, 7)
     deco('40600066', bx + 4.5, by + 4.5, phase)
 phys('rizière 1', 4, 38, 12, 12); phys('rizière 2', 20, 38, 12, 12); phys('verger 1', 46, 37, 16, 16); phys('verger 2', 64, 37, 16, 16)
-phys('grand arbre', 37, 28, 6, 6); phys('étang', 28, 50.6, 10, 5); phys('étang', 42, 51.3, 4, 4.3)
+phys('grand arbre', 37, 28, 6, 6)
 paddy(4, 38, ['grape'] * 29 + ['quick_rice'], 'sun')
 paddy(20, 38, [], None)
 add('<text x="26" y="44.4" class="lbl soft2" font-size=".75" text-anchor="middle">en réserve</text>', 14, 9)
@@ -433,9 +454,9 @@ deco('40300014', 63.4, 54.2); deco('40300014', 72.6, 54.4)
 # ---------------- places of the garden: tap to identify, names on demand ----------------
 ZONES = [
     ('z-allee', 'Allée des lanternes', 'Entrée du jardin : dalles moussues bordées de lampes en pierre.', [(38, 37, 4, 23)], 14, (40, 46.2)),
-    ('z-etang', 'Étang et pont', '10 bassins et un bassin incurvé, franchis par le pont en pierre.', [(28, 50.6, 10, 5), (42, 51.3, 4, 4.3)], 14, (32.6, 53.4)),
+    ('z-stream', 'Rivière sèche et pont', 'Lit de gravier ratissé et de galets qui évoque l\'eau, sorti du bassin rond et enjambé par le pont en pierre.', [(26, 52, 18, 3)], 14, (31.6, 56.9)),
     ('z-cour', 'Cour du grand arbre', 'Cour de gravier de 12 × 12 avec 4 grandes lampes et 4 haies coniques.', [(34, 25, 12, 12)], 14, (40, 36.3)),
-    ('z-mousse', 'Jardin de mousse', 'Pas japonais, érables rouges, un pin et une lampe.', [(20, 25.5, 14, 11.5)], 14, (26.6, 30.2)),
+    ('z-mousse', 'Jardin de mousse', 'Pas japonais, érables rouges, un pin et une lampe.', [(20, 25.5, 14, 11.5)], 14, (24.4, 25.3)),
     ('z-the', 'Jardin de thé', 'Clos de cordes, glycine, mortier, théière et pas japonais.', [(47, 26, 11, 10)], 14, (52.5, 29)),
     ('z-rue', 'Rue des artisans', 'Rue pavée : les ateliers ont leur façade dessus, les plus fréquentés près des kiosques 1 et 2.', [(1, 16.5, 59, 3), (38, 19.5, 4, 5.5)], 14, (30, 18.35)),
     ('z-carriere', 'Carrière', 'Bloc de 12 emplacements de mines 5 × 5 : 7 au VR 14, les autres pour la suite.', [(60, 15, 20, 15)], 14, (70, 29.3)),
@@ -468,7 +489,7 @@ for x, y, txt, sz, ph in NAMES:
 def ov(a, b):
     return min(a['x'] + a['w'], b['x'] + b['w']) - max(a['x'], b['x']) > 1e-6 and min(a['y'] + a['h'], b['y'] + b['h']) - max(a['y'], b['y']) > 1e-6
 INSIDE_OK = {('rizière 1', "Lampe en pierre lumineuse\u00a0II"), ('rizière 2', "Lampe en pierre lumineuse\u00a0II"), ('verger 1', 'Figurine sculptée en pierre'), ('verger 1', 'Arbustes en fleurs'),
-             ('verger 2', "Lampe en pierre lumineuse\u00a0II"), ('verger 2', 'Arbustes en fleurs'), ('verger 2', "Souche d'arbre recouverte de mousse"), ('étang', 'Pont en pierre'), ('Clôture en bois et corde', 'Liane à fleurs blanches')}
+             ('verger 2', "Lampe en pierre lumineuse\u00a0II"), ('verger 2', 'Arbustes en fleurs'), ('verger 2', "Souche d'arbre recouverte de mousse"),  ('Sol en gravier', 'Pont en pierre'), ('Clôture en bois et corde', 'Liane à fleurs blanches')}
 bad = []
 for k, (n1, r1, p1) in enumerate(PHYS):
     for n2, r2, p2 in PHYS[k + 1:]:
