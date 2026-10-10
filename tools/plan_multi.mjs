@@ -17,10 +17,11 @@ const PREVFILE = process.env.PREV || null;
 const MOVEC = +(process.env.MOVEC || 60);
 const prevL = PREVFILE ? JSON.parse(fs.readFileSync(PREVFILE)) : null;
 
-const inp = JSON.parse(fs.readFileSync(path.join(root, `lay_in_rv${lvl}.json`)));
+const PFX = process.env.PREFIX || '';
+const inp = JSON.parse(fs.readFileSync(path.join(root, `${PFX}lay_in_rv${lvl}.json`)));
 const cells = inp.cells;
 const pieces = inp.pieces;
-const ref = JSON.parse(fs.readFileSync(path.join(root, fs.existsSync(path.join(root, `ax2_data_rv${lvl}.json`)) ? `ax2_data_rv${lvl}.json` : `ax_data_rv${lvl}.json`)));
+const ref = JSON.parse(fs.readFileSync(path.join(root, PFX ? `${PFX}data_rv${lvl}.json` : (fs.existsSync(path.join(root, `ax2_data_rv${lvl}.json`)) ? `ax2_data_rv${lvl}.json` : `ax_data_rv${lvl}.json`))));
 
 const EMODE = new Set(['Aniipod Maker', 'Blazing Stove', 'Bouncy Brew Keg', 'Carousel Mill', 'Chimney Kiln', 'Claw Game Cooker', 'Crafting Table', 'Dance Pad Polisher', 'Joy Wheel Loom', 'Jukebox Dryer', 'Mine', 'Phonolfactory Table', 'Pickling Jar', 'Simmering Pot', 'Well', 'Woodworking Bench']);
 const ov = (a, b) => { const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x); const h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y); return w > 1e-6 && h > 1e-6 ? w * h : 0; };
@@ -267,5 +268,5 @@ const res = {
   walk, plazas, freeCount, plots: ref.plots,
   metrics: { weight: best.ev.w, avg: +best.ev.avg.toFixed(2), refAvg, unplaced: out.unplaced.map(i => pieces[i].cluster ? 'cluster' : pieces[i].members[0].facility) },
 };
-fs.writeFileSync(path.join(root, prevL ? `evo_rv${lvl}${process.env.POWER_FRESH ? '_pf' : ''}.json` : `multi_rv${lvl}_k${K}_g${GAP}_h${HUBN}_e${GAPE}.json`), JSON.stringify(res));
+fs.writeFileSync(path.join(root, prevL ? `${PFX}evo_rv${lvl}${process.env.POWER_FRESH ? '_pf' : ''}.json` : `${PFX}multi_rv${lvl}_k${K}_g${GAP}_h${HUBN}_e${GAPE}.json`), JSON.stringify(res));
 console.log(JSON.stringify({ diff: diff && diff.sum, lvl, stores: stores.length, avg: res.metrics.avg, refAvg, unplaced: res.metrics.unplaced, powered: `${powered.size}/${targets.length}`, activeUnpowered: unpowered.filter(u=>!u.idle).length, gens: gens.length, poles: poles.length, plazas: plazas.map(p => p.w + 'x' + p.h), free: freeCount }));
