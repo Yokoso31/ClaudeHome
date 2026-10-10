@@ -121,6 +121,9 @@ export function layOut(pieces, options = {}) {
         if (spot.squares) squares.set(key, spot.squares);
         if (spot.sensitive?.length) sensitive.set(key, spot.sensitive);
     };
+    // climate squares and covered crops fixed outside the planner (blocks kept on the player's spots)
+    if (options.fixedSquares && options.fixedSquares.length) squares.set('fixed-squares', options.fixedSquares);
+    if (options.fixedSensitive && options.fixedSensitive.length) sensitive.set('fixed-crops', options.fixedSensitive);
     const vacate = key => {
         (placedRects.get(key) || []).forEach(r => cellsOf(r).forEach(c => grid.get(c)?.delete(key)));
         placedRects.delete(key);
@@ -268,7 +271,8 @@ export function layOut(pieces, options = {}) {
     const noRoom = new Set();
     const shapeOf = i => (pieces[i].cluster ? null : JSON.stringify(pieces[i].members.map(m => [m.x, m.y, m.w, m.h, !!m.sensitive])));
     if (options.pins) {
-        for (const [key, r] of Object.entries(options.pins)) {
+        const pinOrder = Object.entries(options.pins).sort((a, b) => (+!!pieces[+b[0]].members?.[0]?.pinAt) - (+!!pieces[+a[0]].members?.[0]?.pinAt));
+        for (const [key, r] of pinOrder) {
             const i = +key;
             for (const shape of shapes[i]) {
                 const m0 = shape.members[0];
@@ -302,6 +306,7 @@ export function layOut(pieces, options = {}) {
         let moved = false;
         for (const i of order) {
             if (!placed.has(i)) continue;
+            if (options.freezePins && !pieces[i].cluster && pieces[i].members[0].pinAt && options.pins && options.pins[i]) continue; // fixed spot
             vacate(i);
             const spot = place(i);
             if (spot && spot.cost < placed.get(i).cost - 1e-9) {

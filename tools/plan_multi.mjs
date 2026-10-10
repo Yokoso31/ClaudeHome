@@ -83,14 +83,16 @@ if (prevL) {
   const hubs = hubIdx ? hubIdx.map(k => stores[k]).filter(Boolean) : null;
   const pool = prevL.items.filter(i => i.kind === 'piece' || (i.kind === 'env' && i.group == null)).map(i => ({ ...i, used: false }));
   const pins = {};
-  pieces.map((p, i) => ({ p, i })).filter(o => !o.p.cluster).sort((a, b) => (b.p.members[0].weight || 0) - (a.p.members[0].weight || 0)).forEach(({ p, i }) => {
+  pieces.map((p, i) => ({ p, i })).filter(o => !o.p.cluster).sort((a, b) => (+!!b.p.members[0].pinAt - +!!a.p.members[0].pinAt) || (b.p.members[0].weight || 0) - (a.p.members[0].weight || 0)).forEach(({ p, i }) => {
     const m = p.members[0];
+    if (m.pinAt) { pins[i] = { x: m.pinAt.x, y: m.pinAt.y, w: m.w, h: m.h }; return; }
     const fit = q => !q.used && q.n === m.facility && ((q.w === m.w && q.h === m.h) || (q.w === m.h && q.h === m.w));
     if (process.env.NOPIN && !process.env.NOPIN.split(',').includes('*') && !FIXED.has(m.facility) && !(process.env.PIN_IDLE && !(m.weight > 0))) return;
-    const q = pool.find(q => fit(q) && (q.item || '') === (m.item || m.crop || '')) || pool.find(fit);
+    const q = pool.find(q => fit(q) && (q.item || '') === (m.item || m.crop || '')) || pool.find(q => fit(q) && !q.reserved) || (process.env.NOSTEAL ? null : pool.find(fit));
     if (q) { q.used = true; pins[i] = { x: q.x, y: q.y, w: q.w, h: q.h }; }
   });
-  const out0 = layOut(pieces, { cells, storages: stores, gap: GAP, passes: 4, hubs, hubSet: [...EMODE], gapE: GAPE, prev: prevMap, prevEnv, moveCost: MOVEC, pins });
+  const out0 = layOut(pieces, { cells, storages: stores, gap: GAP, passes: 4, hubs, hubSet: [...EMODE], gapE: GAPE, prev: prevMap, prevEnv, moveCost: MOVEC, pins,
+    fixedSquares: prevL.fixedSquares || null, fixedSensitive: prevL.fixedSensitive || null, freezePins: !!process.env.PINFREEZE });
   best = { out: out0, ev: evaluate(out0), stores: stores.map(s => ({ ...s })) };
 }
 for (let iter = 0; !prevL && iter < (HUBN ? 7 : 5); iter++) {
@@ -129,7 +131,11 @@ out.pieces.forEach((p, i) => {
         squares.push({ x: m.x + m.w / 2 - 4.5, y: m.y + m.h / 2 - 4.5, w: 9, h: 9, n: m.facility, mode: m.mode, group: i });
       } else items.push({ kind: 'piece', n: m.facility, item: m.crop || m.item || '', x: m.x, y: m.y, w: m.w, h: m.h, weight: m.weight || 0, group: i });
     });
-  } else p.members.forEach(m => items.push({ kind: m.facility === 'Sunlamp' || m.facility === 'Heat Furnace' || m.facility === 'Cooling Unit' ? 'env' : 'piece', n: m.facility, item: m.item || m.crop || '', mode: m.mode, x: m.x, y: m.y, w: m.w, h: m.h, weight: m.weight || 0, idle: !m.weight }));
+  } else p.members.forEach(m => {
+    const env = m.facility === 'Sunlamp' || m.facility === 'Heat Furnace' || m.facility === 'Cooling Unit';
+    items.push({ kind: env ? 'env' : 'piece', n: m.facility, item: m.item || m.crop || '', mode: m.mode, x: m.x, y: m.y, w: m.w, h: m.h, weight: m.weight || 0, idle: !m.weight });
+    if (env && m.mode) squares.push({ x: m.x + m.w / 2 - 4.5, y: m.y + m.h / 2 - 4.5, w: 9, h: 9, n: m.facility, mode: m.mode, group: null });
+  });
 });
 items.forEach(it => {
   if (it.kind !== 'piece') return;
