@@ -3,7 +3,7 @@
 TW = [t for t in GL['terraces'] if t['x'] < 40]
 TE = [t for t in GL['terraces'] if t['x'] >= 40]
 ZONES = [
-    ('z-allee', 'Allée des lanternes', 'Entrée du jardin : dalles moussues bordées de lampes en pierre.', [(38, 37, 4, 23)], 14, (40, 46.2)),
+    ('z-allee', 'Allée des lanternes', 'L\'entrée du Foyer, en bas : dalles moussues bordées de lampes en pierre, jusqu\'à la cour du grand arbre.', [(38, 37, 4, 23)], 14, (40, 46.2)),
     ('z-stream', 'Rivière sèche et pont', 'Lit de gravier ratissé et de galets qui évoque l\'eau, né du bassin rond et enjambé par le pont en pierre.', [(26, 52, 18, 3)], 14, (31.6, 56.9)),
     ('z-cour', 'Cour du grand arbre', 'Cour de gravier de 12 × 12 avec 4 grandes lampes et 4 haies coniques.', [(34, 25, 12, 12)], 14, (40, 36.3)),
     ('z-mousse', 'Jardin de mousse', 'Bassin rond, érables rouges et pas japonais le long de la cour.', [(26, 25.5, 8, 11.5)], 14, (30, 25.1)),

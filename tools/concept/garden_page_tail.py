@@ -2,7 +2,7 @@
 import sys; sys.path.insert(0, S)
 from garden_plan import QUARRY as QSLOTS, FP as FP_MACH
 FP_ALL = set(FP_MACH)
-phys('grand arbre', 37, 28, 6, 6)
+phys('grand arbre', 36, 27, 8, 8)   # base 5 x 5 like the Nimbus Bed, set to size x1.6
 
 # ---------------- moss garden, along the courtyard ----------------
 for x, y in ((31.5, 30.5), (29.5, 31.6), (27.5, 32.7)):
@@ -225,6 +225,12 @@ for L in LEVELS:
         ids += 1
         out.append(f'<g class="obj pole"{tag("Crackle Power Pole")} data-id="{L}-{ids}"><rect x="{p["x"]}" y="{p["y"]}" width="1.5" height="1.5" rx=".3"/><circle cx="{p["x"] + .75}" cy="{p["y"] + .75}" r=".3"/></g>')
         out.append(f'<rect x="{f(p["x"] - 2.75)}" y="{f(p["y"] - 2.75)}" width="7" height="7" rx=".4" class="pwa tech"/>')
+    if lv.get('bonus'):
+        T('bonuspole', 'Poteau en plus (module VR 16)', 'Climat et énergie', ic_fac('Crackle Power Pole'), '1.5 × 1.5', 'À poser seulement si le module électrique niveau 3 augmente ta limite de poteaux, dans l\'ordre des numéros.')
+    for k, p in enumerate(lv.get('bonus', [])):
+        ids += 1
+        out.append(f'<g class="obj pole bonus"{tag("bonuspole")} data-id="{L}-{ids}"><rect x="{p["x"]}" y="{p["y"]}" width="1.5" height="1.5" rx=".3"/><text x="{f(p["x"] + .75)}" y="{f(p["y"] + 1.08)}" text-anchor="middle" font-size=".9">+{k + 1}</text></g>')
+        out.append(f'<rect x="{f(p["x"] - 2.75)}" y="{f(p["y"] - 2.75)}" width="7" height="7" rx=".4" class="pwa tech bonus"/>')
     LV[L] = '\n'.join(out)
     blocks = [b for b in rows['blocks'].values()]
     TAB[L] = {
@@ -234,10 +240,10 @@ for L in LEVELS:
         'free': sorted(rows['free'].values(), key=lambda c: -c['n']),
         'quarry': list(rows['quarry'].values()), 'wells': list(rows['wells'].values()), 'pav': rows['pav'],
         'avg': lv['avg'], 'powered': lv['powered'], 'extra': lv['extra'],
-        'poles': len(lv['poles']), 'gens': len(lv['gens']),
+        'poles': len(lv['poles']), 'gens': len(lv['gens']), 'curve': lv.get('curve', []),
     }
     # overlaps between the garden's fixed decor and this level's production
-    prod = [dict(n=it['n'], x=it['x'], y=it['y'], w=it['w'], h=it['h']) for it in lv['items']] + [dict(n='générateur', **g) for g in lv['gens']] + [dict(n='poteau', **p) for p in lv['poles']]
+    prod = [dict(n=it['n'], x=it['x'], y=it['y'], w=it['w'], h=it['h']) for it in lv['items']] + [dict(n='générateur', **g) for g in lv['gens']] + [dict(n='poteau', **p) for p in lv['poles'] + lv.get('bonus', [])]
     vis = lambda ph: ph == 14 or (isinstance(ph, int) and L >= ph) or (ph == 'ph16 until19' and 16 <= L <= 19)
     clash = [(a['n'], n2) for a in prod for (n2, r, ph) in PHYS if vis(ph) and ovr(a, r)]
     clash += [(a['n'], cn) for a in prod for cn, cr in CLEAR if ovr(a, cr)]

@@ -247,6 +247,39 @@ def power_greedy(items, occupied, lvl, poles_n=12):
     return gens, poles, areas, len(powered), len(targets)
 
 
+def more_poles(items, occupied, lvl, gens, poles, extra_n=8):
+    """The power module of RV 16 raises the pole limit by an unknown amount: the next poles to add,
+    in order, each touching the network, with the machines powered after each one."""
+    targets = [i for i in items if i['n'] in EMODE and i.get('weight', 0) > 0]
+    inside = lambda r: 0 <= r['x'] and 0 <= r['y'] and r['x'] + r['w'] <= 80 and r['y'] + r['h'] <= 60 and plot_open(r, lvl)
+    occ = list(occupied) + list(gens) + list(poles)
+    area = lambda p, s: {'x': p['x'] + p['w'] / 2 - s / 2, 'y': p['y'] + p['h'] / 2 - s / 2, 'w': s, 'h': s}
+    areas = [area(g, 11) for g in gens] + [area(p, 7) for p in poles]
+    powered = {k for k, t in enumerate(targets) if any(ov(a, t) for a in areas)}
+    powered0 = set(powered)
+    gain = lambda a: sum((100 + t['weight']) for k, t in enumerate(targets) if k not in powered and ov(a, t))
+    pc = [{'x': x / 2, 'y': y / 2, 'w': 1.5, 'h': 1.5} for x in range(0, 158) for y in range(0, 118)]
+    pc = [c for c in pc if inside(c) and not any(ov(c, o) for o in occ)]
+    bonus, curve = [], []
+    for _ in range(extra_n):
+        if len(powered) == len(targets):
+            break
+        conn = [c for c in pc if not any(ov(c, q) for q in bonus) and any(ov(area(c, 7), a) for a in areas)]
+        if not conn:
+            break
+        pick = max(conn, key=lambda c: gain(area(c, 7)))
+        if gain(area(pick, 7)) == 0:   # a stepping stone towards the nearest machine still dark
+            left = [t for k, t in enumerate(targets) if k not in powered]
+            pick = min(conn, key=lambda c: min(math.dist(cen(area(c, 7)), cen(t)) for t in left))
+        a = area(pick, 7)
+        bonus.append(pick); areas.append(a)
+        powered |= {k for k, t in enumerate(targets) if ov(a, t)}
+        curve.append(len(powered))
+    while curve and (len(curve) == 1 and curve[0] == len(powered0) or len(curve) > 1 and curve[-1] == curve[-2]):
+        bonus.pop(); curve.pop()   # stepping stones that lead nowhere are dropped
+    return bonus, curve
+
+
 def regularize(out, L, cells):
     """Farms and woodlands in straight rows: for each climate building, its pieces are put back on a grid of their size
     around it (the grid phase that holds them best, nearest cells first); then the farms that need
@@ -378,6 +411,7 @@ def main():
         occupied += [{'x': x, 'y': y, 'w': 2, 'h': 2} for x, y in HATCH]
         r1 = power(items, occupied, L); r2 = power_greedy(items, occupied, L)
         gens, poles, areas, pw, tg = max((r1, r2), key=lambda r: r[3])
+        bonus, curve = more_poles(items, occupied, L, gens, poles) if L >= 16 else ([], [])
         # checks
         probs = climate({'items': items}, LAY[L])[0]
         allr = [dict(n=i['n'], x=i['x'], y=i['y'], w=i['w'], h=i['h']) for i in items] + [dict(n='kiosk', x=x, y=y, w=2, h=2) for x, y in KIOSK.values()] + [dict(n='gen', **g) for g in gens] + [dict(n='pole', **p) for p in poles]
@@ -386,9 +420,9 @@ def main():
         stw = [cen({'x': x, 'y': y, 'w': 2, 'h': 2}) for x, y in KIOSK.values()]
         act = [i for i in items if i['kind'] == 'piece' and (i.get('weight') or 0) > 0]
         avg = sum(i['weight'] * min(math.dist(cen(i), s) for s in stw) for i in act) / sum(i['weight'] for i in act)
-        levels[L] = {'extra': key[-1], 'items': items, 'squares': squares, 'gens': gens, 'poles': poles, 'areas': areas, 'powered': [pw, tg], 'avg': round(avg, 2),
+        levels[L] = {'extra': key[-1], 'items': items, 'squares': squares, 'gens': gens, 'poles': poles, 'areas': areas, 'powered': [pw, tg], 'bonus': bonus, 'curve': curve, 'avg': round(avg, 2),
                      'climateMiss': probs, 'overlaps': bad, 'unplaced': out['metrics']['unplaced'], 'others': others}
-        print(f'RV{L}: items {len(items)}, walk {avg:.2f}, power {pw}/{tg}, climate problems {probs}, overlaps {bad[:6]}, unplaced {out["metrics"]["unplaced"]}', flush=True)
+        print(f'RV{L}: items {len(items)}, walk {avg:.2f}, power {pw}/{tg} bonus {curve}, climate problems {probs}, overlaps {bad[:6]}, unplaced {out["metrics"]["unplaced"]}', flush=True)
         prev_items = [it for it in out['items']]
     json.dump({'levels': levels, 'lots': [{'n': i['n'], 'k': i['k'], 'lot': i['lot'], 'w': {L: i['w'][L] for L in LEVELS}} for i in inst], 'kiosks': KIOSK,
                'terraces': TERRACES, 'terrNE': TERR_NE, 'extra': EXTRA, 'reserve': reserve}, open(os.path.join(S, 'garden_levels.json'), 'w'))

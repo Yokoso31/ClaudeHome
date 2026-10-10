@@ -156,6 +156,7 @@ svg[data-lv="14"] .lv:not([data-lv="14"]),svg[data-lv="15"] .lv:not([data-lv="15
 .pd{fill:#7A6243;stroke:#5E4A31;stroke-width:.06}
 .maplet{fill:#D9662F}.maplet-f{fill:#F2A15A}.cocoa{fill:#5F8A36}.cocoa-f{fill:#8A5A2B}.oflower{fill:#5E9A4E}.oflower-f{fill:#FFFFFF}.citrus-f{fill:#F2D74A}
 .pole rect{fill:#CDBDFB;stroke:#7E63D6;stroke-width:.08}.pole circle{fill:#7E63D6}
+.pole.bonus rect{fill:#F4F1FF;stroke-dasharray:.25 .18;stroke-width:.1}.pole.bonus text{fill:#7E63D6;font-weight:700;font-family:'IBM Plex Mono',monospace}.pwa.bonus{stroke-dasharray:.4 .3}
 .pwa{fill:#7E63D6;fill-opacity:.06;stroke:#7E63D6;stroke-width:.08;stroke-dasharray:.4 .3}
 .kno{display:none}svg.tech-on .kno{display:inline}
 
@@ -301,17 +302,17 @@ ol{margin:0;padding-left:20px}
       <h2>Beau et productif</h2>
       <p><b>Production.</b> À chaque palier, du VR 14 au VR 20, le jardin loge exactement le plan de production calculé pour ton équipe. Toutes les machines ont leur place, et chaque culture a son climat (lampe, fournaise ou climatisation, réglés comme indiqué dans « Quoi produire »).</p>
       <p><b>Marche des porteurs.</b> <span id="walk"></span></p>
-      <p><b>Électricité.</b> Avec 2 générateurs et 12 poteaux, la plupart des machines actives sont alimentées (détail par palier dans « Quoi produire »). Les autres produisent quand même, sans le mode électrique.</p>
+      <p><b>Électricité.</b> Avec 2 générateurs et 12 poteaux, la plupart des machines actives sont alimentées (détail par palier dans « Quoi produire »). Les autres produisent quand même, sans le mode électrique. Au VR 16, quatre poteaux de plus suffiraient à tout alimenter.</p>
       <p><b>Ce qui change entre paliers.</b> Les machines, la carrière et les pavillons restent en place. Dans les terrasses, on règle les appareils et on replante ; quelques champs et pépinières bougent quand les cultures changent.</p>
     </div>
     <div class="note">
-      <div class="eyebrow">À valider avec toi</div>
-      <h2>Avant les étapes de chantier</h2>
+      <div class="eyebrow">Tes réponses, prises en compte</div>
+      <h2>Ce qui est calé</h2>
       <ol class="qs">
-        <li><b>L'entrée.</b> Est-ce que tu arrives bien en bas au centre, là où part ton allée de pierre actuelle ?</li>
-        <li><b>Le grand arbre.</b> Quelle taille fait-il au sol ? Une capture vue du dessus avec la grille suffit.</li>
-        <li><b>Le bassin rond.</b> Le magasin le donne en 2 × 2 cases, il a l'air plus grand sur ta capture. Combien de cases occupe-t-il en mode construction ?</li>
-        <li><b>L'électricité.</b> Le module électrique du VR 16 permet-il plus de 12 poteaux ? Si oui, combien ?</li>
+        <li><b>L'entrée.</b> En bas : l'allée des lanternes part de là et monte jusqu'à la cour du grand arbre.</li>
+        <li><b>Le grand arbre.</b> 5 × 5 de base, comme le Lit de Cumulaine. Règle sa taille vers ×1,6 (8 × 8 au sol) : il remplit la cour sans toucher les 4 lampes ni les 4 haies.</li>
+        <li><b>Les bassins ronds.</b> 2 × 2, comme un champ. Ils sont placés en taille de base ; tu peux les agrandir un peu tant qu'ils ne mordent pas sur les dalles autour.</li>
+        <li><b>L'électricité.</b> Le module niveau 3 (VR 16) augmente la limite de poteaux sans dire de combien. Le plan garde 12 poteaux et montre en pointillés les poteaux en plus, numérotés +1, +2… : pose-les dans cet ordre, autant que ta nouvelle limite le permet.</li>
       </ol>
     </div>
   </section>
@@ -389,7 +390,7 @@ ol{margin:0;padding-left:20px}
     if(t.free.length) h+='<div class="pz"><h3>Terrasses : sans climat</h3><p class="sub">Ces cultures poussent n\'importe où dans les terrasses.</p>'+t.free.map(function(c){ return row(c.ids,c.ic,c.n+" × "+c.fac,"Planter : "+c.what,""); }).join("")+'</div>';
     h+='<div class="pz"><h3>Carrière et puits</h3>'+t.quarry.map(function(q){ return row(q.ids,"Mine",q.ids.length+" × Mine","Produire : "+q.what,""); }).join("")+t.wells.map(function(q){ return row(q.ids,"Well",q.ids.length+" × Puits","Produire : "+q.what,""); }).join("")+'</div>';
     h+='<div class="pz"><h3>Pavillons</h3>'+t.pav.map(function(p){ return row([p.id],p.ic,p.title,(p.what?"Produire : "+p.what:"À l'arrêt")+(p.mode?" · climat "+p.mode:""),"",!p.what); }).join("")+'</div>';
-    h+='<div class="pz"><h3>Électricité</h3><p class="sub">'+t.gens+' générateurs (un Aniimo Foudre chacun) et '+t.poles+' poteaux : '+t.powered[0]+' machines actives alimentées sur '+t.powered[1]+'. Vue technique pour voir les zones.</p></div>';
+    h+='<div class="pz"><h3>Électricité</h3><p class="sub">'+t.gens+' générateurs (un Aniimo Foudre chacun) et '+t.poles+' poteaux : '+t.powered[0]+' machines actives alimentées sur '+t.powered[1]+'. Vue technique pour voir les zones.</p>'+(t.curve.length?'<p class="sub">Si le module VR 16 te donne des poteaux en plus, pose les poteaux en pointillés dans l\'ordre : '+t.curve.map(function(n,k){ return '+'+(k+1)+' → '+n+'/'+t.powered[1]; }).join(", ")+'.</p>':'')+'</div>';
     document.getElementById("prodgrid").innerHTML=h;
     document.querySelectorAll(".pr").forEach(function(b){ b.addEventListener("click",function(){ var ids=b.dataset.ids.split(","); hlKey=null; hlIds=(hlIds&&hlIds.join(",")===b.dataset.ids)?null:ids; applyHl();
       if(hlIds) document.querySelector(".sheet").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }); });

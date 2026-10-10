@@ -202,7 +202,7 @@ def pond(x, y, phase=14):
     used[('40700003', phase)] = used.get(('40700003', phase), 0) + 1
     phys('Bassin', x, y, 2, 2, phase)
     j = JP['40700003']
-    T('jp40700003', j['fr'], 'Déco', ic_jp('40700003'), '2 × 2', f'Petit étang rond complet, avec son bord d\'herbe · {j["price"]} · {j["cf"]} de confort')
+    T('jp40700003', j['fr'], 'Déco', ic_jp('40700003'), '2 × 2', f'Petit étang rond complet, avec son bord d\'herbe. 2 × 2 comme un champ, agrandissable jusqu\'à ×3 ; ici en taille de base · {j["price"]} · {j["cf"]} de confort')
     art = (shadow(cx, cy, 1) + f'<circle cx="{cx}" cy="{cy}" r="1.02" class="pond-rim"/><ellipse cx="{f(cx + .05)}" cy="{f(cy + .05)}" rx=".68" ry=".62" class="pond-w"/>'
            f'<circle cx="{f(cx - .1)}" cy="{f(cy - .05)}" r=".2" class="lily"/><circle cx="{f(cx + .3)}" cy="{f(cy + .25)}" r=".11" class="lily"/><circle cx="{f(cx - .35)}" cy="{f(cy + .2)}" r=".13" class="lily"/>'
            + blob(cx + .2, cy - .7, .26, 'pebble', 5, .3, int(x)) + blob(cx + .75, cy - .15, .16, 'pebble', 5, .3, int(y)) + blob(cx - .3, cy + .78, .14, 'pebble', 5, .3, 3)
@@ -218,7 +218,7 @@ num(31, 50.2, 2)
 # ---------------- 3 · courtyard of the great tree ----------------
 rect(34, 25, 12, 12, 'url(#gravel)', layer=2, rx=.6)
 add('<circle cx="40" cy="31" r="5.3" class="ring"/><circle cx="40" cy="31" r="5.8" class="ring"/>', 14, 3)
-T('bigtree', 'Grand arbre violet', 'Lieux', None, 'à confirmer', 'Ton grand arbre actuel, déplacé au centre de la cour. Sa taille au sol reste à mesurer.')
+T('bigtree', 'Grand arbre violet', 'Lieux', None, '8 × 8', 'Ton grand arbre actuel, déplacé au centre de la cour. De base il fait 5 × 5 comme le Lit de Cumulaine : avec « Taille », règle-le vers ×1,6 pour qu\'il remplisse la cour sans toucher les lampes ni les haies.')
 add(f'<g class="obj bigtree"{tag("bigtree")}>' + shadow(40, 31, 4) +
     blob(40, 31, 4.3, 'wis', 12, .14, 3) + blob(38.6, 29.9, 2.3, 'wis-l', 8, .2, 4) + blob(41.8, 32.2, 2.2, 'wis-l', 8, .2, 5) + blob(40.6, 29.2, 1.4, 'wis-ll', 7, .2, 6) + '</g>', 14, 8)
 for x, y in ((34.4, 25.4), (43.85, 25.4), (34.4, 35.1), (43.85, 35.1)):
