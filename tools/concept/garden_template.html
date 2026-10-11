@@ -929,14 +929,15 @@ ol{margin:0;padding-left:20px}
     h+='<div class="bc"><h3>Pièces à obtenir en plus</h3>'+(B["new"].length?'<ul>'+B["new"].map(function(d){ return '<li>'+pic(d.ic,"ci",d.n)+'<span>'+d.k+' × '+esc(d.n)+'</span></li>'; }).join("")+'</ul><small style="color:var(--muted)">Par rapport à ce que tu as déjà posé ; à fabriquer ou sortir de l\'inventaire.</small>':'<small style="color:var(--muted)">Rien : tu as déjà tout.</small>')+'</div>';
     g.innerHTML=h+'</div>';
   }
+  function sg(n){ return n>0?"+"+fmt(n):n<0?"−"+fmt(-n):"0"; }
   function renderDesign(){
     var g=document.getElementById("designgrid"), X=D.design, c=X[cur];
     var rows=D.levels.map(function(L){ var x=X[L], extra=x.trips*(x.garden-x.plan);
-      return '<tr'+(L===cur?' class="cur"':'')+'><td>VR '+L+'</td><td>'+fmt(x.trips)+'</td><td>'+f1(x.plan)+'</td><td>'+f1(x.garden)+'</td><td>+'+Math.round((x.garden/x.plan-1)*100)+' %</td><td>+'+fmt(extra)+'</td></tr>'; }).join("");
-    g.innerHTML='<div class="bc goal"><h3>Ce que le design coûte</h3><p style="margin:0;font-size:14px">Le jardin fait exactement la même production que le plan le plus rentable : <b>même revenu</b> ('+fmt(c.rate)+' pièces/h au VR '+cur+'), tant que les porteurs suivent. Ce qu\'il coûte, c\'est de la marche : les pièces sont un peu plus loin des stockages.</p>'+
+      return '<tr'+(L===cur?' class="cur"':'')+'><td>VR '+L+'</td><td>'+fmt(x.trips)+'</td><td>'+f1(x.plan)+'</td><td>'+f1(x.garden)+'</td><td>'+sg(Math.round((x.garden/x.plan-1)*100))+' %</td><td>'+sg(Math.round(extra))+'</td></tr>'; }).join("");
+    g.innerHTML='<div class="bc goal"><h3>Ce que le design coûte</h3><p style="margin:0;font-size:14px">Le jardin fait exactement la même production que le plan le plus rentable : <b>même revenu</b> ('+fmt(c.rate)+' pièces/h au VR '+cur+'), tant que les porteurs suivent. La seule différence, c\'est la marche des porteurs : depuis l\'échange des machines de la rue, elle est proche de celle du plan rentable, et même plus courte à certains paliers.</p>'+
       '<div class="dwrap"><table class="dtab"><thead><tr><th>Palier</th><th>Trajets/h</th><th>Marche, plan rentable</th><th>Marche, jardin</th><th>Écart</th><th>Cases en plus/h</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       (c.top.length?'<h3 style="font-size:15px;margin-top:6px">Où se fait l\'écart au VR '+cur+'</h3><ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:13.5px">'+c.top.map(function(t){ return '<li style="display:flex;gap:8px;align-items:center">'+pic(t.ic,"ci",t.n)+'<span>'+esc(t.n)+'</span><em style="margin-left:auto;font:500 12px var(--mono);font-style:normal;color:var(--muted)">+'+fmt(t.extra)+' cases/h</em></li>'; }).join("")+'</ul>':'')+
-      '<small>Distances mesurées au plus près d\'un stockage (≈). Pour réduire l\'écart, c\'est surtout ces machines qu\'il faudrait rapprocher d\'un stockage. Le bouton « Trajets » sur le plan le montre.</small></div>';
+      '<small>Distances mesurées au plus près d\'un stockage (≈). Ce qui reste d\'écart vient surtout de ces machines. Le bouton « Trajets » sur le plan le montre.</small></div>';
   }
   /* ---- my team: changes saved on the account, read back by Claude to recompute ---- */
   var ABL=[["Fire","Feu"],["Water","Eau"],["Earth","Terre"],["Grass","Herbe"],["Lightning","Foudre"],["Ice","Glace"],["Wind","Vent"],["Dark","Obscurité"],["Light","Lumière"],["Artisanship","Artisanat"],["Leisure","Loisir"],["Perfumery","Parfumerie"],["Hauling","Transport"]];
@@ -983,7 +984,7 @@ ol{margin:0;padding-left:20px}
     document.querySelectorAll("#lvbtns button").forEach(function(b){ b.setAttribute("aria-pressed",String(+b.dataset.lv===L)); });
     var t=D.tab[L]; document.getElementById("cart-lv").textContent="VR "+L; document.getElementById("avg").textContent=f1(t.avg);
     document.getElementById("pw").textContent=t.powered[0]+" machines actives sur "+t.powered[1]+" alimentées";
-    document.getElementById("walk").innerHTML="Au VR "+L+", un porteur fait <b>"+f1(t.avg)+" cases</b> en moyenne jusqu'au stockage le plus proche, contre "+f1(D.avgPlan)+" dans le plan de construction actuel, qui ne pensait qu'au rendement.";
+    document.getElementById("walk").innerHTML="Au VR "+L+", un porteur fait <b>"+f1(t.avg)+" cases</b> en moyenne jusqu'au stockage le plus proche, contre "+f1(D.design[L].plan)+" dans le plan le plus rentable, qui ne pense qu'au rendement.";
     renderLegend(); renderProd(); renderSteps(); renderWho(); renderChain(); renderGoal(); renderBudget(); renderDesign(); markMine(); applyHl(); if(window.G3D) G3D.level(L); }
   document.getElementById("lvbtns").innerHTML=D.levels.map(function(L){ return '<button class="ph-btn" type="button" data-lv="'+L+'" aria-pressed="false">VR '+L+'</button>'; }).join("");
   document.querySelectorAll("#lvbtns button").forEach(function(b){ b.addEventListener("click",function(){ touched=true; setLevel(+b.dataset.lv); }); });

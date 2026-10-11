@@ -98,6 +98,90 @@ def assign_lots(inst):
         _, side, x0, y, opens = best
         it['lot'] = {'x': x0, 'y': y, 'w': w, 'h': h, 'opens': opens}
         placed.append({'side': side, 'x': x0, 'w': w})
+    return improve_lots(inst)
+
+
+def improve_lots(inst):
+    """Swap machines along the street so the busiest sit nearest a storage: each run of lots keeps
+    its machines in a row 1 tile apart, packed towards whichever end serves them better; swaps
+    and moves between runs are kept while they cut the porters' walk summed over every level."""
+    kc = [(x + 1, y + 1) for x, y in KIOSK.values()]
+    early = lambda it: it['w'][14][0] > 0 or it['w'][15][0] > 0
+    def walk(it, x, y):
+        w, h = FP[it['n']]
+        c = (x + w / 2, y + h / 2)
+        d = min(math.dist(c, k) for k in kc)
+        return sum(it['w'][L][0] * d for L in LEVELS)
+    def pack(r, members):
+        side, y0, down, a, b, opens = RUNS[r]
+        span = sum(FP[it['n']][0] for it in members) + max(0, len(members) - 1)
+        if span > b - a + E or (opens > 14 and any(early(it) for it in members)):
+            return None
+        best = None
+        for start in (a, b - span):
+            x, cost, pos = start, 0, []
+            for it in members:
+                w, h = FP[it['n']]
+                y = y0 if down else y0 - h
+                cost += walk(it, x, y); pos.append((x, y)); x += w + 1
+            if best is None or cost < best[0]:
+                best = (cost, pos)
+        return best
+    rows = [[] for _ in RUNS]
+    for it in inst:
+        if it['lot']:
+            r = next(k for k, (side, y0, down, a, b, o) in enumerate(RUNS)
+                     if a - E <= it['lot']['x'] <= b + E and abs((it['lot']['y'] if down else it['lot']['y'] + it['lot']['h']) - y0) < E)
+            rows[r].append(it)
+    for r in rows:
+        r.sort(key=lambda it: it['lot']['x'])
+    total = lambda rs: sum((pack(k, m) or (1e18,))[0] for k, m in enumerate(rs))
+    before = total(rows)
+    cur = before
+    improved = True
+    while improved:
+        improved = False
+        flat = [(r, i) for r in range(len(rows)) for i in range(len(rows[r]))]
+        for (r1, i1) in flat:
+            for (r2, i2) in flat:
+                if (r1, i1) >= (r2, i2):
+                    continue
+                trial = [list(m) for m in rows]
+                trial[r1][i1], trial[r2][i2] = trial[r2][i2], trial[r1][i1]
+                if pack(r1, trial[r1]) is None or pack(r2, trial[r2]) is None:
+                    continue
+                c = total(trial)
+                if c < cur - 1e-6:
+                    rows, cur, improved = trial, c, True
+                    break
+            if improved:
+                break
+        if improved:
+            continue
+        for r1 in range(len(rows)):           # move one machine to any place in another run
+            for i1 in range(len(rows[r1])):
+                for r2 in range(len(rows)):
+                    for j in range(len(rows[r2]) + 1):
+                        if r1 == r2:
+                            continue
+                        trial = [list(m) for m in rows]
+                        it = trial[r1].pop(i1)
+                        trial[r2].insert(j, it)
+                        if pack(r1, trial[r1]) is None or pack(r2, trial[r2]) is None:
+                            continue
+                        c = total(trial)
+                        if c < cur - 1e-6:
+                            rows, cur, improved = trial, c, True
+                            break
+                    if improved: break
+                if improved: break
+            if improved: break
+    for k, m in enumerate(rows):
+        _, pos = pack(k, m)
+        for it, (x, y) in zip(m, pos):
+            w, h = FP[it['n']]
+            it['lot'] = {'x': round(x, 2), 'y': y, 'w': w, 'h': h, 'opens': RUNS[k][5]}
+    print(f'street: porters walk {before:.0f} -> {cur:.0f} tile-trips (all levels)', flush=True)
     return inst
 
 # ---------------- crops: the planner inside the terraces ----------------
