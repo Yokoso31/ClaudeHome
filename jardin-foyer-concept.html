@@ -39,6 +39,7 @@ header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px
 @media (max-width:980px){.sheet{grid-template-columns:1fr}}
 .plan{padding:clamp(10px,2vw,22px);border-right:1px solid var(--line);min-width:0;position:relative}
 .tipc{position:absolute;z-index:3;max-width:min(300px,80%);background:var(--sheet);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;pointer-events:none;font-size:13.5px;line-height:1.4}
+.tipc[hidden]{display:none}
 .tipc img{width:46px;height:46px;object-fit:contain}
 .tipc b{display:block;font-size:14.5px}
 .tipc small{display:block;color:var(--muted)}
@@ -121,17 +122,38 @@ body.game .gamelv{display:inline-flex}
 #ckout .sum{font-size:15px}
 #ckout .rel{font:500 12px var(--mono);color:var(--muted)}
 body.game .wrap>header,body.game .wrap>section:not(.gm){display:none!important}
-body.game .modebar{order:0;position:sticky;top:0;z-index:5;background:var(--paper);padding:8px 0}
-body.game #goalsec{order:1}body.game #chantier{order:2}body.game #check{order:3}body.game #who{order:4}body.game #prod{order:5}body.game .sheet{order:6}
+body.game .modebar{order:0}
+
 body.game .lede{display:none}
 body.game .ck{width:34px;height:34px}
 body.game .st{font-size:15px;padding:10px 12px}
+
+.tabs{display:flex;gap:2px;overflow-x:auto;position:sticky;top:0;z-index:6;background:var(--paper);border-bottom:2px solid var(--ink);margin-bottom:calc(-1 * clamp(14px,3vw,36px));scrollbar-width:thin}
+.tabs button{flex:none;font:500 15px var(--body);color:var(--muted);background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:10px 14px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--sakura)}
+.tabs button:focus-visible{outline:2px solid var(--indigo);outline-offset:-2px}
+.tabs .tn{font:500 11.5px var(--mono);color:var(--muted)}
+.wrap>section[data-tab]:not(.show){display:none!important}
+details.grp{border:1px solid var(--line);border-radius:10px;background:var(--sheet)}
+details.grp>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 14px;font:700 16px var(--display)}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s;flex:none}
+details.grp[open]>summary::before{transform:rotate(45deg)}
+details.grp>summary .gc{margin-left:auto;font:500 12px var(--mono);color:var(--muted)}
+details.grp>summary .gc.ok{color:var(--moss)}
+details.grp>summary:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+details.grp>.gin{padding:0 10px 10px;display:flex;flex-direction:column;gap:6px}
+.backto{position:fixed;right:16px;bottom:16px;z-index:20;box-shadow:0 6px 18px rgba(0,0,0,.2);background:var(--ink)!important;color:var(--sheet)!important;border-color:var(--ink)!important}
+.backto[hidden]{display:none}
+@media (prefers-reduced-motion: reduce){details.grp>summary::before{transition:none}}
+body.game .tabs button:not(.gm-t){display:none}
+body.game .tabs{order:1}body.game .wrap>section[data-tab]{order:2}body.game .sheet{order:9}
 .prodgrid{display:flex;flex-direction:column;gap:22px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .stats div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column}
 .stats b{font:700 26px/1.1 var(--display);color:var(--indigo)}
 .stats span{font-size:13px;color:var(--muted)}
-.zn{display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:2;background:var(--paper);padding:8px 0}
+.zn{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
 .zn .n{font:500 11px var(--mono);opacity:.7}
 .zs{display:flex;flex-direction:column;gap:12px}
 .zs[hidden]{display:none}
@@ -1784,7 +1806,18 @@ ol{margin:0;padding-left:20px}
     </aside>
   </section>
 
-  <section class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="goal-title" id="goalsec">
+  <button type="button" class="ph-btn backto" id="backto" hidden>↓ Revenir à la liste</button>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Parties de la page">
+    <button type="button" role="tab" data-t="todo" class="gm-t">À faire <span class="tn" id="tn-todo"></span></button>
+    <button type="button" role="tab" data-t="prod" class="gm-t">Machines</button>
+    <button type="button" role="tab" data-t="who" class="gm-t">Aniimo</button>
+    <button type="button" role="tab" data-t="check" class="gm-t">Vérifier</button>
+    <button type="button" role="tab" data-t="chain">Chaîne</button>
+    <button type="button" role="tab" data-t="garden">Le jardin</button>
+    <button type="button" role="tab" data-t="buy">Achats</button>
+  </nav>
+
+  <section data-tab="todo" class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="goal-title" id="goalsec">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Objectif</div>
       <h2 id="goal-title">Le palier suivant</h2>
@@ -1793,7 +1826,7 @@ ol{margin:0;padding-left:20px}
     <div id="goalgrid"></div>
   </section>
 
-  <section class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="ch-title" id="chantier">
+  <section data-tab="todo" class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="ch-title" id="chantier">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Chantier</div>
       <h2 id="ch-title">Les étapes</h2>
@@ -1802,7 +1835,7 @@ ol{margin:0;padding-left:20px}
     <div id="chgrid"></div>
   </section>
 
-  <section class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="ck-title" id="check">
+  <section data-tab="check" class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="ck-title" id="check">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Contrôle</div>
       <h2 id="ck-title">Vérifier ma construction</h2>
@@ -1826,7 +1859,7 @@ ol{margin:0;padding-left:20px}
     </div>
   </section>
 
-  <section class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="prod-title" id="prod">
+  <section data-tab="prod" class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="prod-title" id="prod">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Quoi produire</div>
       <h2 id="prod-title">Au VR 14 : quoi planter, quoi produire</h2>
@@ -1835,7 +1868,7 @@ ol{margin:0;padding-left:20px}
     <div class="prodgrid" id="prodgrid"></div>
   </section>
 
-  <section class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="who-title" id="who">
+  <section data-tab="who" class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="who-title" id="who">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Qui va où</div>
       <h2 id="who-title">Les Aniimo, un par un</h2>
@@ -1844,7 +1877,7 @@ ol{margin:0;padding-left:20px}
     <div id="whogrid"></div>
   </section>
 
-  <section style="display:flex;flex-direction:column;gap:16px" aria-labelledby="chain-title" id="chain">
+  <section data-tab="chain" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="chain-title" id="chain">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">La chaîne</div>
       <h2 id="chain-title">D'où vient chaque produit</h2>
@@ -1853,7 +1886,7 @@ ol{margin:0;padding-left:20px}
     <div id="chaingrid"></div>
   </section>
 
-  <section style="display:flex;flex-direction:column;gap:16px" aria-labelledby="lgd-title">
+  <section data-tab="garden" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="lgd-title" id="garden">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Légende complète</div>
       <h2 id="lgd-title">Ce qu'il y a sur le plan</h2>
@@ -1862,7 +1895,7 @@ ol{margin:0;padding-left:20px}
     <div class="lgd" id="lgd"></div>
   </section>
 
-  <section style="display:flex;flex-direction:column;gap:20px">
+  <section data-tab="garden" style="display:flex;flex-direction:column;gap:20px">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">La promenade</div>
       <h2>De la porte au jardin sec</h2>
@@ -1882,7 +1915,7 @@ ol{margin:0;padding-left:20px}
     </div>
   </section>
 
-  <section class="two">
+  <section data-tab="garden" class="two">
     <div class="note">
       <div class="eyebrow">Ce que ça donne</div>
       <h2>Beau et productif</h2>
@@ -1903,7 +1936,7 @@ ol{margin:0;padding-left:20px}
     </div>
   </section>
 
-  <section style="display:flex;flex-direction:column;gap:16px">
+  <section data-tab="buy" style="display:flex;flex-direction:column;gap:16px" id="buysec">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Déco du jardin</div>
       <h2>Ce qu'il faut acheter</h2>
@@ -1969,7 +2002,7 @@ ol{margin:0;padding-left:20px}
     ["carr","Carrière et puits","Ils produisent seuls : il suffit d'y mettre le bon Aniimo."],
     ["pav","Pavillons","Chacun produit une matière première, certains ont besoin d'un climat."],
     ["elec","Électricité","Les générateurs ont besoin d'un Aniimo Foudre chacun."]];
-  var zone="all";
+  var zone="rue";
   var nf=function(n){ return n>=10?Math.round(n).toLocaleString("fr-FR"):(Math.round(n*10)/10).toLocaleString("fr-FR"); };
   function pic(k,cls,alt){ var u=k&&D.pics[k]; return u?'<img class="'+cls+'" src="'+u+'" alt="'+esc(alt||"")+'">':'<span class="'+cls+' noic" aria-hidden="true">'+esc((alt||"?").charAt(0))+'</span>'; }
   function aniHtml(list){ if(!list||!list.length) return "";
@@ -2006,7 +2039,7 @@ ol{margin:0;padding-left:20px}
     var g=document.getElementById("prodgrid"); g.innerHTML=h;
     g.querySelectorAll("[data-z]").forEach(function(b){ b.addEventListener("click",function(){ zone=b.dataset.z; renderProd(); var f=g.querySelector('[data-z="'+zone+'"]'); if(f) f.focus(); }); });
     g.querySelectorAll("[data-ids]").forEach(function(b){ function go(){ var ids=b.dataset.ids.split(","); hlKey=null; hlIds=(hlIds&&hlIds.join(",")===b.dataset.ids)?null:ids; applyHl();
-        if(hlIds) document.querySelector(".sheet").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }
+        if(hlIds) toPlan(); }
       b.addEventListener("click",go); b.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } }); });
     applyHl();
   }
@@ -2029,7 +2062,7 @@ ol{margin:0;padding-left:20px}
   function seeBtn(s){ if(s.ids&&s.ids.length) return '<button type="button" class="see" data-see="'+s.ids.join(",")+'">Voir</button>';
     if(s.key) return '<button type="button" class="see" data-key="'+esc(s.key)+'">Voir</button>';
     if(s.go) return '<button type="button" class="see" data-go="'+s.go+'">Ouvrir</button>'; return '<span></span>'; }
-  var hideDone=false;
+  var hideDone=false, OPEN={};
   function renderSteps(){
     var S=D.steps[cur], g=document.getElementById("chgrid"); if(!S) return;
     document.getElementById("ch-title").textContent="Chantier : de "+S.from+" au VR "+cur;
@@ -2037,11 +2070,17 @@ ol{margin:0;padding-left:20px}
     var n=S.steps.length, d=S.steps.filter(function(s){ return DONE[s.k]; }).length;
     var h='<div class="prog"><div class="pb" role="progressbar" aria-valuemin="0" aria-valuemax="'+n+'" aria-valuenow="'+d+'" aria-label="Étapes faites"><i style="width:'+(n?Math.round(d/n*100):0)+'%"></i></div><span>'+d+' / '+n+' faites</span>'+
       '<button type="button" class="ph-btn" id="hidedone" aria-pressed="'+hideDone+'">Masquer les étapes faites</button></div><p class="sync">'+esc(syncMsg)+'</p><div class="stg'+(hideDone?' hidedone':'')+'">';
-    var lastG=null;
-    S.steps.forEach(function(s,i){ if(s.g!==lastG){ h+='<h3>'+esc(s.g)+'</h3>'; lastG=s.g; }
-      var ic=s.por!=null?'<img class="por" src="'+D.portraits[s.por]+'" alt="">':(s.ic?pic(s.ic,"pi",""):'<span class="pi noic" aria-hidden="true">'+(i+1)+'</span>');
-      h+='<div class="st'+(DONE[s.k]?' done':'')+(s.warn?' warn':'')+'"><button type="button" class="ck" data-k="'+s.k+'" aria-pressed="'+!!DONE[s.k]+'" aria-label="Fait : '+esc(s.t)+'">'+CHK+'</button>'+ic+'<span class="tx">'+esc(s.t)+'</span>'+seeBtn(s)+'</div>'; });
+    var groups=[]; S.steps.forEach(function(s,i){ s._i=i; var gg=groups[groups.length-1]; if(!gg||gg.g!==s.g){ gg={g:s.g,st:[]}; groups.push(gg); } gg.st.push(s); });
+    var firstOpen=null; groups.forEach(function(gg){ if(firstOpen==null&&gg.st.some(function(s){ return !DONE[s.k]; })) firstOpen=gg.g; });
+    groups.forEach(function(gg){ var key=cur+":"+gg.g, dn=gg.st.filter(function(s){ return DONE[s.k]; }).length, open=OPEN[key]!=null?OPEN[key]:gg.g===firstOpen;
+      h+='<details class="grp" data-og="'+esc(key)+'"'+(open?' open':'')+'><summary>'+esc(gg.g)+'<span class="gc'+(dn===gg.st.length?' ok':'')+'">'+(dn===gg.st.length?'✓ ':'')+dn+' / '+gg.st.length+'</span></summary><div class="gin">';
+      gg.st.forEach(function(s){ var i=s._i;
+        var ic=s.por!=null?'<img class="por" src="'+D.portraits[s.por]+'" alt="">':(s.ic?pic(s.ic,"pi",""):'<span class="pi noic" aria-hidden="true">'+(i+1)+'</span>');
+        h+='<div class="st'+(DONE[s.k]?' done':'')+(s.warn?' warn':'')+'"><button type="button" class="ck" data-k="'+s.k+'" aria-pressed="'+!!DONE[s.k]+'" aria-label="Fait : '+esc(s.t)+'">'+CHK+'</button>'+ic+'<span class="tx">'+esc(s.t)+'</span>'+seeBtn(s)+'</div>'; });
+      h+='</div></details>'; });
     g.innerHTML=h+'</div>';
+    g.querySelectorAll("details[data-og]").forEach(function(d){ d.addEventListener("toggle",function(){ OPEN[d.dataset.og]=d.open; }); });
+    var tn=document.getElementById("tn-todo"); if(tn) tn.textContent=d+"/"+n;
     document.getElementById("hidedone").addEventListener("click",function(){ hideDone=!hideDone; renderSteps(); });
     wire(g);
   }
@@ -2049,18 +2088,36 @@ ol{margin:0;padding-left:20px}
     g.querySelectorAll(".ck").forEach(function(b){ b.addEventListener("click",function(){ var k=b.dataset.k; if(DONE[k]) delete DONE[k]; else DONE[k]=1; save(); if(k.charAt(0)==="a") renderWho(); else renderSteps(); var nb=document.querySelector('.ck[data-k="'+k+'"]'); if(nb) nb.focus(); }); });
     g.querySelectorAll("[data-see]").forEach(function(b){ b.addEventListener("click",function(){ hlKey=null; hlIds=b.dataset.see.split(","); applyHl(); toPlan(); }); });
     g.querySelectorAll("[data-key]").forEach(function(b){ b.addEventListener("click",function(){ hlIds=null; hlKey=b.dataset.key; applyHl(); toPlan(); }); });
-    g.querySelectorAll("[data-go]").forEach(function(b){ b.addEventListener("click",function(){ document.getElementById(b.dataset.go).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }); });
+    g.querySelectorAll("[data-go]").forEach(function(b){ b.addEventListener("click",function(){ showTab(b.dataset.go); document.getElementById("tabs").scrollIntoView({behavior:RM?"auto":"smooth",block:"start"}); }); });
   }
-  function toPlan(){ document.querySelector(".sheet").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches, backY=null, bk=document.getElementById("backto");
+  function toPlan(){ backY=window.scrollY; armed=false; bk.hidden=false; document.querySelector(".sheet").scrollIntoView({behavior:RM?"auto":"smooth",block:"start"}); }
+  bk.addEventListener("click",function(){ if(backY!=null) window.scrollTo({top:backY,behavior:RM?"auto":"smooth"}); bk.hidden=true; backY=null; });
+  var armed=false;
+  window.addEventListener("scroll",function(){ if(backY==null) return; var d=Math.abs(window.scrollY-backY); if(d>200) armed=true; else if(armed&&d<40){ bk.hidden=true; backY=null; armed=false; } },{passive:true});
+  /* ---- tabs: one part of the page at a time, the last one remembered on this device ---- */
+  var TABS=[].slice.call(document.querySelectorAll("#tabs [data-t]"));
+  function showTab(k,focus){ if(!TABS.some(function(b){ return b.dataset.t===k; })) k="todo";
+    if(document.body.classList.contains("game")&&!document.querySelector('#tabs [data-t="'+k+'"].gm-t')) k="todo";
+    TABS.forEach(function(b){ var on=b.dataset.t===k; b.setAttribute("aria-selected",String(on)); b.tabIndex=on?0:-1; if(on&&focus) b.focus(); });
+    document.querySelectorAll(".wrap>section[data-tab]").forEach(function(s){ s.classList.toggle("show",s.dataset.tab===k); });
+    try{ localStorage.setItem("jardin-foyer-tab",k); }catch(e){} }
+  TABS.forEach(function(b,i){ b.addEventListener("click",function(){ showTab(b.dataset.t); });
+    b.addEventListener("keydown",function(e){ var vis=TABS.filter(function(x){ return x.offsetParent!==null; }), j=vis.indexOf(b);
+      if(e.key==="ArrowRight"||e.key==="ArrowLeft"){ e.preventDefault(); var nb=vis[(j+(e.key==="ArrowRight"?1:vis.length-1))%vis.length]; showTab(nb.dataset.t,true); } }); });
+  var tab0="todo"; try{ tab0=localStorage.getItem("jardin-foyer-tab")||"todo"; }catch(e){}
+  showTab(tab0);
   var WG=[["rue","Rue des artisans"],["prod","Carrière, puits et pavillons"],["cult","Cultures"],["clim","Climat et électricité"],["free","Libres à ce palier"]];
   function renderWho(){
     var A=D.cards[cur].ani, g=document.getElementById("whogrid"), h="";
     WG.forEach(function(w){ var list=A.filter(function(a){ return a.g===w[0]; }); if(!list.length) return;
-      h+='<div class="wg"><h3>'+esc(w[1])+' <span class="n" style="font:500 12px var(--mono);color:var(--muted)">'+list.length+'</span></h3><div class="wrows">'+list.map(function(a){ var k="a:"+cur+":"+a.p;
+      var key="w:"+cur+":"+w[0], dn=list.filter(function(a){ return DONE["a:"+cur+":"+a.p]; }).length, open=OPEN[key]!=null?OPEN[key]:w[0]==="rue";
+      h+='<details class="grp" data-og="'+key+'"'+(open?' open':'')+'><summary>'+esc(w[1])+'<span class="gc'+(dn===list.length?' ok':'')+'">'+dn+' / '+list.length+' placés</span></summary><div class="gin"><div class="wrows">'+list.map(function(a){ var k="a:"+cur+":"+a.p;
         return '<div class="wr'+(DONE[k]?' done':'')+'"><button type="button" class="ck" data-k="'+k+'" aria-pressed="'+!!DONE[k]+'" aria-label="Placé">'+CHK+'</button><img class="por" src="'+D.portraits[a.p]+'" alt=""><div><span class="abl">'+a.ab.map(function(x){ return '<span>'+esc(x[0])+' '+x[1]+'</span>'; }).join("")+'</span>'+
           (a.posts.length?'<ul>'+a.posts.map(function(p){ return '<li>'+esc(p)+'</li>'; }).join("")+'</ul>':'<small style="color:var(--muted);font-size:12.5px">Garde-le pour l\'exploration ou en renfort.</small>')+
-          (a.posts.length?'<span class="busy"><i><b style="width:'+Math.round(a.busy*100)+'%"></b></i>occupé '+(a.busy<.05?'moins de 5':Math.round(a.busy*100))+' %</span>':'')+'</div></div>'; }).join("")+'</div></div>'; });
-    g.innerHTML=h; wire(g);
+          (a.posts.length?'<span class="busy"><i><b style="width:'+Math.round(a.busy*100)+'%"></b></i>occupé '+(a.busy<.05?'moins de 5':Math.round(a.busy*100))+' %</span>':'')+'</div></div>'; }).join("")+'</div></div></details>'; });
+    g.innerHTML='<div class="wg">'+h+'</div>'; wire(g);
+    g.querySelectorAll("details[data-og]").forEach(function(d){ d.addEventListener("toggle",function(){ OPEN[d.dataset.og]=d.open; }); });
   }
   /* ---- production chain: columns by depth, links from ingredient to product ---- */
   function renderChain(){
@@ -2122,7 +2179,8 @@ ol{margin:0;padding-left:20px}
   mb.addEventListener("click",function(){ ME=ME===cur?null:cur; save(); markMine(); });
   /* ---- game mode: only what serves while playing, big targets; remembered on this device ---- */
   var gb=document.getElementById("gamebtn");
-  function setGame(on){ document.body.classList.toggle("game",on); gb.setAttribute("aria-pressed",String(on)); gb.textContent=on?"Quitter le mode en jeu":"Mode en jeu"; try{ localStorage.setItem("jardin-foyer-game",on?"1":"0"); }catch(e){} }
+  function setGame(on){ document.body.classList.toggle("game",on); gb.setAttribute("aria-pressed",String(on)); gb.textContent=on?"Quitter le mode en jeu":"Mode en jeu"; try{ localStorage.setItem("jardin-foyer-game",on?"1":"0"); }catch(e){}
+    if(TABS){ var sel=TABS.filter(function(b){ return b.getAttribute("aria-selected")==="true"; })[0]; showTab(sel?sel.dataset.t:"todo"); } }
   gb.addEventListener("click",function(){ setGame(!document.body.classList.contains("game")); window.scrollTo(0,0); });
   var gl=document.getElementById("gamelv"); gl.innerHTML=D.levels.map(function(L){ return '<option value="'+L+'">VR '+L+'</option>'; }).join("");
   gl.addEventListener("change",function(){ touched=true; ME=+gl.value; save(); setLevel(ME); });
