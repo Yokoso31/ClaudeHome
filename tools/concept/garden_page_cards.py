@@ -8,7 +8,12 @@ for line in open(os.path.join(S, 'foyer_data.js')).read().split('\n'):
 ABFR = {'Fire': 'Feu', 'Water': 'Eau', 'Earth': 'Terre', 'Grass': 'Herbe', 'Lightning': 'Foudre', 'Ice': 'Glace', 'Wind': 'Vent', 'Dark': 'Obscurité',
         'Light': 'Lumière', 'Artisanship': 'Artisanat', 'Leisure': 'Loisir', 'Perfumery': 'Parfumerie', 'Hauling': 'Transport'}
 JOBFR = {'Sowing': 'semer', 'Watering': 'arroser', 'Collecting': 'ramasser', 'Reaping': 'récolter', 'Logging': 'couper', 'Reclaiming': 'défricher'}
-PICS = {}   # icon key -> data URI, only those the cards use
+class _Pics(dict):
+    """icon key -> data URI, re-encoded small, only those the cards use"""
+    def __setitem__(self, k, v):
+        if k not in self:
+            super().__setitem__(k, shrink(base64.b64decode(v.split(',', 1)[1]), 64, 72))
+PICS = _Pics()
 def pic_item(item):
     """Icon key of a product, from its internal name (quick_ variants share the plain product's icon)."""
     if not item:
@@ -31,10 +36,8 @@ def pic_item(item):
                 return k
     return None
 def pic_fac(n):
-    k = 'f:' + n
-    if k in PICON:
-        PICS[k] = PICON[k]
-        return k
+    if n in FAC:
+        return ic_fac(n)
     return None
 def snake(s):
     return '_'.join(norm(w) for w in (s or '').replace('-', ' ').replace('_', ' ').split())
@@ -282,4 +285,4 @@ for L in LEVELS:
     MJOBS[L] = {(it['n'], it.get('unit', 0)): [r['n'] for r in next((cc['recs'] for cc in sec['rue'] if cc['ids'][0] == f'{L}-{lv["items"].index(it) + 1}'), [])]
                 for it in lv['items'] if it['n'] in FP_ALL}
     ALAB[L] = {a['p']: a['posts'] for a in ani_view}
-PORTRAITS = ['data:image/webp;base64,' + p if not p.startswith('data:') else p for p in TEAM['portraits']]
+PORTRAITS = [shrink(base64.b64decode(p.split(',', 1)[1] if p.startswith('data:') else p), 96, 75) for p in TEAM['portraits']]

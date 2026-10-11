@@ -18,8 +18,17 @@ for line in open(os.path.join(S, 'foyer_data.js')).read().split('\n'):
 rnd = random.Random(7)
 
 
+def shrink(raw, px=96, q=75):
+    """Re-encode an embedded image small: the page shows icons at 30-60 px, so 64-96 px is plenty."""
+    import io
+    from PIL import Image
+    im = Image.open(io.BytesIO(raw)).convert('RGBA')
+    im.thumbnail((px, px))
+    out = io.BytesIO()
+    im.save(out, 'WEBP', quality=q, method=6)
+    return 'data:image/webp;base64,' + base64.b64encode(out.getvalue()).decode()
 def b64(path):
-    return 'data:image/webp;base64,' + base64.b64encode(open(path, 'rb').read()).decode()
+    return shrink(open(path, 'rb').read())
 
 
 ICON = {}

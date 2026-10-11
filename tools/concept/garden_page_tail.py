@@ -236,6 +236,19 @@ for L in LEVELS:
         ids += 1
         out.append(f'<g class="obj pole bonus"{tag("bonuspole")} data-id="{L}-{ids}"><rect x="{p["x"]}" y="{p["y"]}" width="1.5" height="1.5" rx=".3"/><text x="{f(p["x"] + .75)}" y="{f(p["y"] + 1.08)}" text-anchor="middle" font-size=".9">+{k + 1}</text></g>')
         out.append(f'<rect x="{f(p["x"] - 2.75)}" y="{f(p["y"] - 2.75)}" width="7" height="7" rx=".4" class="pwa tech bonus"/>')
+    # porters' trips: each producing piece to its nearest storage, thicker where more trips go
+    kc = {k: (x + 1, y + 1) for k, (x, y) in KIOSK.items()}
+    act = [it for it in lv['items'] if (it.get('weight') or 0) > 0 and it['kind'] == 'piece']
+    wmax = max(it['weight'] for it in act)
+    tot = {k: 0 for k in kc}
+    tl = []
+    for it in sorted(act, key=lambda it: it['weight']):
+        c = (it['x'] + it['w'] / 2, it['y'] + it['h'] / 2)
+        k = min(kc, key=lambda k: math.dist(c, kc[k]))
+        tot[k] += it['weight']
+        tl.append(f'<line x1="{f(c[0])}" y1="{f(c[1])}" x2="{f(kc[k][0])}" y2="{f(kc[k][1])}" stroke-width="{f(.07 + .75 * math.sqrt(it["weight"] / wmax))}"/>')
+    tl += [f'<g class="tk"><rect x="{f(kc[k][0] - 2.1)}" y="{f(kc[k][1] - 3.3)}" width="4.2" height="1.5" rx=".4"/><text x="{f(kc[k][0])}" y="{f(kc[k][1] - 2.18)}" text-anchor="middle" font-size=".85">{round(v)}/h</text></g>' for k, v in tot.items() if v > 0]
+    out.append('<g class="trips">' + ''.join(tl) + '</g>')
     LV[L] = '\n'.join(out)
     blocks = [b for b in rows['blocks'].values()]
     TAB[L] = {
@@ -253,3 +266,41 @@ for L in LEVELS:
     clash = [(a['n'], n2) for a in prod for (n2, r, ph) in PHYS if vis(ph) and ovr(a, r)]
     clash += [(a['n'], cn) for a in prod for cn, cr in CLEAR if ovr(a, cr)]
     print(f'RV{L}: {len(lv["items"])} pièces, marche {lv["avg"]}, courant {lv["powered"]}, chevauchements déco {clash[:8]}')
+
+
+# ---------------- before / after: today's Foyer, revealed left of a divider ----------------
+CURF = json.load(open(os.path.join(S, 'current_rv14.json')))
+bt = ['<clipPath id="clipB"><rect id="clipBr" x="-1" y="-1" width="41" height="62"/></clipPath><g class="before" clip-path="url(#clipB)">',
+      '<rect x="0" y="0" width="80" height="60" fill="#93B86A"/>',
+      '<path d="M20 0V60M40 0V60M60 0V60M0 15H80M0 30H80M0 45H80" stroke="#FFFFFF" stroke-opacity=".3" stroke-width=".08" fill="none"/>']
+def bpiece(n, x, y, w, h):
+    if n == 'Farmland':
+        return f'<rect x="{x + .1}" y="{y + .1}" width="{w - .2}" height="{h - .2}" rx=".2" fill="#7A6243"/>'
+    if n == 'Woodland':
+        return f'<rect x="{x + .15}" y="{y + .15}" width="{w - .3}" height="{h - .3}" rx=".4" fill="#6E8F45"/><circle cx="{x + w / 2}" cy="{y + h / 2}" r="{w * .32}" fill="#3F7A36"/>'
+    if n == 'Mine':
+        return f'<rect x="{x + .3}" y="{y + .3}" width="{w - .6}" height="{h - .6}" rx="1.2" fill="#8E8A84"/>'
+    if n == 'Incubateur':
+        return f'<ellipse cx="{x + 1}" cy="{y + 1}" rx=".7" ry=".85" fill="#F4F2EC" stroke="#5FD3E0" stroke-width=".12"/>'
+    if n == 'Storage Unit':
+        return f'<rect x="{x + .1}" y="{y + .1}" width="1.8" height="1.8" rx=".2" fill="#C99A5B" stroke="#8A6A45" stroke-width=".1"/>'
+    if n == 'Crackle Generator':
+        return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx=".2" fill="#7E63D6"/>'
+    if n == 'Crackle Power Pole':
+        return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx=".3" fill="#CDBDFB" stroke="#7E63D6" stroke-width=".08"/>'
+    col = {'Heat Furnace': '#C8432B', 'Cooling Unit': '#7FC4E8', 'Sunlamp': '#F2C21F'}.get(n)
+    if col:
+        return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx=".2" fill="{col}"/>'
+    ic = f'<use href="#i-{ic_fac(n).replace(" ", "_")}" x="{f(x + w * .18)}" y="{f(y + h * .18)}" width="{f(w * .64)}" height="{f(h * .64)}"/>' if n in FAC else ''
+    lab = f'<text x="{f(x + w / 2)}" y="{f(y + h + .55)}" font-size=".5" text-anchor="middle" class="nm">{SHORT.get(n, FR.get(n, n))}</text>'
+    return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx=".3" fill="#E8D2AE" stroke="#8A6A45" stroke-width=".1"/>' + ic + lab
+for it in CURF['items']:
+    bt.append(bpiece(it['n'], it['x'], it['y'], it['w'], it['h']))
+for s_ in CURF['stores']:
+    bt.append(bpiece('Storage Unit', s_['x'], s_['y'], 2, 2))
+for g in CURF['gens']:
+    bt.append(bpiece('Crackle Generator', g['x'], g['y'], g['w'], g['h']))
+for p in CURF['poles']:
+    bt.append(bpiece('Crackle Power Pole', p['x'], p['y'], p['w'], p['h']))
+bt.append('</g><g class="divb"><line id="divBl" x1="40" y1="-0.6" x2="40" y2="60.6"/><g id="divBt"><rect x="34.6" y="0.6" width="10.8" height="1.9" rx=".95"/><text x="40" y="1.85" text-anchor="middle" font-size=".95">◀ aujourd\'hui · jardin ▶</text></g></g>')
+add(''.join(bt), 14, 20)

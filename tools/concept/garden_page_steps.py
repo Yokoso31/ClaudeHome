@@ -237,3 +237,74 @@ for L, v in STEPS.items():
     for k, s in enumerate(v['steps']):
         s['k'] = f'{L}:{k}'
 print('steps', {L: len(v['steps']) for L, v in STEPS.items()})
+
+# ---------------- budget of each level: seeds for the level, new decor, pieces to get ----------------
+owned = {}
+for it in CUR['items']:
+    owned[it['n']] = owned.get(it['n'], 0) + 1
+owned['Crackle Generator'] = len(CUR['gens']); owned['Crackle Power Pole'] = len(CUR['poles'])
+seen_max = dict(owned)
+for L in LEVELS:
+    lv = GL['levels'][str(L)]
+    need = {}
+    for it in lv['items']:
+        need[it['n']] = need.get(it['n'], 0) + 1
+    need['Crackle Generator'] = len(lv['gens']); need['Crackle Power Pole'] = len(lv['poles'])
+    new = []
+    for n, k in sorted(need.items(), key=lambda kv: FR.get(kv[0], kv[0])):
+        have = seen_max.get(n, 0)
+        if k > have:
+            new.append({'n': FR.get(n, n), 'k': k - have, 'ic': pic_fac(n)})
+            seen_max[n] = k
+    fl = FOYER_L.get(str(L), {})
+    seeds, stot = [], 0
+    for r in fl.get('seeds') or []:
+        try:
+            cost = float(r[3]) if r[3] not in (None, '', 'free') else 0
+        except (TypeError, ValueError):
+            cost = 0
+        per = 86400 if not fl.get('luRows') else 1   # last level: the plan gives rates per second, shown per day
+        nm = pfr(snake(r[0]))
+        same = next((x for x in seeds if x['n'] == nm), None)
+        if same:
+            same['plots'] += int(r[1]); same['seeds'] += round(float(r[2]) * per); same['cost'] += round(cost * per)
+        else:
+            seeds.append({'n': nm, 'ic': pic_item(snake(r[0])), 'plots': int(r[1]), 'seeds': round(float(r[2]) * per), 'cost': round(cost * per)})
+        stot += round(cost * per)
+    deco = [{'n': b['fr'], 'k': b['n'], 'pr': b['pr'], 'ic': b['ic']} for b in buy if b['ph'] == L]
+    STEPS[L]['budget'] = {'perDay': not fl.get('luRows'), 'seeds': seeds, 'seedsTotal': stot, 'deco': deco, 'decoTotal': sum(d['k'] * d['pr'] for d in deco), 'new': new}
+
+# ---------------- what the design costs: the same production, but porters walk further ----------------
+DESIGN = {}
+for L in LEVELS:
+    fl = FOYER_L.get(str(L), {})
+    lv = GL['levels'][str(L)]
+    md = json.load(open(os.path.join(S, f'my_data_rv{L}.json')))
+    kc = [(x + 1, y + 1) for x, y in KIOSK.values()]
+    g, p = {}, {}
+    for it in lv['items']:
+        w = it.get('weight') or 0
+        if w <= 0 or it['kind'] != 'piece':
+            continue
+        d = min(math.dist((it['x'] + it['w'] / 2, it['y'] + it['h'] / 2), c) for c in kc)
+        key = (it['n'], it.get('item') or '')
+        g[key] = g.get(key, 0) + w * d
+    for pc in md['pieces']:
+        st = pc.get('stats') or ''
+        if pc.get('kind') != 'piece' or 'tiles from storage' not in st:
+            continue
+        try:
+            w = float(st.split(' trips/hour')[0].replace(',', ''))
+            d = float(st.split('· ')[1].split(' tiles')[0])
+        except (ValueError, IndexError):
+            continue
+        key = (pc['name'], snake(pc.get('detail') or ''))
+        p[key] = p.get(key, 0) + w * d
+    gap = []
+    for key, v in g.items():
+        pv = p.get((key[0], snake(key[1])), p.get((key[0], snake(key[1][6:] if key[1].startswith('quick_') else key[1])), 0))
+        if v - pv > 0:
+            gap.append({'n': FR.get(key[0], key[0]) + (' · ' + pfr(key[1]) if key[1] else ''), 'ic': pic_fac(key[0]), 'extra': round(v - pv)})
+    gap.sort(key=lambda x: -x['extra'])
+    trips = fl.get('trips') or 0
+    DESIGN[L] = {'trips': trips, 'garden': lv['avg'], 'plan': fl.get('avg'), 'rate': fl.get('rate'), 'top': gap[:5]}

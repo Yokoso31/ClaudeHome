@@ -48,14 +48,14 @@ for i, (n, ph) in sorted(shop_list.items(), key=lambda kv: (kv[1][1], -JP[kv[0]]
     if n > (j['max'] or 999):
         print('OVER CAP', j['fr'], n, j['max'])
     buy.append({'id': i, 'fr': j['fr'], 'n': n, 'ph': ph, 'cf': j['cf'], 'pr': pr, 'fp': j['fp'], 'ic': ic_jp(i)})
+exec(open(os.path.join(S, 'garden_page_3d.py')).read())
+exec(open(os.path.join(S, 'garden_page_cards.py')).read())
+exec(open(os.path.join(S, 'garden_page_steps.py')).read())
 defs = ''.join(f'<symbol id="i-{k.replace(" ", "_")}" viewBox="0 0 1 1"><image href="{v}" width="1" height="1" preserveAspectRatio="xMidYMid meet"/></symbol>' for k, v in ICON.items())
 for k in ICON:
     if ' ' in k:
         body = body.replace(f'#i-{k}"', f'#i-{k.replace(" ", "_")}"')
-exec(open(os.path.join(S, 'garden_page_3d.py')).read())
-exec(open(os.path.join(S, 'garden_page_cards.py')).read())
-exec(open(os.path.join(S, 'garden_page_steps.py')).read())
-data = {'types': TYPES, 'tab': TAB, 'levels': LEVELS, 'buy': buy, 'avgPlan': 4.66, 'scene': S3, 'cards': CARDS, 'pics': PICS, 'portraits': PORTRAITS, 'steps': STEPS}
+data = {'types': TYPES, 'tab': {L: {'avg': v['avg'], 'powered': v['powered']} for L, v in TAB.items()}, 'roster': json.load(open(os.path.join(S, 'roster.json'))), 'levels': LEVELS, 'buy': buy, 'avgPlan': 4.66, 'scene': S3, 'cards': CARDS, 'pics': PICS, 'portraits': PORTRAITS, 'steps': STEPS, 'design': DESIGN}
 tpl = open(os.path.join(S, 'garden_template.html')).read()
 html = tpl.replace('/*DEFS*/', defs).replace('/*PLAN*/', body).replace('/*DATA*/', json.dumps(data, ensure_ascii=False)).replace('/*G3D*/', open(os.path.join(S, 'garden_3d.js')).read())
 open('/home/user/ClaudeHome/jardin-foyer-concept.html', 'w').write(html)

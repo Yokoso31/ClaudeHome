@@ -148,6 +148,48 @@ details.grp>.gin{padding:0 10px 10px;display:flex;flex-direction:column;gap:6px}
 @media (prefers-reduced-motion: reduce){details.grp>summary::before{transition:none}}
 body.game .tabs button:not(.gm-t){display:none}
 body.game .tabs{order:1}body.game .wrap>section[data-tab]{order:2}body.game .sheet{order:9}
+
+#plan .trips{display:none;pointer-events:none}
+#plan.trips-on .trips{display:inline}
+#plan .trips line{stroke:#C9384F;stroke-opacity:.55;stroke-linecap:round}
+#plan .trips .tk rect{fill:#C9384F}
+#plan .trips .tk text{fill:#fff;font-family:"IBM Plex Mono",monospace;font-weight:600}
+#plan .before,#plan .divb{display:none}
+#plan.before-on .before,#plan.before-on .divb{display:inline}
+#plan.before-on .before .nm{display:inline}
+#plan .divb line{stroke:#203026;stroke-width:.22}
+#plan .divb rect{fill:#203026}
+#plan .divb text{fill:#fff;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:700}
+.ba{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:13.5px;color:var(--muted)}
+.ba[hidden]{display:none}
+.ba input{flex:1;accent-color:var(--indigo)}
+.bud{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.bud .bc{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.bud h3{font-size:16px}
+.bud .tot{font:700 22px var(--display);color:var(--indigo)}
+.bud ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:13.5px}
+.bud li{display:flex;align-items:center;gap:8px}
+.bud li em{margin-left:auto;font:500 12px var(--mono);font-style:normal;color:var(--muted);white-space:nowrap}
+.dtab{width:100%;border-collapse:collapse;font-size:13.5px}
+.dtab th{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
+.dtab th:first-child,.dtab td:first-child{text-align:left}
+.dtab td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12.5px}
+.dtab tr.cur td{background:color-mix(in srgb,var(--sakura) 12%,transparent);font-weight:700}
+.dwrap{overflow-x:auto}
+.tm{display:flex;flex-direction:column;gap:8px}
+.tm .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:6px}
+.tm .tr{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.tm .tr.gone{opacity:.5}.tm .tr.chg{border-color:var(--sakura)}
+.tm .por{width:40px;height:40px}
+.tm .abs{display:flex;flex-wrap:wrap;gap:6px}
+.tm .ab{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:999px;padding:1px 3px 1px 9px;font-size:12.5px}
+.tm .ab button,.tm .mini{border:0;background:var(--paper);color:var(--ink);width:24px;height:24px;border-radius:50%;cursor:pointer;font:600 14px var(--body);padding:0}
+.tm .ab button:focus-visible,.tm .mini:focus-visible{outline:2px solid var(--indigo)}
+.tm .gonebtn{font:500 12px var(--body);color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer}
+.tm .gonebtn[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.tm .add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--sheet);border:1px dashed var(--line);border-radius:10px;padding:10px}
+.tm select{font:400 13.5px var(--body);padding:4px 6px;border:1.5px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+.tm .sumtxt{white-space:pre-wrap;font:400 12.5px var(--mono);background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:10px;margin:0}
 .prodgrid{display:flex;flex-direction:column;gap:22px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .stats div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column}
@@ -396,6 +438,8 @@ ol{margin:0;padding-left:20px}
         <span style="flex:1"></span>
         <button class="ph-btn" type="button" id="namebtn" aria-pressed="true">Noms sur le plan</button>
         <button class="ph-btn" type="button" id="techbtn" aria-pressed="false">Vue technique</button>
+        <button class="ph-btn" type="button" id="tripbtn" aria-pressed="false">Trajets</button>
+        <button class="ph-btn" type="button" id="babtn" aria-pressed="false">Avant / après</button>
         <button class="ph-btn" type="button" id="v3dbtn" aria-pressed="false">Vue 3D</button>
       </div>
       <svg id="plan" class="names-on" viewBox="-0.6 -0.6 81.2 61.2" data-lv="14" role="img" aria-label="Plan du jardin japonais, vue de dessus, 80 cases sur 60">
@@ -420,6 +464,12 @@ ol{margin:0;padding-left:20px}
           <span>Glisse pour tourner · molette ou pince pour zoomer · clic droit ou deux doigts pour te déplacer. En promenade : glisse pour regarder, flèches ou ZQSD (Maj pour courir), ou les boutons à l'écran.</span>
         </div>
       </div>
+      <div class="ba" id="barow" hidden>
+        <span>Aujourd'hui</span>
+        <input type="range" id="barange" min="0" max="80" step="0.5" value="40" aria-label="Glisser entre ton Foyer d'aujourd'hui (à gauche) et le jardin (à droite)">
+        <span>Le jardin</span>
+      </div>
+      <p class="hint" id="tripnote" hidden>Trajets des porteurs : chaque ligne va d'une pièce qui produit au stockage le plus proche, plus épaisse quand il y a plus de trajets. Le chiffre sur chaque stockage est ce qu'il reçoit par heure.</p>
       <div class="tipc" id="tipc" hidden></div>
       <p class="hint">Touche ou survole un élément pour savoir ce que c'est. La liste juste en dessous fait ressortir chaque type d'objet sur le plan.</p>
     </div>
@@ -469,6 +519,7 @@ ol{margin:0;padding-left:20px}
       <p class="lede">Entre ce que tu as déjà : le temps restant et le jour où tu pourras monter se recalculent tout seuls, au rythme du plan.</p>
     </div>
     <div id="goalgrid"></div>
+    <div id="budgetgrid"></div>
   </section>
 
   <section data-tab="todo" class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="ch-title" id="chantier">
@@ -520,6 +571,7 @@ ol{margin:0;padding-left:20px}
       <p class="lede">Dans le jeu, on affecte en choisissant l'Aniimo : voici chacun avec ses postes au palier choisi. Coche-le une fois placé.</p>
     </div>
     <div id="whogrid"></div>
+    <div id="teamgrid"></div>
   </section>
 
   <section data-tab="chain" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="chain-title" id="chain">
@@ -528,6 +580,7 @@ ol{margin:0;padding-left:20px}
       <h2 id="chain-title">D'où vient chaque produit</h2>
       <p class="lede">De gauche à droite : ce que le jardin récolte, ce que les machines en tirent, et ce qui est vendu, avec ce que ça rapporte. Survole ou touche un produit pour suivre son chemin.</p>
     </div>
+    <div id="designgrid"></div>
     <div id="chaingrid"></div>
   </section>
 
@@ -649,7 +702,7 @@ ol{margin:0;padding-left:20px}
     ["elec","Électricité","Les générateurs ont besoin d'un Aniimo Foudre chacun."]];
   var zone="rue";
   var nf=function(n){ return n>=10?Math.round(n).toLocaleString("fr-FR"):(Math.round(n*10)/10).toLocaleString("fr-FR"); };
-  function pic(k,cls,alt){ var u=k&&D.pics[k]; return u?'<img class="'+cls+'" src="'+u+'" alt="'+esc(alt||"")+'">':'<span class="'+cls+' noic" aria-hidden="true">'+esc((alt||"?").charAt(0))+'</span>'; }
+  function pic(k,cls,alt){ var u=k&&(D.pics[k]||iconOf(k)); return u?'<img class="'+cls+'" src="'+u+'" alt="'+esc(alt||"")+'">':'<span class="'+cls+' noic" aria-hidden="true">'+esc((alt||"?").charAt(0))+'</span>'; }
   function aniHtml(list){ if(!list||!list.length) return "";
     if(list.length>3 && list.every(function(a){ return !a.jobs && (!a.also||!a.also.length); })){
       var mains={}; list.forEach(function(a){ var m=(a.ab.filter(function(x){ return x[2]; })[0]||a.ab[0]); var k=m[0]+" "+m[1]; mains[k]=(mains[k]||0)+1; });
@@ -690,17 +743,17 @@ ol{margin:0;padding-left:20px}
   }
   function secs(s){ var m=String(s).match(/(\d+)\s*j/), h=String(s).match(/(\d+)\s*h/), mi=String(s).match(/(\d+)\s*min/); return (m?+m[1]*86400:0)+(h?+h[1]*3600:0)+(mi?+mi[1]*60:0); }
   /* ---- progress kept per person: the artifact's own store when the page runs on claude.ai, this browser otherwise ---- */
-  var DONE={}, HAVE={}, ME=null, ref=null, saving=false, again=false, syncMsg="Coches gardées dans ce navigateur.", touched=false;
-  try{ var st0=JSON.parse(localStorage.getItem("jardin-foyer-state")||"null"); if(st0){ DONE=st0.done||{}; HAVE=st0.have||{}; ME=st0.me||null; } else DONE=JSON.parse(localStorage.getItem("jardin-foyer-done")||"{}")||{}; }catch(e){ DONE={}; }
-  function save(){ try{ localStorage.setItem("jardin-foyer-state",JSON.stringify({done:DONE,have:HAVE,me:ME})); }catch(e){}
+  var DONE={}, HAVE={}, TEAMED={edit:{},gone:{},added:[]}, ME=null, ref=null, saving=false, again=false, syncMsg="Coches gardées dans ce navigateur.", touched=false;
+  try{ var st0=JSON.parse(localStorage.getItem("jardin-foyer-state")||"null"); if(st0){ DONE=st0.done||{}; HAVE=st0.have||{}; ME=st0.me||null; if(st0.team) TEAMED=st0.team; } else DONE=JSON.parse(localStorage.getItem("jardin-foyer-done")||"{}")||{}; }catch(e){ DONE={}; }
+  function save(){ try{ localStorage.setItem("jardin-foyer-state",JSON.stringify({done:DONE,have:HAVE,me:ME,team:TEAMED})); }catch(e){}
     if(!ref) return; if(saving){ again=true; return; } saving=true;
-    ref.set({done:DONE,have:HAVE,me:ME}).catch(function(){}).then(function(){ saving=false; if(again){ again=false; save(); } }); }
+    ref.set({done:DONE,have:HAVE,me:ME,team:TEAMED}).catch(function(){}).then(function(){ saving=false; if(again){ again=false; save(); } }); }
   if(window.claude && window.claude.use){
     Promise.all([window.claude.use("db"),window.claude.use("user")]).then(function(r){ var db=r[0], u=r[1]; if(!db||!u) return null;
       return u.id().then(function(id){ if(!id) return null; ref=db.doc("data/users/"+id+"/progress"); return ref.get(); }); })
-    .then(function(s){ if(!ref) return; if(s&&s.exists){ var x=s.data()||{}, d=x.done||{}, hv=x.have||{}; for(var k in d) DONE[k]=d[k]; for(var l in hv) HAVE[l]=Object.assign(HAVE[l]||{},hv[l]); if(x.me) ME=x.me; }
+    .then(function(s){ if(!ref) return; if(s&&s.exists){ var x=s.data()||{}, d=x.done||{}, hv=x.have||{}; for(var k in d) DONE[k]=d[k]; for(var l in hv) HAVE[l]=Object.assign(HAVE[l]||{},hv[l]); if(x.me) ME=x.me; if(x.team) TEAMED=x.team; }
       syncMsg="Coches enregistrées sur ton compte : tu les retrouves sur ton téléphone comme sur ton ordinateur.";
-      if(ME&&!touched&&ME!==cur) setLevel(ME); else { renderSteps(); renderWho(); renderGoal(); markMine(); } })
+      if(ME&&!touched&&ME!==cur) setLevel(ME); else { renderSteps(); renderWho(); renderGoal(); markMine(); } renderTeam(); })
     .catch(function(){});
   }
   var CHK='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -783,7 +836,7 @@ ol{margin:0;padding-left:20px}
     cols.forEach(function(c,ci){ s+='<text class="ch" x="'+(2+ci*CW)+'" y="14">'+heads[Math.min(ci,heads.length-1)]+'</text>'; });
     C.edges.forEach(function(e){ var a=xy[e[0]], b=xy[e[1]]; if(!a||!b) return; var x1=a[0]+NW, y1=a[1]+NH/2, x2=b[0], y2=b[1]+NH/2, mx=(x1+x2)/2;
       s+='<path class="lk" data-a="'+e[0]+'" data-b="'+e[1]+'" d="M'+x1+' '+y1+'C'+mx+' '+y1+' '+mx+' '+y2+' '+x2+' '+y2+'"/>'; });
-    C.nodes.forEach(function(n){ var p=xy[n.id], u=n.ic&&D.pics[n.ic], kc=KC[n.kind[0]]||"var(--muted)";
+    C.nodes.forEach(function(n){ var p=xy[n.id], u=n.ic&&(D.pics[n.ic]||iconOf(n.ic)), kc=KC[n.kind[0]]||"var(--muted)";
       s+='<g class="nd" data-id="'+n.id+'" tabindex="0" role="button" aria-label="'+esc(n.n+(n.sold?", vendu : "+fmt(n.sold.g)+" pièces par heure":""))+'"><title>'+esc(n.n+(n.src.length?" ← "+n.src.join(", "):""))+'</title>'+
         '<rect class="bg" x="'+p[0]+'" y="'+p[1]+'" width="'+NW+'" height="'+NH+'" rx="7"/><rect x="'+p[0]+'" y="'+p[1]+'" width="4" height="'+NH+'" rx="2" fill="'+(n.sold?"var(--indigo)":kc)+'"/>'+
         (u?'<image href="'+u+'" x="'+(p[0]+8)+'" y="'+(p[1]+6)+'" width="28" height="28"/>':'')+
@@ -867,15 +920,74 @@ ol{margin:0;padding-left:20px}
       if(c==="not_granted"||c==="sampling_disabled"||c==="images_unavailable") noSample();
     }).then(function(){ stop.hidden=true; ctl=null; upd(); }); });
   stop.addEventListener("click",function(){ if(ctl) ctl.abort(); });
+  function renderBudget(){
+    var B=(D.steps[cur]||{}).budget, g=document.getElementById("budgetgrid"); if(!B){ g.innerHTML=""; return; }
+    var per=B.perDay?" par jour":"";
+    var h='<div class="bud">';
+    h+='<div class="bc"><h3>Graines'+(B.perDay?" (par jour)":" pour tout le palier")+'</h3><span class="tot">'+fmt(B.seedsTotal)+' pièces'+per+'</span><ul>'+B.seeds.map(function(s){ return '<li>'+pic(s.ic,"ci",s.n)+'<span>'+esc(s.n)+' <small style="color:var(--muted)">· '+s.plots+' parcelle'+(s.plots>1?"s":"")+'</small></span><em>'+(s.cost?fmt(s.cost):"gratuit")+'</em></li>'; }).join("")+'</ul></div>';
+    h+='<div class="bc"><h3>Déco nouvelle à ce palier</h3>'+(B.deco.length?'<span class="tot">'+fmt(B.decoTotal)+' tickets bourgeon</span><ul>'+B.deco.map(function(d){ return '<li>'+pic(d.ic,"ci",d.n)+'<span>'+d.k+' × '+esc(d.n)+'</span><em>'+fmt(d.k*d.pr)+'</em></li>'; }).join("")+'</ul>':'<small style="color:var(--muted)">Rien de nouveau à acheter.</small>')+'</div>';
+    h+='<div class="bc"><h3>Pièces à obtenir en plus</h3>'+(B["new"].length?'<ul>'+B["new"].map(function(d){ return '<li>'+pic(d.ic,"ci",d.n)+'<span>'+d.k+' × '+esc(d.n)+'</span></li>'; }).join("")+'</ul><small style="color:var(--muted)">Par rapport à ce que tu as déjà posé ; à fabriquer ou sortir de l\'inventaire.</small>':'<small style="color:var(--muted)">Rien : tu as déjà tout.</small>')+'</div>';
+    g.innerHTML=h+'</div>';
+  }
+  function renderDesign(){
+    var g=document.getElementById("designgrid"), X=D.design, c=X[cur];
+    var rows=D.levels.map(function(L){ var x=X[L], extra=x.trips*(x.garden-x.plan);
+      return '<tr'+(L===cur?' class="cur"':'')+'><td>VR '+L+'</td><td>'+fmt(x.trips)+'</td><td>'+f1(x.plan)+'</td><td>'+f1(x.garden)+'</td><td>+'+Math.round((x.garden/x.plan-1)*100)+' %</td><td>+'+fmt(extra)+'</td></tr>'; }).join("");
+    g.innerHTML='<div class="bc goal"><h3>Ce que le design coûte</h3><p style="margin:0;font-size:14px">Le jardin fait exactement la même production que le plan le plus rentable : <b>même revenu</b> ('+fmt(c.rate)+' pièces/h au VR '+cur+'), tant que les porteurs suivent. Ce qu\'il coûte, c\'est de la marche : les pièces sont un peu plus loin des stockages.</p>'+
+      '<div class="dwrap"><table class="dtab"><thead><tr><th>Palier</th><th>Trajets/h</th><th>Marche, plan rentable</th><th>Marche, jardin</th><th>Écart</th><th>Cases en plus/h</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      (c.top.length?'<h3 style="font-size:15px;margin-top:6px">Où se fait l\'écart au VR '+cur+'</h3><ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:13.5px">'+c.top.map(function(t){ return '<li style="display:flex;gap:8px;align-items:center">'+pic(t.ic,"ci",t.n)+'<span>'+esc(t.n)+'</span><em style="margin-left:auto;font:500 12px var(--mono);font-style:normal;color:var(--muted)">+'+fmt(t.extra)+' cases/h</em></li>'; }).join("")+'</ul>':'')+
+      '<small>Distances mesurées au plus près d\'un stockage (≈). Pour réduire l\'écart, c\'est surtout ces machines qu\'il faudrait rapprocher d\'un stockage. Le bouton « Trajets » sur le plan le montre.</small></div>';
+  }
+  /* ---- my team: changes saved on the account, read back by Claude to recompute ---- */
+  var ABL=[["Fire","Feu"],["Water","Eau"],["Earth","Terre"],["Grass","Herbe"],["Lightning","Foudre"],["Ice","Glace"],["Wind","Vent"],["Dark","Obscurité"],["Light","Lumière"],["Artisanship","Artisanat"],["Leisure","Loisir"],["Perfumery","Parfumerie"],["Hauling","Transport"]];
+  var ABF={}; ABL.forEach(function(a){ ABF[a[0]]=a[1]; });
+  var draft={};
+  function teamOf(i){ return (TEAMED.edit[i]&&TEAMED.edit[i].ab)||D.roster[i]; }
+  function teamSummary(){ var L=[];
+    D.roster.forEach(function(ab,i){ if(TEAMED.gone[i]) L.push("- n°"+(i+1)+" ("+fmtAb(ab)+") : n'est plus dans l'équipe"); else if(TEAMED.edit[i]) L.push("- n°"+(i+1)+" : "+fmtAb(ab)+" → "+fmtAb(TEAMED.edit[i].ab)); });
+    TEAMED.added.forEach(function(a){ L.push("- nouveau : "+fmtAb(a.ab)); }); return L; }
+  function fmtAb(ab){ return Object.keys(ab).map(function(k){ return (ABF[k]||k)+" "+ab[k]; }).join(", "); }
+  function renderTeam(){
+    var g=document.getElementById("teamgrid"), sum=teamSummary(), h="";
+    var open=OPEN["team"]!=null?OPEN["team"]:!!sum.length;
+    h+='<details class="grp" data-og="team"'+(open?' open':'')+'><summary>Mon équipe a changé ?<span class="gc">'+(sum.length?sum.length+' changement'+(sum.length>1?"s":""):"aucun changement")+'</span></summary><div class="gin tm">';
+    h+='<p style="margin:0;font-size:13.5px;color:var(--muted)">Monte ou baisse un niveau d\'aptitude, retire un Aniimo parti, ou ajoute un nouveau. C\'est enregistré avec tes coches. Ensuite, écris-moi « recalcule mon équipe » dans la conversation : je relis tes changements et je refais le plan, les fiches, le « Qui va où » et le chantier.</p>';
+    h+='<div class="tgrid">';
+    D.roster.forEach(function(ab0,i){ var ab=teamOf(i), gone=!!TEAMED.gone[i], chg=!!TEAMED.edit[i];
+      h+='<div class="tr'+(gone?' gone':'')+(chg?' chg':'')+'"><img class="por" src="'+D.portraits[i]+'" alt=""><div class="abs">'+Object.keys(ab).map(function(k){ return '<span class="ab">'+esc(ABF[k]||k)+' <b>'+ab[k]+'</b><button type="button" data-i="'+i+'" data-k="'+k+'" data-d="-1" aria-label="Baisser '+esc(ABF[k]||k)+'">−</button><button type="button" data-i="'+i+'" data-k="'+k+'" data-d="1" aria-label="Monter '+esc(ABF[k]||k)+'">+</button></span>'; }).join("")+'</div>'+
+        '<button type="button" class="gonebtn" data-gone="'+i+'" aria-pressed="'+gone+'">'+(gone?"Parti":"Encore là")+'</button></div>'; });
+    h+='</div>';
+    TEAMED.added.forEach(function(a,j){ h+='<div class="tr chg"><span class="por noic" aria-hidden="true">+</span><div class="abs">'+esc(fmtAb(a.ab))+'</div><button type="button" class="gonebtn" data-del="'+j+'">Retirer</button></div>'; });
+    h+='<div class="add"><b style="font-size:13.5px">Nouvel Aniimo :</b>'+Object.keys(draft).map(function(k){ return '<span class="ab" style="border:1px solid var(--line);border-radius:999px;padding:1px 9px;font-size:12.5px">'+esc(ABF[k])+' '+draft[k]+'</span>'; }).join("")+
+      '<select id="nab" aria-label="Aptitude">'+ABL.map(function(a){ return '<option value="'+a[0]+'">'+a[1]+'</option>'; }).join("")+'</select><select id="nlv" aria-label="Niveau"><option>1</option><option>2</option><option selected>3</option><option>4</option></select>'+
+      '<button type="button" class="ph-btn" id="nabadd">+ aptitude</button><button type="button" class="ph-btn" id="naniadd"'+(Object.keys(draft).length?'':' disabled')+'>Ajouter cet Aniimo</button></div>';
+    if(sum.length) h+='<pre class="sumtxt" id="teamsum">'+esc("Changements dans mon équipe :\n"+sum.join("\n"))+'</pre><div><button type="button" class="ph-btn" id="teamcopy">Copier ce résumé</button> <button type="button" class="ph-btn" id="teamreset">Tout annuler</button></div>';
+    g.innerHTML=h+'</div></details>';
+    g.querySelector("details").addEventListener("toggle",function(e){ OPEN["team"]=e.target.open; });
+    g.querySelectorAll(".ab button[data-i]").forEach(function(b){ b.addEventListener("click",function(){ var i=+b.dataset.i, k=b.dataset.k, ab=Object.assign({},teamOf(i)); ab[k]=Math.max(1,Math.min(4,ab[k]+(+b.dataset.d)));
+      if(JSON.stringify(ab)===JSON.stringify(D.roster[i])) delete TEAMED.edit[i]; else TEAMED.edit[i]={ab:ab}; save(); renderTeam(); var nb=document.querySelector('.ab button[data-i="'+i+'"][data-k="'+k+'"][data-d="'+b.dataset.d+'"]'); if(nb) nb.focus(); }); });
+    g.querySelectorAll("[data-gone]").forEach(function(b){ b.addEventListener("click",function(){ var i=b.dataset.gone; if(TEAMED.gone[i]) delete TEAMED.gone[i]; else TEAMED.gone[i]=1; save(); renderTeam(); }); });
+    g.querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ TEAMED.added.splice(+b.dataset.del,1); save(); renderTeam(); }); });
+    document.getElementById("nabadd").addEventListener("click",function(){ draft[document.getElementById("nab").value]=+document.getElementById("nlv").value; renderTeam(); });
+    document.getElementById("naniadd").addEventListener("click",function(){ if(!Object.keys(draft).length) return; TEAMED.added.push({ab:draft}); draft={}; save(); renderTeam(); });
+    var cp=document.getElementById("teamcopy"); if(cp) cp.addEventListener("click",function(){ var tx=document.getElementById("teamsum").textContent; (navigator.clipboard?navigator.clipboard.writeText(tx):Promise.reject()).then(function(){ cp.textContent="Copié ✓"; },function(){ cp.textContent="Sélectionne le texte et copie-le"; }); });
+    var rs=document.getElementById("teamreset"); if(rs) rs.addEventListener("click",function(){ TEAMED={edit:{},gone:{},added:[]}; save(); renderTeam(); });
+  }
+  /* ---- plan toggles: porters' trips, before / after ---- */
+  var trb=document.getElementById("tripbtn"), bab=document.getElementById("babtn"), bar=document.getElementById("barange");
+  trb.addEventListener("click",function(){ var on=trb.getAttribute("aria-pressed")!=="true"; trb.setAttribute("aria-pressed",String(on)); svg.classList.toggle("trips-on",on); document.getElementById("tripnote").hidden=!on; });
+  function baSet(v){ var r=document.getElementById("clipBr"), l=document.getElementById("divBl"), tg=document.getElementById("divBt"); if(r) r.setAttribute("width",v+1); if(l){ l.setAttribute("x1",v); l.setAttribute("x2",v); } if(tg) tg.setAttribute("transform","translate("+(Math.max(5.6,Math.min(74.4,v))-40)+" 0)"); }
+  bab.addEventListener("click",function(){ var on=bab.getAttribute("aria-pressed")!=="true"; bab.setAttribute("aria-pressed",String(on)); svg.classList.toggle("before-on",on); document.getElementById("barow").hidden=!on; baSet(+bar.value); });
+  bar.addEventListener("input",function(){ baSet(+bar.value); });
   function setLevel(L){ cur=L; svg.setAttribute("data-lv",String(L)); tip.hidden=true; hlIds=null;
     document.querySelectorAll("#lvbtns button").forEach(function(b){ b.setAttribute("aria-pressed",String(+b.dataset.lv===L)); });
     var t=D.tab[L]; document.getElementById("cart-lv").textContent="VR "+L; document.getElementById("avg").textContent=f1(t.avg);
     document.getElementById("pw").textContent=t.powered[0]+" machines actives sur "+t.powered[1]+" alimentées";
     document.getElementById("walk").innerHTML="Au VR "+L+", un porteur fait <b>"+f1(t.avg)+" cases</b> en moyenne jusqu'au stockage le plus proche, contre "+f1(D.avgPlan)+" dans le plan de construction actuel, qui ne pensait qu'au rendement.";
-    renderLegend(); renderProd(); renderSteps(); renderWho(); renderChain(); renderGoal(); markMine(); applyHl(); if(window.G3D) G3D.level(L); }
+    renderLegend(); renderProd(); renderSteps(); renderWho(); renderChain(); renderGoal(); renderBudget(); renderDesign(); markMine(); applyHl(); if(window.G3D) G3D.level(L); }
   document.getElementById("lvbtns").innerHTML=D.levels.map(function(L){ return '<button class="ph-btn" type="button" data-lv="'+L+'" aria-pressed="false">VR '+L+'</button>'; }).join("");
   document.querySelectorAll("#lvbtns button").forEach(function(b){ b.addEventListener("click",function(){ touched=true; setLevel(+b.dataset.lv); }); });
-  setLevel(ME||14);
+  setLevel(ME||14); renderTeam();
   tb.addEventListener("click",function(){ var on=tb.getAttribute("aria-pressed")!=="true"; tb.setAttribute("aria-pressed",String(on)); svg.classList.toggle("tech-on",on); if(window.G3D) G3D.tech(on); });
   window.__G={D:D, iconOf:iconOf, level:function(){ return cur; }, names:function(){ return nb.getAttribute("aria-pressed")==="true"; }, tech:function(){ return tb.getAttribute("aria-pressed")==="true"; }};
 })();
