@@ -125,6 +125,10 @@ def ovr(a, b):
     return min(a['x'] + a['w'], b['x'] + b['w']) - max(a['x'], b['x']) > 1e-6 and min(a['y'] + a['h'], b['y'] + b['h']) - max(a['y'], b['y']) > 1e-6
 TAB = {}
 LV = {}
+NEEDS_L = {}
+LOTCOUNT = {}
+for _i in GL['lots']:
+    LOTCOUNT[_i['n']] = LOTCOUNT.get(_i['n'], 0) + 1
 for L in LEVELS:
     lv = GL['levels'][str(L)]
     out = []
@@ -139,6 +143,7 @@ for L in LEVELS:
         if p.get('cluster'):
             for q in p['plots']:
                 NEEDS.add((q['facility'], q.get('crop')))
+    NEEDS_L[L] = NEEDS
     for it in lv['items']:
         ids += 1
         iid = f'{L}-{ids}'
@@ -178,7 +183,7 @@ for L in LEVELS:
             out.append(f'<g class="obj shop{" idle" if idle else ""}"{tag(n, lab)} data-id="{iid}"><rect x="{f(x + .25)}" y="{f(y + .3)}" width="{f(w)}" height="{f(h)}" rx=".3" class="shd"/>'
                        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx=".3" class="eave"/><rect x="{f(x + .25)}" y="{f(y + .25)}" width="{f(w - .5)}" height="{f(h - .5)}" rx=".2" class="roof"/>'
                        f'<path d="{ridge}" class="ridge"/><use href="#i-{ic_fac(n).replace(" ", "_")}" x="{f(x + w * .2)}" y="{f(y + h * .2)}" width="{f(w * .6)}" height="{f(h * .6)}" class="sign"/></g>')
-            out.append(f'<text x="{f(x + w / 2)}" y="{f(y + h / 2 + .2)}" font-size="{.5 if w < 3 else .6}" text-anchor="middle" class="nm">{SHORT.get(n, n)}</text>')
+            out.append(f'<text x="{f(x + w / 2)}" y="{f(y + h / 2 + .2)}" font-size="{.5 if w < 3 else .6}" text-anchor="middle" class="nm">{SHORT.get(n, n)}{f" {it.get('unit', 0) + 1}" if LOTCOUNT.get(n, 0) > 1 else ""}</text>')
             rows['street'].append({'id': iid, 'n': n, 'ic': ic_fac(n).replace(' ', '_'), 'title': name_fr, 'what': rec if not idle else None, 'w': round(wt, 1), 'x': x})
             continue
         elif n == 'Mine':

@@ -45,7 +45,62 @@ header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px
 .tipc .cat{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--indigo)}
 .hint{font-size:13px;color:var(--muted);margin-top:8px}
 .lgd{display:flex;flex-direction:column;gap:18px}
-.prodgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;align-items:start}
+.prodgrid{display:flex;flex-direction:column;gap:22px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stats div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column}
+.stats b{font:700 26px/1.1 var(--display);color:var(--indigo)}
+.stats span{font-size:13px;color:var(--muted)}
+.zn{display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:2;background:var(--paper);padding:8px 0}
+.zn .n{font:500 11px var(--mono);opacity:.7}
+.zs{display:flex;flex-direction:column;gap:12px}
+.zs[hidden]{display:none}
+.zh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.zh h3{font-size:21px}
+.zh p{font-size:13.5px;color:var(--muted);margin:0;flex:1 1 300px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px;align-items:start}
+.mc{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0;cursor:pointer;border-top:4px solid var(--line)}
+.mc.dev{border-top-color:var(--m)}
+.mc:hover{border-color:color-mix(in srgb,var(--indigo) 45%,var(--line))}
+.mc:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.mc[aria-pressed="true"]{box-shadow:0 0 0 2px #C9384F}
+.mc header{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center}
+.mc header b{display:block;font-size:15.5px;line-height:1.25}
+.mc header small{display:block;font-size:12px;color:var(--muted);line-height:1.3}
+.fi{width:40px;height:40px;object-fit:contain}
+.pi{width:30px;height:30px;object-fit:contain;flex:none}
+.ci{width:22px;height:22px;object-fit:contain;flex:none}
+.noic{display:inline-grid;place-items:center;border-radius:6px;background:var(--paper);color:var(--indigo);font:800 13px var(--display)}
+.md{font:600 11.5px var(--mono);padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--m) 22%,transparent);border:1px solid var(--m)}
+.set{margin:0;font-size:14px}.set b{padding:0 6px;border-radius:4px;background:color-mix(in srgb,var(--m) 28%,transparent)}
+.alt{margin:0;font-size:12.5px;color:var(--muted)}
+.rx{display:flex;flex-direction:column;gap:6px}
+.rx.many{border-left:3px solid var(--line);padding-left:9px}
+.out{display:flex;align-items:center;gap:8px}
+.out b{font-size:14.5px;flex:1;min-width:0}
+.out em{font:500 12.5px var(--mono);font-style:normal;color:var(--indigo);white-space:nowrap}
+.lbl{display:block;font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.ins.none{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border-radius:8px;padding:4px 9px 4px 5px;font-size:13px;line-height:1.2}
+.chip small{display:block;font:400 11px var(--mono);color:var(--muted)}
+.crops{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.crops li{display:flex;align-items:center;gap:8px;font-size:14px}
+.who{border-top:1px dashed var(--line);padding-top:8px}
+.wl{display:flex;flex-direction:column;gap:6px}
+.wa{display:flex;align-items:center;gap:9px}
+.por{width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--paper);flex:none}
+.abl{display:flex;flex-wrap:wrap;gap:4px}
+.abl span{font-size:12px;padding:1px 7px;border-radius:999px;border:1px solid var(--line)}
+.abl span.main{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.wa small{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.pors{display:flex;flex-wrap:wrap;gap:4px}
+.pm{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+.idle{display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--sheet);border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
+.idle .lbl{width:100%;margin:0}
+.idle .ic{display:inline-flex;align-items:center;gap:6px;font:500 13px var(--body);color:var(--muted);background:var(--paper);border:0;border-radius:999px;padding:3px 10px 3px 4px;cursor:pointer}
+.idle .ic .por{width:24px;height:24px}
+.idle .ic[aria-pressed="true"]{box-shadow:0 0 0 2px #C9384F}
+.idle small{width:100%;font-size:12px;color:var(--muted)}
 .pz{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .pz h3{font-size:18px}
 .pz .sub{font-size:13px;color:var(--muted)}
@@ -281,7 +336,7 @@ ol{margin:0;padding-left:20px}
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Quoi produire</div>
       <h2 id="prod-title">Au VR 14 : quoi planter, quoi produire</h2>
-      <p class="lede">Pour chaque zone et chaque machine du palier choisi au-dessus du plan. Clique une ligne pour la voir sur le plan.</p>
+      <p class="lede">Une fiche par machine, au palier choisi au-dessus du plan : ce qu'elle fabrique, ce qu'il faut mettre dedans et quel Aniimo y affecter. Touche une fiche pour la retrouver sur le plan.</p>
     </div>
     <div class="prodgrid" id="prodgrid"></div>
   </section>
@@ -376,7 +431,7 @@ ol{margin:0;padding-left:20px}
   svg.addEventListener("pointermove",showTip); svg.addEventListener("pointerdown",showTip);
   svg.addEventListener("pointerleave",function(e){ if(e.pointerType==="mouse") tip.hidden=true; });
   function applyHl(){ svg.classList.toggle("hl",!!hlKey||!!hlIds); svg.querySelectorAll("[data-t]").forEach(function(el){ el.classList.toggle("on",hlIds?!!(el.dataset.id&&hlIds.indexOf(el.dataset.id)>=0):el.dataset.t===hlKey); });
-    document.querySelectorAll(".pr").forEach(function(b){ b.setAttribute("aria-pressed",String(!!hlIds&&b.dataset.ids===hlIds.join(","))); });
+    document.querySelectorAll("#prodgrid [data-ids]").forEach(function(b){ b.setAttribute("aria-pressed",String(!!hlIds&&b.dataset.ids===hlIds.join(","))); });
     document.querySelectorAll(".lg").forEach(function(b){ b.setAttribute("aria-pressed",String(b.dataset.k===hlKey)); }); }
   var CATS=["Lieux","Production","Ateliers","Stockage","Climat et énergie","Déco"];
   function renderLegend(){
@@ -397,22 +452,51 @@ ol{margin:0;padding-left:20px}
       if(hlKey) document.querySelector(".sheet").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }); });
   }
   var MODEC={"Ensoleillé":"#F2C21F","Torride":"#EF5F45","Chaud":"#F59A3C","Frais":"#33B9E2","Glacial":"#7DA8F5"};
-  function row(ids,ic,title,sub,right,off){ var im=ic?iconOf(ic):null;
-    return '<button class="pr'+(off?' off':'')+'" type="button" data-ids="'+esc(ids.join(","))+'">'+(im?'<img src="'+im+'" alt="">':'<span class="ph">庭</span>')+'<span><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span><em>'+esc(right||"")+'</em></button>'; }
+  var SECS=[["rue","Rue des artisans","Chaque machine garde sa place à tous les paliers. Règle-la sur la recette, mets dedans ce qui est indiqué, et affecte l'Aniimo montré."],
+    ["terr","Terrasses","Règle chaque appareil de climat, puis plante dans son carré de 9 × 9 (vue technique pour le voir)."],
+    ["carr","Carrière et puits","Ils produisent seuls : il suffit d'y mettre le bon Aniimo."],
+    ["pav","Pavillons","Chacun produit une matière première, certains ont besoin d'un climat."],
+    ["elec","Électricité","Les générateurs ont besoin d'un Aniimo Foudre chacun."]];
+  var zone="all";
+  var nf=function(n){ return n>=10?Math.round(n).toLocaleString("fr-FR"):(Math.round(n*10)/10).toLocaleString("fr-FR"); };
+  function pic(k,cls,alt){ var u=k&&D.pics[k]; return u?'<img class="'+cls+'" src="'+u+'" alt="'+esc(alt||"")+'">':'<span class="'+cls+' noic" aria-hidden="true">'+esc((alt||"?").charAt(0))+'</span>'; }
+  function aniHtml(list){ if(!list||!list.length) return "";
+    if(list.length>3 && list.every(function(a){ return !a.jobs && (!a.also||!a.also.length); })){
+      var mains={}; list.forEach(function(a){ var m=(a.ab.filter(function(x){ return x[2]; })[0]||a.ab[0]); var k=m[0]+" "+m[1]; mains[k]=(mains[k]||0)+1; });
+      return '<div class="who"><span class="lbl">Aniimo · '+list.length+'</span><div class="pors">'+list.map(function(a){ return '<img class="por" src="'+D.portraits[a.p]+'" alt="" title="'+esc(a.ab.map(function(x){ return x[0]+" "+x[1]; }).join(" · "))+'">'; }).join("")+'</div><small class="pm">'+Object.keys(mains).map(function(k){ return mains[k]+' × '+esc(k); }).join(" · ")+', un par machine</small></div>'; }
+    return '<div class="who"><span class="lbl">Aniimo</span><div class="wl">'+list.map(function(a){
+      return '<div class="wa"><img class="por" src="'+D.portraits[a.p]+'" alt=""><div><span class="abl">'+a.ab.map(function(x){ return '<span'+(x[2]?' class="main"':'')+'>'+esc(x[0])+' '+x[1]+'</span>'; }).join("")+'</span>'+
+        (a.also&&a.also.length?'<small>aussi : '+esc(a.also.join(", "))+'</small>':'')+(a.jobs?'<small>'+esc(a.jobs.join(", "))+'</small>':'')+'</div></div>'; }).join("")+'</div></div>'; }
+  function recHtml(r,many){
+    var out='<div class="out">'+pic(r.ic,"pi",r.n)+'<b>'+esc(r.n)+'</b>'+(r.h?'<em>'+nf(r.h)+' / h</em>':'')+'</div>';
+    var ins=r.ins.length?'<div class="ins"><span class="lbl">Mettre dedans</span><div class="chips">'+r.ins.map(function(x){ return '<span class="chip">'+pic(x.ic,"ci",x.n)+'<span><b>'+x.q+' ×</b> '+esc(x.n)+(r.h?'<small>≈ '+nf(x.h)+' / h</small>':'')+'</span></span>'; }).join("")+'</div></div>':'<div class="ins none">Rien à mettre dedans : elle produit seule.</div>';
+    return '<div class="rx'+(many?' many':'')+'">'+out+ins+'</div>'; }
+  function card(c,k){
+    var ids=c.ids.join(","), head='<header>'+pic(c.ic,"fi",c.t)+'<div><b>'+esc(c.t)+'</b><small>'+esc(c.where||"")+'</small></div>'+(c.mode?'<span class="md" style="--m:'+(MODEC[c.mode]||"#999")+'">'+esc(c.mode)+'</span>':'')+'</header>';
+    var body="";
+    if(c.recs&&c.recs.length){ if(c.recs.length>1) body+='<p class="alt">Alterne entre '+c.recs.length+' recettes :</p>'; body+=c.recs.map(function(r){ return recHtml(r,c.recs.length>1); }).join(""); }
+    if(c.crops){ body+=c.crops.length?'<ul class="crops">'+c.crops.map(function(x){ return '<li>'+pic(x.ic,"pi",x.rec)+'<span><b>'+x.n+' × '+esc(x.fac)+'</b> '+esc(x.rec)+'</span></li>'; }).join("")+'</ul>':'<p class="alt">Rien à planter : il chauffe ou refroidit le pavillon voisin.</p>'; }
+    if(c.dev) body='<p class="set">Règle-la sur <b style="--m:'+(MODEC[c.mode]||"#999")+'">'+esc(c.mode)+'</b></p>'+body;
+    if(c.crew) body+=aniHtml(c.crew.map(function(m){ return {p:m.p,ab:m.ab,jobs:m.jobs}; }));
+    else body+=aniHtml(c.ani);
+    return '<article class="mc'+(c.dev?' dev':'')+'"'+(ids?' data-ids="'+ids+'" tabindex="0" role="button" aria-pressed="false" aria-label="'+esc(c.t)+' : voir sur le plan"':'')+(c.mode?' style="--m:'+(MODEC[c.mode]||"#999")+'"':'')+'>'+head+body+'</article>'; }
   function renderProd(){
-    var t=D.tab[cur], h="";
-    document.getElementById("prod-title").textContent="Au VR "+cur+" : quoi planter, quoi produire";
-    h+='<div class="pz"><h3>Rue des artisans</h3><p class="sub">Chaque machine garde sa place à tous les paliers. Règle-la sur la recette indiquée.</p>'+t.street.map(function(r){ return row([r.id],r.ic,r.title,r.what?"Produire : "+r.what:"À l'arrêt à ce palier (rien à produire)",r.what?(r.w<1?f1(r.w):fmt(r.w))+" trajets/h":"",!r.what); }).join("")+'</div>';
-    h+='<div class="pz"><h3>Terrasses : blocs de climat</h3><p class="sub">Chaque appareil couvre un carré de 9 × 9 (vue technique). Règle-le, puis plante dans son carré.</p>'+t.blocks.map(function(b){
-      return '<div class="blk"><i style="background:'+(MODEC[b.mode]||"#ccc")+'"></i>'+esc(b.dev)+' réglée en '+esc(b.mode)+'</div>'+b.crops.map(function(c){ return row(c.ids.concat(b.ids),c.ic,c.n+" × "+c.fac,c.what?c.verb+" : "+c.what:"",""); }).join("");
-    }).join("")+'</div>';
-    if(t.free.length) h+='<div class="pz"><h3>Terrasses : sans climat</h3><p class="sub">Ces cultures poussent n\'importe où dans les terrasses.</p>'+t.free.map(function(c){ return row(c.ids,c.ic,c.n+" × "+c.fac,"Planter : "+c.what,""); }).join("")+'</div>';
-    h+='<div class="pz"><h3>Carrière et puits</h3>'+t.quarry.map(function(q){ return row(q.ids,"Mine",q.ids.length+" × Mine","Produire : "+q.what,""); }).join("")+t.wells.map(function(q){ return row(q.ids,"Well",q.ids.length+" × Puits","Produire : "+q.what,""); }).join("")+'</div>';
-    h+='<div class="pz"><h3>Pavillons</h3>'+t.pav.map(function(p){ return row([p.id],p.ic,p.title,(p.what?"Produire : "+p.what:"À l'arrêt")+(p.mode?" · climat "+p.mode:""),"",!p.what); }).join("")+'</div>';
-    h+='<div class="pz"><h3>Électricité</h3><p class="sub">'+t.gens+' générateurs (un Aniimo Foudre chacun) et '+t.poles+' poteaux : '+t.powered[0]+' machines actives alimentées sur '+t.powered[1]+'. Vue technique pour voir les zones.</p>'+(t.curve.length?'<p class="sub">Si le module VR 16 te donne des poteaux en plus, pose les poteaux en pointillés dans l\'ordre : '+t.curve.map(function(n,k){ return '+'+(k+1)+' → '+n+'/'+t.powered[1]; }).join(", ")+'.</p>':'')+'</div>';
-    document.getElementById("prodgrid").innerHTML=h;
-    document.querySelectorAll(".pr").forEach(function(b){ b.addEventListener("click",function(){ var ids=b.dataset.ids.split(","); hlKey=null; hlIds=(hlIds&&hlIds.join(",")===b.dataset.ids)?null:ids; applyHl();
-      if(hlIds) document.querySelector(".sheet").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }); });
+    var C=D.cards[cur], t=D.tab[cur], h="";
+    document.getElementById("prod-title").textContent="Au VR "+cur+" : quoi mettre dans chaque machine";
+    var busy=C.nAni-C.free.length;
+    h+='<div class="stats"><div><b>'+C.nAct+'</b><span>machines au travail</span></div><div><b>'+C.nIdle+'</b><span>à l\'arrêt à ce palier</span></div><div><b>'+busy+' / '+C.nAni+'</b><span>Aniimo affectés</span></div><div><b>'+fmt(C.rate||0)+'</b><span>pièces du Foyer par heure</span></div></div>';
+    h+='<div class="zn" role="group" aria-label="Zone">'+[["all","Tout"]].concat(SECS.map(function(s){ return [s[0],s[1]]; })).map(function(z){ var n=z[0]==="all"?0:C.sec[z[0]].length; return '<button type="button" class="ph-btn" data-z="'+z[0]+'" aria-pressed="'+(zone===z[0])+'">'+esc(z[1])+(n?' <span class="n">'+n+'</span>':'')+'</button>'; }).join("")+'</div>';
+    SECS.forEach(function(s){ var list=C.sec[s[0]]; if(!list.length) return;
+      h+='<div class="zs" data-zs="'+s[0]+'"'+(zone!=="all"&&zone!==s[0]?' hidden':'')+'><div class="zh"><h3>'+esc(s[1])+'</h3><p>'+esc(s[2])+'</p></div><div class="cards">'+list.map(card).join("")+'</div>';
+      if(s[0]==="rue"&&C.idle.length) h+='<div class="idle"><span class="lbl">À l\'arrêt à ce palier</span>'+C.idle.map(function(x){ return '<button type="button" class="ic" data-ids="'+x.ids.join(",")+'" aria-pressed="false">'+pic(x.ic,"ci",x.t)+esc(x.t)+'</button>'; }).join("")+'<small>Rien à y produire pour l\'instant : laisse-les vides, elles serviront plus tard.</small></div>';
+      if(s[0]==="elec"&&C.free.length) h+='<div class="idle"><span class="lbl">Aniimo libres</span>'+C.free.map(function(a){ return '<span class="ic"><img class="por" src="'+D.portraits[a.p]+'" alt="">'+esc(a.ab.map(function(x){ return x[0]+" "+x[1]; }).join(" · "))+'</span>'; }).join("")+'<small>Personne ne les attend à ce palier : garde-les pour l\'exploration ou en renfort.</small></div>';
+      h+='</div>'; });
+    var g=document.getElementById("prodgrid"); g.innerHTML=h;
+    g.querySelectorAll("[data-z]").forEach(function(b){ b.addEventListener("click",function(){ zone=b.dataset.z; renderProd(); var f=g.querySelector('[data-z="'+zone+'"]'); if(f) f.focus(); }); });
+    g.querySelectorAll("[data-ids]").forEach(function(b){ function go(){ var ids=b.dataset.ids.split(","); hlKey=null; hlIds=(hlIds&&hlIds.join(",")===b.dataset.ids)?null:ids; applyHl();
+        if(hlIds) document.querySelector(".sheet").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }
+      b.addEventListener("click",go); b.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } }); });
+    applyHl();
   }
   function setLevel(L){ cur=L; svg.setAttribute("data-lv",String(L)); tip.hidden=true; hlIds=null;
     document.querySelectorAll("#lvbtns button").forEach(function(b){ b.setAttribute("aria-pressed",String(+b.dataset.lv===L)); });
