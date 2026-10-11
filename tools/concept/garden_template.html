@@ -45,6 +45,54 @@ header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px
 .tipc .cat{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--indigo)}
 .hint{font-size:13px;color:var(--muted);margin-top:8px}
 .lgd{display:flex;flex-direction:column;gap:18px}
+
+.goal{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.goal h3{font-size:17px}
+.goal .gr{display:grid;grid-template-columns:30px minmax(110px,1.2fr) minmax(0,2fr) auto;gap:10px;align-items:center;font-size:13.5px}
+.goal .bar{height:10px;border-radius:5px;background:var(--paper);overflow:hidden}
+.goal .bar i{display:block;height:100%;border-radius:5px;background:var(--indigo);opacity:.55}
+.goal .gr.lim .bar i{opacity:1}
+.goal .gr em{font:500 12.5px var(--mono);font-style:normal;white-space:nowrap}
+.goal small{color:var(--muted);font-size:12.5px}
+.src{display:block;font-size:11px;color:var(--moss);margin-top:1px}
+.prog{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.prog .pb{flex:1 1 220px;height:10px;border-radius:5px;background:var(--sheet);border:1px solid var(--line);overflow:hidden}
+.prog .pb i{display:block;height:100%;background:var(--moss)}
+.prog span{font:500 13px var(--mono)}
+.sync{font-size:12px;color:var(--muted)}
+.stg{display:flex;flex-direction:column;gap:6px}
+.stg h3{font-size:18px;margin-top:10px;border-bottom:2px solid var(--ink);padding-bottom:4px}
+.st{display:grid;grid-template-columns:30px 30px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px}
+.st.warn{border-style:dashed}
+.st.done{opacity:.55}.st.done .tx{text-decoration:line-through}
+.st .pi,.st .por{width:30px;height:30px}
+.ck{width:26px;height:26px;border-radius:7px;border:2px solid var(--line);background:var(--paper);cursor:pointer;display:grid;place-items:center;padding:0;color:var(--sheet)}
+.ck[aria-pressed="true"]{background:var(--moss);border-color:var(--moss)}
+.ck svg{width:16px;height:16px;opacity:0}.ck[aria-pressed="true"] svg{opacity:1}
+.ck:focus-visible,.see:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.see{font:500 12.5px var(--body);color:var(--indigo);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
+.hidedone .st.done{display:none}
+.wg{display:flex;flex-direction:column;gap:8px}
+.wg h3{font-size:18px;margin-top:8px}
+.wrows{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:8px}
+.wr{display:grid;grid-template-columns:30px 46px minmax(0,1fr);gap:10px;align-items:center;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.wr.done{opacity:.6}
+.wr .por{width:46px;height:46px}
+.wr ul{margin:4px 0 0;padding-left:16px;font-size:13.5px}
+.wr .busy{display:flex;align-items:center;gap:6px;font:400 11px var(--mono);color:var(--muted);margin-top:4px}
+.wr .busy i{flex:0 0 60px;height:5px;border-radius:3px;background:var(--paper);overflow:hidden}.wr .busy i b{display:block;height:100%;background:var(--indigo)}
+.chainbox{overflow-x:auto;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px}
+.chainbox svg{display:block}
+.chainbox .lk{fill:none;stroke:var(--line);stroke-width:1.6}
+.chainbox .lk.on{stroke:var(--indigo);stroke-width:2.2}
+.chainbox .nd rect.bg{fill:var(--paper);stroke:var(--line)}
+.chainbox .nd.on rect.bg{stroke:var(--indigo);stroke-width:2}
+.chainbox .nd.dim{opacity:.35}.chainbox .lk.dim{opacity:.25}
+.chainbox text{fill:var(--ink);font:500 12px var(--body)}
+.chainbox text.v{fill:var(--muted);font:400 10.5px var(--mono)}
+.chainbox .ch{font:600 11px var(--mono);fill:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.chlg{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.chlg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .prodgrid{display:flex;flex-direction:column;gap:22px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .stats div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column}
@@ -134,6 +182,11 @@ header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px
 .v3d canvas:active{cursor:grabbing}
 .v3dbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
 .v3dbar span{font-size:12.5px;color:var(--muted);flex:1 1 220px}
+.walkpad{position:absolute;right:12px;bottom:72px;display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:6px}
+.walkpad[hidden]{display:none}
+.walkpad button{border:0;border-radius:10px;background:rgba(32,48,38,.72);color:#fff;font-size:16px;cursor:pointer;touch-action:none;user-select:none}
+.walkpad [data-mv="f"]{grid-column:2;grid-row:1}.walkpad [data-mv="l"]{grid-column:1;grid-row:2}.walkpad [data-mv="b"]{grid-column:2;grid-row:2}.walkpad [data-mv="r"]{grid-column:3;grid-row:2}
+.v3d.walking canvas{cursor:move}
 .tip3d{position:absolute;z-index:3;max-width:min(280px,80%);background:var(--sheet);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:7px 10px;font-size:13.5px;line-height:1.35;pointer-events:none}
 .v3dmsg{position:absolute;inset:0 0 auto 0;margin:0;padding:40px 16px;text-align:center;color:#203026;font-size:14px}
 .phases{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
@@ -293,12 +346,16 @@ ol{margin:0;padding-left:20px}
       <div id="v3d" class="v3d" hidden>
         <canvas id="v3dc" role="img" aria-label="Vue 3D du jardin au palier choisi"></canvas>
         <div class="tip3d" id="tip3d" hidden></div>
+        <div class="walkpad" id="walkpad" hidden aria-label="Avancer, reculer, tourner">
+          <button type="button" data-mv="f" aria-label="Avancer">▲</button><button type="button" data-mv="l" aria-label="Pas à gauche">◀</button><button type="button" data-mv="b" aria-label="Reculer">▼</button><button type="button" data-mv="r" aria-label="Pas à droite">▶</button>
+        </div>
         <p class="v3dmsg" id="v3dmsg" hidden></p>
         <div class="v3dbar">
           <button class="ph-btn" type="button" data-view="all">Vue d'ensemble</button>
           <button class="ph-btn" type="button" data-view="gate">Depuis l'entrée</button>
           <button class="ph-btn" type="button" data-view="top">Du dessus</button>
-          <span>Glisse pour tourner · molette ou pince pour zoomer · clic droit ou deux doigts pour te déplacer</span>
+          <button class="ph-btn" type="button" data-view="walk" aria-pressed="false">Se promener</button>
+          <span>Glisse pour tourner · molette ou pince pour zoomer · clic droit ou deux doigts pour te déplacer. En promenade : glisse pour regarder, flèches ou ZQSD (Maj pour courir), ou les boutons à l'écran.</span>
         </div>
       </div>
       <div class="tipc" id="tipc" hidden></div>
@@ -332,6 +389,15 @@ ol{margin:0;padding-left:20px}
     </aside>
   </section>
 
+  <section style="display:flex;flex-direction:column;gap:16px" aria-labelledby="ch-title" id="chantier">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="eyebrow">Chantier</div>
+      <h2 id="ch-title">Les étapes</h2>
+      <p class="lede" id="ch-lede"></p>
+    </div>
+    <div id="chgrid"></div>
+  </section>
+
   <section style="display:flex;flex-direction:column;gap:16px" aria-labelledby="prod-title" id="prod">
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="eyebrow">Quoi produire</div>
@@ -339,6 +405,24 @@ ol{margin:0;padding-left:20px}
       <p class="lede">Une fiche par machine, au palier choisi au-dessus du plan : ce qu'elle fabrique, ce qu'il faut mettre dedans et quel Aniimo y affecter. Touche une fiche pour la retrouver sur le plan.</p>
     </div>
     <div class="prodgrid" id="prodgrid"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px" aria-labelledby="who-title" id="who">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="eyebrow">Qui va où</div>
+      <h2 id="who-title">Les Aniimo, un par un</h2>
+      <p class="lede">Dans le jeu, on affecte en choisissant l'Aniimo : voici chacun avec ses postes au palier choisi. Coche-le une fois placé.</p>
+    </div>
+    <div id="whogrid"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px" aria-labelledby="chain-title" id="chain">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="eyebrow">La chaîne</div>
+      <h2 id="chain-title">D'où vient chaque produit</h2>
+      <p class="lede">De gauche à droite : ce que le jardin récolte, ce que les machines en tirent, et ce qui est vendu, avec ce que ça rapporte. Survole ou touche un produit pour suivre son chemin.</p>
+    </div>
+    <div id="chaingrid"></div>
   </section>
 
   <section style="display:flex;flex-direction:column;gap:16px" aria-labelledby="lgd-title">
@@ -469,7 +553,7 @@ ol{margin:0;padding-left:20px}
         (a.also&&a.also.length?'<small>aussi : '+esc(a.also.join(", "))+'</small>':'')+(a.jobs?'<small>'+esc(a.jobs.join(", "))+'</small>':'')+'</div></div>'; }).join("")+'</div></div>'; }
   function recHtml(r,many){
     var out='<div class="out">'+pic(r.ic,"pi",r.n)+'<b>'+esc(r.n)+'</b>'+(r.h?'<em>'+nf(r.h)+' / h</em>':'')+'</div>';
-    var ins=r.ins.length?'<div class="ins"><span class="lbl">Mettre dedans</span><div class="chips">'+r.ins.map(function(x){ return '<span class="chip">'+pic(x.ic,"ci",x.n)+'<span><b>'+x.q+' ×</b> '+esc(x.n)+(r.h?'<small>≈ '+nf(x.h)+' / h</small>':'')+'</span></span>'; }).join("")+'</div></div>':'<div class="ins none">Rien à mettre dedans : elle produit seule.</div>';
+    var ins=r.ins.length?'<div class="ins"><span class="lbl">Mettre dedans</span><div class="chips">'+r.ins.map(function(x){ return '<span class="chip">'+pic(x.ic,"ci",x.n)+'<span><b>'+x.q+' ×</b> '+esc(x.n)+(r.h?'<small>≈ '+nf(x.h)+' / h</small>':'')+(x.src?'<span class="src">← '+esc(x.src.join(", "))+'</span>':'')+'</span></span>'; }).join("")+'</div></div>':'<div class="ins none">Rien à mettre dedans : elle produit seule.</div>';
     return '<div class="rx'+(many?' many':'')+'">'+out+ins+'</div>'; }
   function card(c,k){
     var ids=c.ids.join(","), head='<header>'+pic(c.ic,"fi",c.t)+'<div><b>'+esc(c.t)+'</b><small>'+esc(c.where||"")+'</small></div>'+(c.mode?'<span class="md" style="--m:'+(MODEC[c.mode]||"#999")+'">'+esc(c.mode)+'</span>':'')+'</header>';
@@ -485,6 +569,11 @@ ol{margin:0;padding-left:20px}
     document.getElementById("prod-title").textContent="Au VR "+cur+" : quoi mettre dans chaque machine";
     var busy=C.nAni-C.free.length;
     h+='<div class="stats"><div><b>'+C.nAct+'</b><span>machines au travail</span></div><div><b>'+C.nIdle+'</b><span>à l\'arrêt à ce palier</span></div><div><b>'+busy+' / '+C.nAni+'</b><span>Aniimo affectés</span></div><div><b>'+fmt(C.rate||0)+'</b><span>pièces du Foyer par heure</span></div></div>';
+    if(C.goal){ var mx=0, lim=null; C.goal.rows.forEach(function(r){ var s=secs(r.eta); if(s>mx){ mx=s; lim=r; } });
+      h+='<div class="goal"><h3>Pour passer au VR '+C.goal.next+' : environ '+esc(C.goal.eta)+'</h3>'+C.goal.rows.map(function(r){ var s=secs(r.eta);
+        return '<div class="gr'+(r===lim?' lim':'')+'">'+pic(r.ic,"ci",r.n)+'<span><b>'+fmt(r.need)+'</b> '+esc(r.n)+'<small style="display:block">'+nf(r.rate)+' / h</small></span><span class="bar" role="img" aria-label="'+esc(r.eta)+'"><i style="width:'+Math.max(3,Math.round(s/mx*100))+'%"></i></span><em>'+esc(r.eta)+'</em></div>'; }).join("")+
+        '<small>C\'est '+esc(lim.n)+' qui décide du temps : c\'est la ressource la plus longue à réunir à ce rythme.</small></div>'; }
+    else h+='<div class="goal"><h3>VR 20 : dernier palier du plan</h3><small>Plus de montée de niveau à préparer ici : tout sert au revenu.</small></div>';
     h+='<div class="zn" role="group" aria-label="Zone">'+[["all","Tout"]].concat(SECS.map(function(s){ return [s[0],s[1]]; })).map(function(z){ var n=z[0]==="all"?0:C.sec[z[0]].length; return '<button type="button" class="ph-btn" data-z="'+z[0]+'" aria-pressed="'+(zone===z[0])+'">'+esc(z[1])+(n?' <span class="n">'+n+'</span>':'')+'</button>'; }).join("")+'</div>';
     SECS.forEach(function(s){ var list=C.sec[s[0]]; if(!list.length) return;
       h+='<div class="zs" data-zs="'+s[0]+'"'+(zone!=="all"&&zone!==s[0]?' hidden':'')+'><div class="zh"><h3>'+esc(s[1])+'</h3><p>'+esc(s[2])+'</p></div><div class="cards">'+list.map(card).join("")+'</div>';
@@ -498,12 +587,97 @@ ol{margin:0;padding-left:20px}
       b.addEventListener("click",go); b.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } }); });
     applyHl();
   }
+  function secs(s){ var m=String(s).match(/(\d+)\s*j/), h=String(s).match(/(\d+)\s*h/), mi=String(s).match(/(\d+)\s*min/); return (m?+m[1]*86400:0)+(h?+h[1]*3600:0)+(mi?+mi[1]*60:0); }
+  /* ---- progress kept per person: the artifact's own store when the page runs on claude.ai, this browser otherwise ---- */
+  var DONE={}, ref=null, saving=false, again=false, syncMsg="Coches gardées dans ce navigateur.";
+  try{ DONE=JSON.parse(localStorage.getItem("jardin-foyer-done")||"{}")||{}; }catch(e){ DONE={}; }
+  function save(){ try{ localStorage.setItem("jardin-foyer-done",JSON.stringify(DONE)); }catch(e){}
+    if(!ref) return; if(saving){ again=true; return; } saving=true;
+    ref.set({done:DONE}).catch(function(){}).then(function(){ saving=false; if(again){ again=false; save(); } }); }
+  if(window.claude && window.claude.use){
+    Promise.all([window.claude.use("db"),window.claude.use("user")]).then(function(r){ var db=r[0], u=r[1]; if(!db||!u) return null;
+      return u.id().then(function(id){ if(!id) return null; ref=db.doc("data/users/"+id+"/progress"); return ref.get(); }); })
+    .then(function(s){ if(!ref) return; if(s&&s.exists){ var d=(s.data()||{}).done||{}; for(var k in d) DONE[k]=d[k]; }
+      syncMsg="Coches enregistrées sur ton compte : tu les retrouves sur ton téléphone comme sur ton ordinateur."; renderSteps(); renderWho(); })
+    .catch(function(){});
+  }
+  var CHK='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function seeBtn(s){ if(s.ids&&s.ids.length) return '<button type="button" class="see" data-see="'+s.ids.join(",")+'">Voir</button>';
+    if(s.key) return '<button type="button" class="see" data-key="'+esc(s.key)+'">Voir</button>';
+    if(s.go) return '<button type="button" class="see" data-go="'+s.go+'">Ouvrir</button>'; return '<span></span>'; }
+  var hideDone=false;
+  function renderSteps(){
+    var S=D.steps[cur], g=document.getElementById("chgrid"); if(!S) return;
+    document.getElementById("ch-title").textContent="Chantier : de "+S.from+" au VR "+cur;
+    document.getElementById("ch-lede").textContent=cur===14?"Dans l'ordre : chaque pièce part vers une place déjà libre, pour ne jamais rester bloqué. Quand rien n'est libre, l'étape te dit quoi ranger un moment. Coche au fur et à mesure.":"Seulement ce qui change par rapport au VR "+(cur-1)+". Coche au fur et à mesure ; « Voir » montre la pièce sur le plan.";
+    var n=S.steps.length, d=S.steps.filter(function(s){ return DONE[s.k]; }).length;
+    var h='<div class="prog"><div class="pb" role="progressbar" aria-valuemin="0" aria-valuemax="'+n+'" aria-valuenow="'+d+'" aria-label="Étapes faites"><i style="width:'+(n?Math.round(d/n*100):0)+'%"></i></div><span>'+d+' / '+n+' faites</span>'+
+      '<button type="button" class="ph-btn" id="hidedone" aria-pressed="'+hideDone+'">Masquer les étapes faites</button></div><p class="sync">'+esc(syncMsg)+'</p><div class="stg'+(hideDone?' hidedone':'')+'">';
+    var lastG=null;
+    S.steps.forEach(function(s,i){ if(s.g!==lastG){ h+='<h3>'+esc(s.g)+'</h3>'; lastG=s.g; }
+      var ic=s.por!=null?'<img class="por" src="'+D.portraits[s.por]+'" alt="">':(s.ic?pic(s.ic,"pi",""):'<span class="pi noic" aria-hidden="true">'+(i+1)+'</span>');
+      h+='<div class="st'+(DONE[s.k]?' done':'')+(s.warn?' warn':'')+'"><button type="button" class="ck" data-k="'+s.k+'" aria-pressed="'+!!DONE[s.k]+'" aria-label="Fait : '+esc(s.t)+'">'+CHK+'</button>'+ic+'<span class="tx">'+esc(s.t)+'</span>'+seeBtn(s)+'</div>'; });
+    g.innerHTML=h+'</div>';
+    document.getElementById("hidedone").addEventListener("click",function(){ hideDone=!hideDone; renderSteps(); });
+    wire(g);
+  }
+  function wire(g){
+    g.querySelectorAll(".ck").forEach(function(b){ b.addEventListener("click",function(){ var k=b.dataset.k; if(DONE[k]) delete DONE[k]; else DONE[k]=1; save(); if(k.charAt(0)==="a") renderWho(); else renderSteps(); var nb=document.querySelector('.ck[data-k="'+k+'"]'); if(nb) nb.focus(); }); });
+    g.querySelectorAll("[data-see]").forEach(function(b){ b.addEventListener("click",function(){ hlKey=null; hlIds=b.dataset.see.split(","); applyHl(); toPlan(); }); });
+    g.querySelectorAll("[data-key]").forEach(function(b){ b.addEventListener("click",function(){ hlIds=null; hlKey=b.dataset.key; applyHl(); toPlan(); }); });
+    g.querySelectorAll("[data-go]").forEach(function(b){ b.addEventListener("click",function(){ document.getElementById(b.dataset.go).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }); });
+  }
+  function toPlan(){ document.querySelector(".sheet").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}); }
+  var WG=[["rue","Rue des artisans"],["prod","Carrière, puits et pavillons"],["cult","Cultures"],["clim","Climat et électricité"],["free","Libres à ce palier"]];
+  function renderWho(){
+    var A=D.cards[cur].ani, g=document.getElementById("whogrid"), h="";
+    WG.forEach(function(w){ var list=A.filter(function(a){ return a.g===w[0]; }); if(!list.length) return;
+      h+='<div class="wg"><h3>'+esc(w[1])+' <span class="n" style="font:500 12px var(--mono);color:var(--muted)">'+list.length+'</span></h3><div class="wrows">'+list.map(function(a){ var k="a:"+cur+":"+a.p;
+        return '<div class="wr'+(DONE[k]?' done':'')+'"><button type="button" class="ck" data-k="'+k+'" aria-pressed="'+!!DONE[k]+'" aria-label="Placé">'+CHK+'</button><img class="por" src="'+D.portraits[a.p]+'" alt=""><div><span class="abl">'+a.ab.map(function(x){ return '<span>'+esc(x[0])+' '+x[1]+'</span>'; }).join("")+'</span>'+
+          (a.posts.length?'<ul>'+a.posts.map(function(p){ return '<li>'+esc(p)+'</li>'; }).join("")+'</ul>':'<small style="color:var(--muted);font-size:12.5px">Garde-le pour l\'exploration ou en renfort.</small>')+
+          (a.posts.length?'<span class="busy"><i><b style="width:'+Math.round(a.busy*100)+'%"></b></i>occupé '+(a.busy<.05?'moins de 5':Math.round(a.busy*100))+' %</span>':'')+'</div></div>'; }).join("")+'</div></div>'; });
+    g.innerHTML=h; wire(g);
+  }
+  /* ---- production chain: columns by depth, links from ingredient to product ---- */
+  function renderChain(){
+    var C=D.cards[cur].chain, box=document.getElementById("chaingrid"), N={}, ins={}, outs={};
+    C.nodes.forEach(function(n){ N[n.id]=n; ins[n.id]=[]; outs[n.id]=[]; });
+    C.edges.forEach(function(e){ if(N[e[0]]&&N[e[1]]){ outs[e[0]].push(e[1]); ins[e[1]].push(e[0]); } });
+    var depth={}; function dep(id,seen){ if(depth[id]!=null) return depth[id]; if(seen[id]) return 0; seen[id]=1; var d=0; ins[id].forEach(function(p){ d=Math.max(d,dep(p,seen)+1); }); return depth[id]=d; }
+    C.nodes.forEach(function(n){ dep(n.id,{}); });
+    var cols=[]; C.nodes.forEach(function(n){ (cols[depth[n.id]]=cols[depth[n.id]]||[]).push(n.id); });
+    var pos={}; cols.forEach(function(col,ci){ if(ci){ col.sort(function(a,b){ function bc(x){ var s=0; ins[x].forEach(function(p){ s+=pos[p]||0; }); return ins[x].length?s/ins[x].length:0; } return bc(a)-bc(b); }); }
+      else col.sort(function(a,b){ return (N[a].kind[0]||"").localeCompare(N[b].kind[0]||"")||N[a].n.localeCompare(N[b].n); }); col.forEach(function(id,i){ pos[id]=i; }); });
+    var CW=236, NW=196, NH=40, GAP=10, TOP=26, maxG=0; C.nodes.forEach(function(n){ if(n.sold) maxG=Math.max(maxG,n.sold.g); });
+    var H=TOP+Math.max.apply(null,cols.map(function(c){ return c.length; }))*(NH+GAP)+4, W=cols.length*CW-(CW-NW)+4;
+    var xy={}; cols.forEach(function(col,ci){ var off=TOP+((H-TOP)-col.length*(NH+GAP))/2; col.forEach(function(id,i){ xy[id]=[2+ci*CW, Math.max(TOP,off)+i*(NH+GAP)]; }); });
+    var KC={raw:"var(--moss)",by:"#B7834A",machine:"var(--muted)"};
+    var s='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Chaîne de production du VR '+cur+'">';
+    var heads=["Récolté au jardin","1re transformation","2e transformation","3e transformation","4e transformation"];
+    cols.forEach(function(c,ci){ s+='<text class="ch" x="'+(2+ci*CW)+'" y="14">'+heads[Math.min(ci,heads.length-1)]+'</text>'; });
+    C.edges.forEach(function(e){ var a=xy[e[0]], b=xy[e[1]]; if(!a||!b) return; var x1=a[0]+NW, y1=a[1]+NH/2, x2=b[0], y2=b[1]+NH/2, mx=(x1+x2)/2;
+      s+='<path class="lk" data-a="'+e[0]+'" data-b="'+e[1]+'" d="M'+x1+' '+y1+'C'+mx+' '+y1+' '+mx+' '+y2+' '+x2+' '+y2+'"/>'; });
+    C.nodes.forEach(function(n){ var p=xy[n.id], u=n.ic&&D.pics[n.ic], kc=KC[n.kind[0]]||"var(--muted)";
+      s+='<g class="nd" data-id="'+n.id+'" tabindex="0" role="button" aria-label="'+esc(n.n+(n.sold?", vendu : "+fmt(n.sold.g)+" pièces par heure":""))+'"><title>'+esc(n.n+(n.src.length?" ← "+n.src.join(", "):""))+'</title>'+
+        '<rect class="bg" x="'+p[0]+'" y="'+p[1]+'" width="'+NW+'" height="'+NH+'" rx="7"/><rect x="'+p[0]+'" y="'+p[1]+'" width="4" height="'+NH+'" rx="2" fill="'+(n.sold?"var(--indigo)":kc)+'"/>'+
+        (u?'<image href="'+u+'" x="'+(p[0]+8)+'" y="'+(p[1]+6)+'" width="28" height="28"/>':'')+
+        '<text x="'+(p[0]+42)+'" y="'+(p[1]+(n.sold?17:24))+'">'+esc(n.n.length>24?n.n.slice(0,23)+"…":n.n)+'</text>'+
+        (n.sold?'<rect x="'+(p[0]+42)+'" y="'+(p[1]+24)+'" width="'+Math.max(3,Math.round(n.sold.g/maxG*70))+'" height="6" rx="3" fill="var(--indigo)"/><text class="v" x="'+(p[0]+42+Math.max(3,Math.round(n.sold.g/maxG*70))+6)+'" y="'+(p[1]+31)+'">'+fmt(n.sold.g)+'/h · '+esc(n.sold.share)+'</text>':'')+'</g>'; });
+    s+='</svg>';
+    box.innerHTML='<div class="chainbox">'+s+'</div><div class="chlg"><span><i style="background:var(--moss)"></i>récolté (champs, pépinières, mines, puits, pavillons)</span><span><i style="background:#B7834A"></i>sous-produit</span><span><i style="background:var(--muted)"></i>fabriqué puis réutilisé</span><span><i style="background:var(--indigo)"></i>vendu, barre = pièces par heure</span></div>';
+    function lit(id){ var up={}, dn={}; (function u(x){ if(up[x]) return; up[x]=1; ins[x].forEach(u); })(id); (function d(x){ if(dn[x]) return; dn[x]=1; outs[x].forEach(d); })(id);
+      box.querySelectorAll(".nd").forEach(function(g){ var k=g.dataset.id, on=up[k]||dn[k]; g.classList.toggle("on",k===id); g.classList.toggle("dim",!on); });
+      box.querySelectorAll(".lk").forEach(function(l){ var on=(up[l.dataset.a]&&up[l.dataset.b])||(dn[l.dataset.a]&&dn[l.dataset.b]); l.classList.toggle("on",!!on); l.classList.toggle("dim",!on); }); }
+    function clear(){ box.querySelectorAll(".on,.dim").forEach(function(e){ e.classList.remove("on","dim"); }); }
+    box.querySelectorAll(".nd").forEach(function(g){ g.addEventListener("pointerenter",function(){ lit(g.dataset.id); }); g.addEventListener("focus",function(){ lit(g.dataset.id); }); g.addEventListener("click",function(){ lit(g.dataset.id); }); });
+    box.querySelector("svg").addEventListener("pointerleave",clear);
+  }
   function setLevel(L){ cur=L; svg.setAttribute("data-lv",String(L)); tip.hidden=true; hlIds=null;
     document.querySelectorAll("#lvbtns button").forEach(function(b){ b.setAttribute("aria-pressed",String(+b.dataset.lv===L)); });
     var t=D.tab[L]; document.getElementById("cart-lv").textContent="VR "+L; document.getElementById("avg").textContent=f1(t.avg);
     document.getElementById("pw").textContent=t.powered[0]+" machines actives sur "+t.powered[1]+" alimentées";
     document.getElementById("walk").innerHTML="Au VR "+L+", un porteur fait <b>"+f1(t.avg)+" cases</b> en moyenne jusqu'au stockage le plus proche, contre "+f1(D.avgPlan)+" dans le plan de construction actuel, qui ne pensait qu'au rendement.";
-    renderLegend(); renderProd(); applyHl(); if(window.G3D) G3D.level(L); }
+    renderLegend(); renderProd(); renderSteps(); renderWho(); renderChain(); applyHl(); if(window.G3D) G3D.level(L); }
   document.getElementById("lvbtns").innerHTML=D.levels.map(function(L){ return '<button class="ph-btn" type="button" data-lv="'+L+'" aria-pressed="false">VR '+L+'</button>'; }).join("");
   document.querySelectorAll("#lvbtns button").forEach(function(b){ b.addEventListener("click",function(){ setLevel(+b.dataset.lv); }); });
   setLevel(14);

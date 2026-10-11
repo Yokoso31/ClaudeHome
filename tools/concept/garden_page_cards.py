@@ -53,7 +53,8 @@ def recipe(item, per_h):
     r = REC.get(item) or REC.get(item.replace('quick_', '')) or {}
     ins = []
     for m, q in zip(r.get('raw_materials') or [], r.get('required_amount') or []):
-        ins.append({'n': ifr(m), 'ic': pic_item(m), 'q': q, 'h': round(per_h / (r.get('yield_amount') or 1) * q, 1)})
+        src = [p[0] for p in PRODBY.get(snake(m), [])] or ['à acheter ou à ramasser hors du Foyer']
+        ins.append({'n': ifr(m), 'ic': pic_item(m), 'q': q, 'h': round(per_h / (r.get('yield_amount') or 1) * q, 1), 'src': src})
     return {'n': pfr(item), 'ic': pic_item(item), 'h': round(per_h, 1), 'ins': ins, 'yield': r.get('yield_amount') or 1}
 COUNT = {}
 for i in GL['lots']:
@@ -65,6 +66,10 @@ def near_kiosk(it):
     k, (x, y) = min(KIOSK.items(), key=lambda kv: math.dist(c, (kv[1][0] + 1, kv[1][1] + 1)))
     return int(k)
 CARDS = {}
+MJOBS, ALAB = {}, {}
+for line in open(os.path.join(S, 'foyer_data.js')).read().split('\n'):
+    if line.startswith('window.FOYER='):
+        FOYER_L = json.loads(line[len('window.FOYER='):].rstrip().rstrip(';'))['levels']
 for L in LEVELS:
     lv = GL['levels'][str(L)]
     lay = json.load(open(os.path.join(S, f'my_lay_in_rv{L}.json')))
@@ -93,6 +98,28 @@ for L in LEVELS:
             m0 = next((m for m in mem if m['facility'] == it['n'] and (m.get('crop') or '') == (it.get('item') or '') and abs((m.get('weight') or 0) - it['weight']) < 1e-6), None)
             for j in (m0.get('jobs') if m0 and m0.get('jobs') else [{'item': it.get('item')}]):
                 INST.setdefault((it['n'], snake(j['item'])), mlabel(it['n'], it.get('unit', 0)))
+    # who makes each product at this level: machines, fields, by-products, mines, wells, pavilions
+    PRODBY = {}
+    def addp(item, lab, kind):
+        lst = PRODBY.setdefault(snake(item), [])
+        if lab not in [p[0] for p in lst]:
+            lst.append((lab, kind))
+    for (fac, it_s), title in INST.items():
+        addp(it_s, title, 'machine')
+    cnt = {}
+    for it in lv['items']:
+        if it['kind'] == 'piece' and it['n'] not in FP_ALL and it.get('item'):
+            cnt[(it['n'], it['item'])] = cnt.get((it['n'], it['item']), 0) + 1
+    for (n, item), k in sorted(cnt.items(), key=lambda kv: -kv[1]):
+        prod = item[6:] if item.startswith('quick_') else item
+        de = (lambda x: ("d'" if x[:1].lower() in 'aeiouéèêh' else 'de ') + x)(pfr(item))
+        lab = {'Farmland': f'{k} champ{"s" if k > 1 else ""} {de}', 'Woodland': f'{k} pépinière{"s" if k > 1 else ""} {de}',
+               'Mine': f'{k} mine{"s" if k > 1 else ""}', 'Well': 'le puits'}.get(n, FR.get(n, n))
+        for x in {item, prod}:
+            addp(x, lab, 'raw')
+        bp = (REC.get(item) or {}).get('byproduct_item')
+        if bp:
+            addp(bp, {'Woodland': 'la coupe des pépinières', 'Mine': 'les mines'}.get(n, FR.get(n, n)) + ' (sous-produit)', 'by')
     def who(m, t, here):
         others = []
         for t2 in m['tasks']:
@@ -186,7 +213,73 @@ for L in LEVELS:
     sec['elec'].append({'ids': gen_ids, 'ic': pic_fac('Crackle Generator'), 't': f'{len(lv["gens"])} × {FR.get("Crackle Generator")}', 'where': f'{len(lv["poles"])} poteaux · {lv["powered"][0]} machines alimentées sur {lv["powered"][1]}',
                         'ani': [who(m, t, FR.get('Crackle Generator')) for m, t in gens], 'recs': []})
     sec['rue'].sort(key=lambda c: (c['side'], c['x']))
+    # every Aniimo and its posts at this level
+    devlab, devn = {}, {}
+    for e in envs:
+        devlab.setdefault(e['n'], []).append(f'{FR.get(e["n"])} ({MODEFR.get(e["mode"], e["mode"])})')
+    ani_view = []
+    for m in team['members']:
+        posts, grp = [], None
+        for t in m['tasks']:
+            if t['kind'] == 'job':
+                lab = 'Cultures : ' + JOBFR.get(t['job'], t['job']) + (' (champs)' if t['where'] == 'Farmland' else ' (pépinières)')
+                g = 'cult'
+            elif t.get('item'):
+                lab = INST.get((t['fac'], snake(t['item'])))
+                if not lab:
+                    lab = FR.get(t['fac'], t['fac']) + ' · ' + pfr(snake(t['item']))
+                g = 'rue' if t['fac'] in FP_ALL else 'prod'
+            else:
+                k = devn.get(t['fac'], 0); devn[t['fac']] = k + 1
+                lst = devlab.get(t['fac']) or [FR.get(t['fac'], t['fac'])]
+                lab = lst[min(k, len(lst) - 1)] if t['fac'] != 'Crackle Generator' else FR.get(t['fac'], t['fac'])
+                g = 'clim'
+            if lab not in posts:
+                posts.append(lab)
+            grp = grp or g
+        ani_view.append({'p': m['i'], 'ab': [[ABFR.get(a, a), v] for a, v in sorted(m['ab'].items(), key=lambda kv: -kv[1])], 'busy': round(m.get('busy', 0), 2), 'posts': posts, 'g': grp or 'free'})
+    gorder = {'rue': 0, 'prod': 1, 'cult': 2, 'clim': 3, 'free': 4}
+    ani_view.sort(key=lambda a: (gorder[a['g']], a['posts'][:1]))
+    # production chain: products as nodes, recipes as links, what is sold and what it earns
+    fl = FOYER_L.get(str(L), {})
+    sold = {}
+    for row in (fl.get('profit') or []):
+        try:
+            sold[snake(row[0])] = {'h': float(str(row[2]).replace(',', '')), 'g': float(str(row[3]).replace(',', '')), 'share': row[4]}
+        except (ValueError, IndexError):
+            pass
+    nodes, edges = {}, []
+    def node(it):
+        s = snake(it)
+        if s not in nodes:
+            src = [p for p in PRODBY.get(s, [])]
+            nodes[s] = {'id': s, 'n': ifr(it) if not it.startswith('quick_') else pfr(it), 'ic': pic_item(it), 'src': [p[0] for p in src], 'kind': [p[1] for p in src],
+                        'sold': sold.get(s) or sold.get(snake(it[6:]) if it.startswith('quick_') else '')}
+        return s
+    for it in lv['items']:
+        if it['n'] in FP_ALL and (it.get('weight') or 0) > 0:
+            m0 = next((m for m in mem if m['facility'] == it['n'] and (m.get('crop') or '') == (it.get('item') or '') and abs((m.get('weight') or 0) - it['weight']) < 1e-6), None)
+            for j in (m0.get('jobs') if m0 and m0.get('jobs') else [{'item': it.get('item')}]):
+                r = REC.get(j['item']) or {}
+                out = node(j['item'])
+                for mat in r.get('raw_materials') or []:
+                    e = [node(mat), out]
+                    if e not in edges:
+                        edges.append(e)
+    for s, v in sold.items():   # raw products sold as they are (crops, ores)
+        if s not in nodes:
+            nodes[s] = {'id': s, 'n': pfr(s), 'ic': pic_item(s), 'src': [p[0] for p in PRODBY.get(s, [])], 'kind': [p[1] for p in PRODBY.get(s, [])], 'sold': v}
+    # what the next level asks for
+    goal = None
+    if fl.get('luRows'):
+        tr = lambda s: str(s).replace('d', ' j').replace('h', ' h').replace('m', ' min')
+        rows = [{'n': 'Pièces du Foyer' if r[0] == 'Home Coins' else pfr(snake(r[0])), 'ic': None if r[0] == 'Home Coins' else pic_item(snake(r[0])), 'need': r[1], 'rate': r[2], 'eta': tr(r[3])} for r in fl['luRows']]
+        goal = {'next': fl.get('next'), 'eta': tr(fl.get('nextIn') or ''), 'rows': rows}
     nm = sum(1 for it in lv['items'] if it['n'] in FP_ALL or it['zone'] in ('pavilion', 'flower') and it['kind'] == 'piece' and it['n'] not in ('Woodland',))
     CARDS[L] = {'sec': sec, 'idle': idle, 'free': free, 'rate': team.get('rate'), 'nAni': len(team['members']),
-                'nAct': len(sec['rue']) + len(sec['pav']), 'nIdle': len(idle)}
+                'nAct': len(sec['rue']) + len(sec['pav']), 'nIdle': len(idle), 'ani': ani_view,
+                'chain': {'nodes': list(nodes.values()), 'edges': edges}, 'goal': goal}
+    MJOBS[L] = {(it['n'], it.get('unit', 0)): [r['n'] for r in next((cc['recs'] for cc in sec['rue'] if cc['ids'][0] == f'{L}-{lv["items"].index(it) + 1}'), [])]
+                for it in lv['items'] if it['n'] in FP_ALL}
+    ALAB[L] = {a['p']: a['posts'] for a in ani_view}
 PORTRAITS = ['data:image/webp;base64,' + p if not p.startswith('data:') else p for p in TEAM['portraits']]

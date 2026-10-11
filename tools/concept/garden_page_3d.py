@@ -21,6 +21,33 @@ def lv_of(ph):
             out.append(L)
     return out
 r2 = lambda v: round(v, 2)
+from PIL import Image as _Im
+import colorsys as _cs
+_COL = {}
+def icol(n):
+    """The machine's own main colour, read from its game icon (opaque, coloured pixels)."""
+    if n in _COL:
+        return _COL[n]
+    try:
+        im = _Im.open(os.path.join(S, 'web', 'icons', FAC[n])).convert('RGBA').resize((48, 48))
+    except Exception:
+        _COL[n] = None
+        return None
+    acc, k = [0, 0, 0], 0
+    for r_, g_, b_, a_ in im.getdata():
+        if a_ < 200:
+            continue
+        h_, l_, s_ = _cs.rgb_to_hls(r_ / 255, g_ / 255, b_ / 255)
+        if s_ < .3 or l_ < .18 or l_ > .85:
+            continue
+        acc[0] += r_; acc[1] += g_; acc[2] += b_; k += 1
+    if not k:
+        _COL[n] = None
+        return None
+    h_, l_, s_ = _cs.rgb_to_hls(*(c / k / 255 for c in acc))
+    r_, g_, b_ = _cs.hls_to_rgb(h_, min(.55, max(.38, l_)), min(.75, s_ * 1.15))
+    _COL[n] = '#%02X%02X%02X' % (int(r_ * 255), int(g_ * 255), int(b_ * 255))
+    return _COL[n]
 S3 = {'decor': [], 'ground': [], 'terr': [], 'levels': {}}
 for n, r, ph in PHYS:
     S3['decor'].append({'n': n, 'x': r2(r['x']), 'y': r2(r['y']), 'w': r2(r['w']), 'h': r2(r['h']), 'lv': lv_of(ph)})
@@ -52,13 +79,13 @@ for L in LEVELS:
             o |= {'k': 'wood', 't': TREECLS.get(item, 'citrus'), 'lab': f'{FR.get("Woodland", "Pépinière")} · {rec}{mode}'}
         elif n in FP_ALL:
             idle = wt <= 0
-            o |= {'k': 'shop', 'idle': idle, 'ic': ic_fac(n).replace(' ', '_'), 'lab': f'{name_fr} · ' + (f'{rec} · {round(wt)} trajets/h' if not idle else 'à l\'arrêt à ce palier')}
+            o |= {'k': 'shop', 'idle': idle, 'col': icol(n), 'ic': ic_fac(n).replace(' ', '_'), 'lab': f'{name_fr} · ' + (f'{rec} · {round(wt)} trajets/h' if not idle else 'à l\'arrêt à ce palier')}
         elif n == 'Mine':
             o |= {'k': 'mine', 'ic': ic_fac('Mine'), 'lab': f'{FR.get("Mine")} · {rec}'}
         elif n == 'Well':
             o |= {'k': 'well', 'lab': f'{FR.get("Well")} · {rec}'}
         else:
-            o |= {'k': 'pav', 'ic': ic_fac(n).replace(' ', '_'), 'lab': f'{name_fr} · ' + (rec or 'à l\'arrêt') + mode}
+            o |= {'k': 'pav', 'col': icol(n), 'ic': ic_fac(n).replace(' ', '_'), 'lab': f'{name_fr} · ' + (rec or 'à l\'arrêt') + mode}
         objs.append(o)
     for g in lv['gens']:
         objs.append({'k': 'gen', 'x': g['x'], 'y': g['y'], 'w': 1, 'h': 1, 'lab': FR.get('Crackle Generator', 'Générateur') + ' · tenu par un Aniimo Foudre'})

@@ -54,7 +54,8 @@ for k in ICON:
         body = body.replace(f'#i-{k}"', f'#i-{k.replace(" ", "_")}"')
 exec(open(os.path.join(S, 'garden_page_3d.py')).read())
 exec(open(os.path.join(S, 'garden_page_cards.py')).read())
-data = {'types': TYPES, 'tab': TAB, 'levels': LEVELS, 'buy': buy, 'avgPlan': 4.66, 'scene': S3, 'cards': CARDS, 'pics': PICS, 'portraits': PORTRAITS}
+exec(open(os.path.join(S, 'garden_page_steps.py')).read())
+data = {'types': TYPES, 'tab': TAB, 'levels': LEVELS, 'buy': buy, 'avgPlan': 4.66, 'scene': S3, 'cards': CARDS, 'pics': PICS, 'portraits': PORTRAITS, 'steps': STEPS}
 tpl = open(os.path.join(S, 'garden_template.html')).read()
 html = tpl.replace('/*DEFS*/', defs).replace('/*PLAN*/', body).replace('/*DATA*/', json.dumps(data, ensure_ascii=False)).replace('/*G3D*/', open(os.path.join(S, 'garden_3d.js')).read())
 open('/home/user/ClaudeHome/jardin-foyer-concept.html', 'w').write(html)
