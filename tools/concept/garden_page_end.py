@@ -52,8 +52,9 @@ defs = ''.join(f'<symbol id="i-{k.replace(" ", "_")}" viewBox="0 0 1 1"><image h
 for k in ICON:
     if ' ' in k:
         body = body.replace(f'#i-{k}"', f'#i-{k.replace(" ", "_")}"')
-data = {'types': TYPES, 'tab': TAB, 'levels': LEVELS, 'buy': buy, 'avgPlan': 4.66}
+exec(open(os.path.join(S, 'garden_page_3d.py')).read())
+data = {'types': TYPES, 'tab': TAB, 'levels': LEVELS, 'buy': buy, 'avgPlan': 4.66, 'scene': S3}
 tpl = open(os.path.join(S, 'garden_template.html')).read()
-html = tpl.replace('/*DEFS*/', defs).replace('/*PLAN*/', body).replace('/*DATA*/', json.dumps(data, ensure_ascii=False))
+html = tpl.replace('/*DEFS*/', defs).replace('/*PLAN*/', body).replace('/*DATA*/', json.dumps(data, ensure_ascii=False)).replace('/*G3D*/', open(os.path.join(S, 'garden_3d.js')).read())
 open('/home/user/ClaudeHome/jardin-foyer-concept.html', 'w').write(html)
 print('size', len(html))

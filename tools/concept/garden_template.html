@@ -74,6 +74,13 @@ header{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px
 .lg em{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--muted)}
 @media (max-width:980px){.plan{border-right:0;border-bottom:1px solid var(--line)}}
 .plan svg{display:block;width:100%;height:auto;border-radius:3px}
+.v3d{position:relative}
+.v3d canvas{display:block;width:100%;border-radius:3px;touch-action:none;cursor:grab;background:#CFE3EC}
+.v3d canvas:active{cursor:grabbing}
+.v3dbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.v3dbar span{font-size:12.5px;color:var(--muted);flex:1 1 220px}
+.tip3d{position:absolute;z-index:3;max-width:min(280px,80%);background:var(--sheet);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:7px 10px;font-size:13.5px;line-height:1.35;pointer-events:none}
+.v3dmsg{position:absolute;inset:0 0 auto 0;margin:0;padding:40px 16px;text-align:center;color:#203026;font-size:14px}
 .phases{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
 .phases span{font-family:var(--mono);font-size:12px;color:var(--muted);margin-right:4px}
 .ph-btn{font:500 14px var(--body);color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:999px;padding:5px 14px;cursor:pointer}
@@ -219,6 +226,7 @@ ol{margin:0;padding-left:20px}
         <span style="flex:1"></span>
         <button class="ph-btn" type="button" id="namebtn" aria-pressed="true">Noms sur le plan</button>
         <button class="ph-btn" type="button" id="techbtn" aria-pressed="false">Vue technique</button>
+        <button class="ph-btn" type="button" id="v3dbtn" aria-pressed="false">Vue 3D</button>
       </div>
       <svg id="plan" class="names-on" viewBox="-0.6 -0.6 81.2 61.2" data-lv="14" role="img" aria-label="Plan du jardin japonais, vue de dessus, 80 cases sur 60">
         /*PLAN*/
@@ -227,6 +235,17 @@ ol{margin:0;padding-left:20px}
         </g>
         <rect x="0" y="0" width="80" height="60" fill="none" stroke="#203026" stroke-width=".3"/>
       </svg>
+      <div id="v3d" class="v3d" hidden>
+        <canvas id="v3dc" role="img" aria-label="Vue 3D du jardin au palier choisi"></canvas>
+        <div class="tip3d" id="tip3d" hidden></div>
+        <p class="v3dmsg" id="v3dmsg" hidden></p>
+        <div class="v3dbar">
+          <button class="ph-btn" type="button" data-view="all">Vue d'ensemble</button>
+          <button class="ph-btn" type="button" data-view="gate">Depuis l'entrée</button>
+          <button class="ph-btn" type="button" data-view="top">Du dessus</button>
+          <span>Glisse pour tourner · molette ou pince pour zoomer · clic droit ou deux doigts pour te déplacer</span>
+        </div>
+      </div>
       <div class="tipc" id="tipc" hidden></div>
       <p class="hint">Touche ou survole un élément pour savoir ce que c'est. La liste juste en dessous fait ressortir chaque type d'objet sur le plan.</p>
     </div>
@@ -338,7 +357,7 @@ ol{margin:0;padding-left:20px}
     return '<div class="bi"><img src="'+document.querySelector("#i-"+b.ic+" image").getAttribute("href")+'" alt=""><div><b>'+b.n+' × '+b.fr+(b.ph>14?'<span class="tag">'+ph[b.ph]+'</span>':'')+'</b><small>'+b.fp[0]+' × '+b.fp[1]+' cases · '+fmt(b.pr)+' tickets pièce · '+fmt(b.cf)+' de confort</small></div></div>'; }).join("");
   document.getElementById("total").textContent="Total : "+fmt(tot)+" Tickets bourgeon pour "+fmt(cf)+" de confort.";
   var svg=document.getElementById("plan"), tb=document.getElementById("techbtn"), nb=document.getElementById("namebtn");
-  nb.addEventListener("click",function(){ var on=nb.getAttribute("aria-pressed")!=="true"; nb.setAttribute("aria-pressed",String(on)); svg.classList.toggle("names-on",on); });
+  nb.addEventListener("click",function(){ var on=nb.getAttribute("aria-pressed")!=="true"; nb.setAttribute("aria-pressed",String(on)); svg.classList.toggle("names-on",on); if(window.G3D) G3D.names(); });
   var TY=D.types, tip=document.getElementById("tipc"), plan=document.querySelector(".plan"), hlKey=null;
   var esc=function(t){ return String(t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); };
   function iconOf(k){ if(!k) return null; var sy=document.getElementById("i-"+k.replace(/ /g,"_")); var im=sy&&sy.querySelector("image"); return im?im.getAttribute("href"):null; }
@@ -400,10 +419,14 @@ ol{margin:0;padding-left:20px}
     var t=D.tab[L]; document.getElementById("cart-lv").textContent="VR "+L; document.getElementById("avg").textContent=f1(t.avg);
     document.getElementById("pw").textContent=t.powered[0]+" machines actives sur "+t.powered[1]+" alimentées";
     document.getElementById("walk").innerHTML="Au VR "+L+", un porteur fait <b>"+f1(t.avg)+" cases</b> en moyenne jusqu'au stockage le plus proche, contre "+f1(D.avgPlan)+" dans le plan de construction actuel, qui ne pensait qu'au rendement.";
-    renderLegend(); renderProd(); applyHl(); }
+    renderLegend(); renderProd(); applyHl(); if(window.G3D) G3D.level(L); }
   document.getElementById("lvbtns").innerHTML=D.levels.map(function(L){ return '<button class="ph-btn" type="button" data-lv="'+L+'" aria-pressed="false">VR '+L+'</button>'; }).join("");
   document.querySelectorAll("#lvbtns button").forEach(function(b){ b.addEventListener("click",function(){ setLevel(+b.dataset.lv); }); });
   setLevel(14);
-  tb.addEventListener("click",function(){ var on=tb.getAttribute("aria-pressed")!=="true"; tb.setAttribute("aria-pressed",String(on)); svg.classList.toggle("tech-on",on); });
+  tb.addEventListener("click",function(){ var on=tb.getAttribute("aria-pressed")!=="true"; tb.setAttribute("aria-pressed",String(on)); svg.classList.toggle("tech-on",on); if(window.G3D) G3D.tech(on); });
+  window.__G={D:D, iconOf:iconOf, level:function(){ return cur; }, names:function(){ return nb.getAttribute("aria-pressed")==="true"; }, tech:function(){ return tb.getAttribute("aria-pressed")==="true"; }};
 })();
+</script>
+<script>
+/*G3D*/
 </script>
