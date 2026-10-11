@@ -6,7 +6,7 @@ blocks and crops, inside two bordered terraces (west and east), anchored on the 
 Then electricity (2 generators, 12 poles) and checks: climate for every crop, overlaps, power.
 Writes garden_levels.json.
 """
-import json, math, os, subprocess, sys
+import json, math, os, random, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from evo_steps import climate
 
@@ -253,7 +253,7 @@ def power(items, occupied, lvl, gens_prev=None, poles_n=12):
     pc = [c for c in cands(1.5) if free0(c)]
     ph = [(c, hits(area(c, 7)), area(c, 7)) for c in pc]
     ph = [t for t in ph if t[1]] + [t for t in ph if not t[1]][::7]   # poles that reach nothing: keep a sample as stepping stones
-    def lay(gens):
+    def lay(gens, rng=None):
         powered = set().union(*(h for _, h in gens))
         areas = [area(c, 11) for c, _ in gens]
         poles = []
@@ -261,7 +261,7 @@ def power(items, occupied, lvl, gens_prev=None, poles_n=12):
             left = [k for k in range(len(targets)) if k not in powered]
             if not left:
                 break
-            best, bv = None, -1
+            scored = []
             for c, h, a in ph:
                 if any(ov(c, q) for q in poles) or any(ov(c, g) for g, _ in gens):
                     continue
@@ -270,11 +270,13 @@ def power(items, occupied, lvl, gens_prev=None, poles_n=12):
                 v = sum(100 + targets[k]['weight'] for k in h if k not in powered)
                 if v == 0:
                     v = -min(math.dist(cen(a), cen(targets[k])) for k in left)
-                if best is None or v > bv:
-                    best, bv = (c, h, a), v
-            if best is None:
+                scored.append((v, c, h, a))
+            if not scored:
                 break
-            c, h, a = best
+            scored.sort(key=lambda t: -t[0])
+            # randomised runs pick among the few best moves, so a detour can open a better route
+            pick = scored[0] if rng is None else scored[min(len(scored) - 1, int(rng.random() ** 2 * 4))]
+            _, c, h, a = pick
             poles.append(c); areas.append(a); powered |= h
         return powered, poles, areas
     top = sorted(gh, key=lambda t: -sum(100 + targets[k]['weight'] for k in t[1]))
@@ -282,16 +284,25 @@ def power(items, occupied, lvl, gens_prev=None, poles_n=12):
     for c, h in top:
         if h and h not in seen:
             seen.add(h); short.append((c, h))
-        if len(short) >= 9:
+        if len(short) >= 16:
             break
     best = None
+    tried = []
     for i in range(len(short)):
         for j in range(i + 1, len(short)):
             if ov(short[i][0], short[j][0]):
                 continue
             pw, poles, areas = lay([short[i], short[j]])
             score = (len(pw), sum(targets[k]['weight'] for k in pw))
+            tried.append((score, i, j))
             if best is None or score > best[0]:
+                best = (score, [short[i][0], short[j][0]], poles, areas, pw)
+    rng = random.Random(lvl)
+    for score0, i, j in sorted(tried, reverse=True)[:6]:
+        for _ in range(12):
+            pw, poles, areas = lay([short[i], short[j]], rng)
+            score = (len(pw), sum(targets[k]['weight'] for k in pw))
+            if score > best[0]:
                 best = (score, [short[i][0], short[j][0]], poles, areas, pw)
     _, gens, poles, areas, pw = best
     return gens, poles, areas, len(pw), len(targets)
@@ -490,21 +501,43 @@ def main():
                 x, y, s = PAV[m['facility']]
                 items.append({'kind': 'piece', 'n': m['facility'], 'item': m.get('crop') or '', 'x': x, 'y': y, 'w': s, 'h': s, 'weight': m.get('weight') or 0, 'idle': not m.get('weight'), 'zone': 'pavilion'})
         others = [m['facility'] for m in fixed if m['facility'] not in FP and m['facility'] not in ('Mine', 'Well') and m['facility'] not in PAV]
+        # one storage may move for this level only, when that cuts the porters' walk by 8 % or more
+        KL = dict(KIOSK)
+        act = [(i['x'] + i['w'] / 2, i['y'] + i['h'] / 2, i['weight']) for i in items if (i.get('weight') or 0) > 0 and i['kind'] == 'piece']
+        wsum = sum(w for *_, w in act)
+        walk_of = lambda kc: sum(w * min(math.dist((x, y), c) for c in kc) for x, y, w in act) / wsum
+        base = walk_of([(x + 1, y + 1) for x, y in KL.values()])
+        block = [dict(x=i['x'], y=i['y'], w=i['w'], h=i['h']) for i in items] + CLEAR + [{'x': x, 'y': y, 'w': 2, 'h': 2} for x, y in HATCH]
+        bestk = (base, None, None)
+        for k in KL:
+            others = [(x + 1, y + 1) for kk, (x, y) in KL.items() if kk != k]
+            oth = [{'x': x, 'y': y, 'w': 2, 'h': 2} for kk, (x, y) in KL.items() if kk != k]
+            for xi in range(0, 157):
+                for yi in range(0, 117):
+                    r = {'x': xi / 2, 'y': yi / 2, 'w': 2, 'h': 2}
+                    if not plot_open(r, L) or any(ov(r, o) for o in block) or any(ov(r, o) for o in oth):
+                        continue
+                    v = walk_of(others + [(r['x'] + 1, r['y'] + 1)])
+                    if v < bestk[0]:
+                        bestk = (v, k, (r['x'], r['y']))
+        if bestk[1] is not None and bestk[0] <= base * .92:
+            KL[bestk[1]] = bestk[2]
+            print(f'  RV{L}: storage {bestk[1]} moves to {bestk[2]} for this level, walk {base:.2f} -> {bestk[0]:.2f}', flush=True)
         # occupancy for power: everything placed, kiosks, hatchery, kept-clear paths, terraces
-        occupied = [dict(x=i['x'], y=i['y'], w=i['w'], h=i['h']) for i in items] + [{'x': x, 'y': y, 'w': 2, 'h': 2} for x, y in KIOSK.values()] + CLEAR + [{k: t[k] for k in 'xywh'} for t in TERRACES + (TERR_NE if L >= 18 else [])] + ([{'x': 40.2, 'y': .6, 'w': 18, 'h': 10.2}] if L >= 16 else []) + ([{k: t[k] for k in 'xywh'} for t in EXTRA] if key[-1] else [])
+        occupied = [dict(x=i['x'], y=i['y'], w=i['w'], h=i['h']) for i in items] + [{'x': x, 'y': y, 'w': 2, 'h': 2} for x, y in KL.values()] + CLEAR + [{k: t[k] for k in 'xywh'} for t in TERRACES + (TERR_NE if L >= 18 else [])] + ([{'x': 40.2, 'y': .6, 'w': 18, 'h': 10.2}] if L >= 16 else []) + ([{k: t[k] for k in 'xywh'} for t in EXTRA] if key[-1] else [])
         occupied += [{'x': x, 'y': y, 'w': 2, 'h': 2} for x, y in HATCH]
         r1 = power(items, occupied, L); r2 = power_greedy(items, occupied, L)
         gens, poles, areas, pw, tg = max((r1, r2), key=lambda r: r[3])
         bonus, curve = more_poles(items, occupied, L, gens, poles) if L >= 16 else ([], [])
         # checks
         probs = climate({'items': items}, LAY[L])[0]
-        allr = [dict(n=i['n'], x=i['x'], y=i['y'], w=i['w'], h=i['h']) for i in items] + [dict(n='kiosk', x=x, y=y, w=2, h=2) for x, y in KIOSK.values()] + [dict(n='gen', **g) for g in gens] + [dict(n='pole', **p) for p in poles]
+        allr = [dict(n=i['n'], x=i['x'], y=i['y'], w=i['w'], h=i['h']) for i in items] + [dict(n='kiosk', x=x, y=y, w=2, h=2) for x, y in KL.values()] + [dict(n='gen', **g) for g in gens] + [dict(n='pole', **p) for p in poles]
         bad = [(a['n'], b['n']) for k, a in enumerate(allr) for b in allr[k + 1:] if ov(a, b)]
         bad += [(a['n'], 'locked') for a in allr if not plot_open(a, L)]
-        stw = [cen({'x': x, 'y': y, 'w': 2, 'h': 2}) for x, y in KIOSK.values()]
+        stw = [cen({'x': x, 'y': y, 'w': 2, 'h': 2}) for x, y in KL.values()]
         act = [i for i in items if i['kind'] == 'piece' and (i.get('weight') or 0) > 0]
         avg = sum(i['weight'] * min(math.dist(cen(i), s) for s in stw) for i in act) / sum(i['weight'] for i in act)
-        levels[L] = {'extra': key[-1], 'items': items, 'squares': squares, 'gens': gens, 'poles': poles, 'areas': areas, 'powered': [pw, tg], 'bonus': bonus, 'curve': curve, 'avg': round(avg, 2),
+        levels[L] = {'extra': key[-1], 'kiosks': KL, 'items': items, 'squares': squares, 'gens': gens, 'poles': poles, 'areas': areas, 'powered': [pw, tg], 'bonus': bonus, 'curve': curve, 'avg': round(avg, 2),
                      'climateMiss': probs, 'overlaps': bad, 'unplaced': out['metrics']['unplaced'], 'others': others}
         print(f'RV{L}: items {len(items)}, walk {avg:.2f}, power {pw}/{tg} bonus {curve}, climate problems {probs}, overlaps {bad[:6]}, unplaced {out["metrics"]["unplaced"]}', flush=True)
         prev_items = [it for it in out['items']]

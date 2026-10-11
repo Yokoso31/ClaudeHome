@@ -219,6 +219,11 @@ for L in LEVELS[1:]:
                 st.append({'g': 'Carrière, puits, pavillons', 't': f'Pose {lab if len(ids_) > 1 else "1 × " + lab} ({z}) : {pfr(nw) or "à l’arrêt"}.', 'ids': ids_, 'ic': pic_fac(n)})
             else:
                 st.append({'g': 'Carrière, puits, pavillons', 't': f'{lab[0].upper() + lab[1:]} ({z}) : {pfr(o) or "à l’arrêt"} → {pfr(nw) or "à l’arrêt"}.', 'ids': ids_, 'ic': pic_fac(n)})
+    # storages that change place for this level
+    for k, pos in KLV[L].items():
+        if KLV[P].get(k) != pos:
+            back = pos == KIOSK.get(k)
+            st.append({'g': 'Stockages', 't': (f'Remets le stockage {k} à sa place habituelle' if back else f'Déplace le stockage {k} {cardinal({"x": pos[0], "y": pos[1], "w": 2, "h": 2})} (surligné sur le plan) : les porteurs marchent moins à ce palier') + '.', 'ids': [], 'key': 'Storage Unit', 'ic': pic_fac('Storage Unit')})
     # electricity
     pg = {(g['x'], g['y']) for g in pv['gens']}; pp = {(p['x'], p['y']) for p in pv['poles']}
     mg = [gid for g, gid in zip(lv['gens'], gids) if (g['x'], g['y']) not in pg]
@@ -280,7 +285,7 @@ for L in LEVELS:
     fl = FOYER_L.get(str(L), {})
     lv = GL['levels'][str(L)]
     md = json.load(open(os.path.join(S, f'my_data_rv{L}.json')))
-    kc = [(x + 1, y + 1) for x, y in KIOSK.values()]
+    kc = [(x + 1, y + 1) for x, y in KLV[L].values()]
     g, p = {}, {}
     for it in lv['items']:
         w = it.get('weight') or 0

@@ -25,8 +25,6 @@ for key, fr, role, rects, ph, (lx, ly) in ZONES:
     for (x, y, w, h) in rects:
         add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" class="obj zone"{tag(key)}/>', ph, 2.5)
     nlabel(lx, ly, fr, .82, ph)
-for k, (x, y) in KIOSK.items():
-    nlabel(x + 1, y + 2.75, f'Stockage {k}', .5)
 for x, y, txt, sz, ph in NAMES:
     add(f'<text x="{f(x)}" y="{f(y)}" font-size="{sz}" text-anchor="middle" class="nm">{txt}</text>', ph, 13)
 for L in LEVELS:

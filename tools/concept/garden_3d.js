@@ -58,6 +58,7 @@
         else if(o.dv==="cool"){ g.add(at(box(1.8,1.2,1.8,"#BFE3F2"),0,.6,0)); g.add(at(box(1.4,.2,1.4,"#33B9E2",{emissive:"#0E5A75"}),0,1.3,0)); }
         else { g.add(at(cyl(.08,.1,2.2,"#5D6A60",6),0,1.1,0)); g.add(at(ball(.38,"#FFD54A",1,{emissive:"#C99A22"}),0,2.35,0)); }
         g.add(at(cyl(.62,.62,.04,MODEC[o.m]||"#ccc",16,{emissive:MODEC[o.m]||"#000",emissiveIntensity:.25}),0,.02,0)); break;
+      case "kiosk": g.add(at(box(1.9,1.3,1.9,"#C99A5B"),0,.65,0)); g.add(at(box(2,.12,2,"#8A6A45"),0,1.36,0)); g.add(textSprite(String(o.n),1.1,2.3,"#203026","#FFFFFF")); break;
       case "gen": g.add(at(cyl(.45,.5,1.3,"#7E63D6",8),0,.65,0)); g.add(at(ball(.3,"#CDBDFB",1,{emissive:"#7E63D6"}),0,1.5,0)); break;
       case "pole": case "bonus": var op=o.k==="bonus"?{transparent:true,opacity:.5}:{};
         g.add(at(box(1.2,.15,1.2,"#B9B2A6",op),0,.07,0)); g.add(at(cyl(.1,.12,3.2,"#5E4B9E",6,op),0,1.6,0)); g.add(at(box(1.1,.08,.08,"#5E4B9E",op),0,2.9,0));

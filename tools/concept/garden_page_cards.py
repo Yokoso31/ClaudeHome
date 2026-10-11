@@ -64,9 +64,9 @@ for i in GL['lots']:
     COUNT[i['n']] = COUNT.get(i['n'], 0) + 1
 def mlabel(n, k):
     return FR.get(n, n) + (f' {k + 1}' if COUNT.get(n, 0) > 1 else '')
-def near_kiosk(it):
+def near_kiosk(it, L=14):
     c = (it['x'] + it['w'] / 2, it['y'] + it['h'] / 2)
-    k, (x, y) = min(KIOSK.items(), key=lambda kv: math.dist(c, (kv[1][0] + 1, kv[1][1] + 1)))
+    k, (x, y) = min(KLV[L].items(), key=lambda kv: math.dist(c, (kv[1][0] + 1, kv[1][1] + 1)))
     return int(k)
 CARDS = {}
 MJOBS, ALAB = {}, {}
@@ -159,7 +159,7 @@ for L in LEVELS:
                 for mm, t in by_task.get((n, snake(j)), []):
                     if all(a['p'] != mm['i'] for a in ani):
                         ani.append(who(mm, t, title))
-            sec['rue'].append({'ids': [iid], 'ic': pic_fac(n), 't': title, 'where': f'Rue des artisans, côté {"nord" if it["y"] < 17 else "sud"} · stockage {near_kiosk(it)} tout près', 'x': it['x'], 'side': 0 if it['y'] < 17 else 1,
+            sec['rue'].append({'ids': [iid], 'ic': pic_fac(n), 't': title, 'where': f'Rue des artisans, côté {"nord" if it["y"] < 17 else "sud"} · stockage {near_kiosk(it, L)} tout près', 'x': it['x'], 'side': 0 if it['y'] < 17 else 1,
                                'recs': recs, 'ani': ani, 'w': round(wt)})
             continue
         cover = [e for e in envs if ovr(it, sq9(e))]

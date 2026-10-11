@@ -30,12 +30,14 @@ CLEAR += [('rue', {'x': 1, 'y': 16.5, 'w': 59, 'h': 3}), ('lien', {'x': 38, 'y':
 num(2.2, 18, 4)
 GL = json.load(open(os.path.join(S, 'garden_levels.json')))
 KIOSK = {int(k): tuple(v) for k, v in GL['kiosks'].items()}
-for k, (x, y) in KIOSK.items():
-    phys('stockage %d' % k, x, y, 2, 2)
-    T('Storage Unit', FR.get('Storage Unit', 'Unité de stockage'), 'Stockage', ic_fac('Storage Unit'), '2 × 2', 'Les porteurs y déposent la production.')
-    add(f'<g class="obj kiosk"{tag("Storage Unit", "Unité de stockage " + str(k))}><rect x="{x - .15}" y="{y - .15}" width="2.3" height="2.3" rx=".25" class="eave"/><rect x="{x + .15}" y="{y + .15}" width="1.7" height="1.7" class="roof"/>'
-        f'<path d="M{x + .15} {y + .15}L{x + 1.85} {y + 1.85}M{x + 1.85} {y + .15}L{x + .15} {y + 1.85}" class="ridge"/>'
-        f'<g class="kno"><circle cx="{x + 2}" cy="{y}" r=".6"/><text x="{x + 2}" y="{y + .25}" text-anchor="middle">{k}</text></g></g>', 14, 7)
+# storages per level: one may stand elsewhere for a level when that shortens the porters' walk
+KLV = {int(L): {int(k): tuple(v) for k, v in (lv.get('kiosks') or GL['kiosks']).items()} for L, lv in GL['levels'].items()}
+T('Storage Unit', FR.get('Storage Unit', 'Unité de stockage'), 'Stockage', ic_fac('Storage Unit'), '2 × 2', 'Les porteurs y déposent la production.')
+def kiosk_svg(k, x, y):
+    return (f'<g class="obj kiosk"{tag("Storage Unit", "Unité de stockage " + str(k))}><rect x="{x - .15}" y="{y - .15}" width="2.3" height="2.3" rx=".25" class="eave"/><rect x="{x + .15}" y="{y + .15}" width="1.7" height="1.7" class="roof"/>'
+            f'<path d="M{x + .15} {y + .15}L{x + 1.85} {y + 1.85}M{x + 1.85} {y + .15}L{x + .15} {y + 1.85}" class="ridge"/>'
+            f'<g class="kno"><circle cx="{x + 2}" cy="{y}" r=".6"/><text x="{x + 2}" y="{y + .25}" text-anchor="middle">{k}</text></g></g>'
+            f'<text x="{f(x + 1)}" y="{f(y + 2.75)}" font-size=".5" text-anchor="middle" class="nm">Stockage {k}</text>')
 
 # ---------------- quarry ground, mountain ----------------
 rect(60, 15, 20, 15, 'url(#stone)', layer=1, rx=.4)
@@ -237,7 +239,8 @@ for L in LEVELS:
         out.append(f'<g class="obj pole bonus"{tag("bonuspole")} data-id="{L}-{ids}"><rect x="{p["x"]}" y="{p["y"]}" width="1.5" height="1.5" rx=".3"/><text x="{f(p["x"] + .75)}" y="{f(p["y"] + 1.08)}" text-anchor="middle" font-size=".9">+{k + 1}</text></g>')
         out.append(f'<rect x="{f(p["x"] - 2.75)}" y="{f(p["y"] - 2.75)}" width="7" height="7" rx=".4" class="pwa tech bonus"/>')
     # porters' trips: each producing piece to its nearest storage, thicker where more trips go
-    kc = {k: (x + 1, y + 1) for k, (x, y) in KIOSK.items()}
+    out += [kiosk_svg(k, x, y) for k, (x, y) in KLV[L].items()]
+    kc = {k: (x + 1, y + 1) for k, (x, y) in KLV[L].items()}
     act = [it for it in lv['items'] if (it.get('weight') or 0) > 0 and it['kind'] == 'piece']
     wmax = max(it['weight'] for it in act)
     tot = {k: 0 for k in kc}
@@ -261,7 +264,7 @@ for L in LEVELS:
         'poles': len(lv['poles']), 'gens': len(lv['gens']), 'curve': lv.get('curve', []),
     }
     # overlaps between the garden's fixed decor and this level's production
-    prod = [dict(n=it['n'], x=it['x'], y=it['y'], w=it['w'], h=it['h']) for it in lv['items']] + [dict(n='générateur', **g) for g in lv['gens']] + [dict(n='poteau', **p) for p in lv['poles'] + lv.get('bonus', [])]
+    prod = [dict(n=it['n'], x=it['x'], y=it['y'], w=it['w'], h=it['h']) for it in lv['items']] + [dict(n='générateur', **g) for g in lv['gens']] + [dict(n='poteau', **p) for p in lv['poles'] + lv.get('bonus', [])] + [dict(n=f'stockage {k}', x=x, y=y, w=2, h=2) for k, (x, y) in KLV[L].items()]
     vis = lambda ph: ph == 14 or (isinstance(ph, int) and L >= ph) or (ph == 'ph16 until19' and 16 <= L <= 19)
     clash = [(a['n'], n2) for a in prod for (n2, r, ph) in PHYS if vis(ph) and ovr(a, r)]
     clash += [(a['n'], cn) for a in prod for cn, cr in CLEAR if ovr(a, cr)]

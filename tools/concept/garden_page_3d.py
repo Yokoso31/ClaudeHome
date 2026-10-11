@@ -87,6 +87,8 @@ for L in LEVELS:
         else:
             o |= {'k': 'pav', 'col': icol(n), 'ic': ic_fac(n).replace(' ', '_'), 'lab': f'{name_fr} · ' + (rec or 'à l\'arrêt') + mode}
         objs.append(o)
+    for k, (x, y) in KLV[L].items():
+        objs.append({'k': 'kiosk', 'n': k, 'x': x, 'y': y, 'w': 2, 'h': 2, 'lab': f'Stockage {k}'})
     for g in lv['gens']:
         objs.append({'k': 'gen', 'x': g['x'], 'y': g['y'], 'w': 1, 'h': 1, 'lab': FR.get('Crackle Generator', 'Générateur') + ' · tenu par un Aniimo Foudre'})
     for p in lv['poles']:
