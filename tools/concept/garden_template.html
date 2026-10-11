@@ -190,6 +190,21 @@ body.game .tabs{order:1}body.game .wrap>section[data-tab]{order:2}body.game .she
 .tm .add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--sheet);border:1px dashed var(--line);border-radius:10px;padding:10px}
 .tm select{font:400 13.5px var(--body);padding:4px 6px;border:1.5px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
 .tm .sumtxt{white-space:pre-wrap;font:400 12.5px var(--mono);background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:10px;margin:0}
+
+.inv{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px}
+.inv .ic2{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.inv .ic2.done{opacity:.55}
+.inv .hd{display:grid;grid-template-columns:30px 36px minmax(0,1fr);gap:10px;align-items:center}
+.inv .hd b{font-size:15px;line-height:1.3}
+.inv .badge{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font:700 16px var(--display);color:#fff}
+.inv .big{font:700 20px var(--display);color:var(--indigo)}
+.inv .lvls{display:flex;flex-wrap:wrap;gap:4px}
+.inv .lvls span{font:500 11.5px var(--mono);background:var(--paper);border-radius:6px;padding:2px 7px}
+.inv .lvls span.cur{background:color-mix(in srgb,var(--sakura) 22%,transparent);font-weight:700}
+.inv .who2{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.inv .who2 .por{width:32px;height:32px}
+.inv small{color:var(--muted);font-size:12.5px}
+.pgh{font-size:19px;margin:6px 0 2px}
 .prodgrid{display:flex;flex-direction:column;gap:22px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .stats div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column}
@@ -506,6 +521,7 @@ ol{margin:0;padding-left:20px}
     <button type="button" role="tab" data-t="todo" class="gm-t">À faire <span class="tn" id="tn-todo"></span></button>
     <button type="button" role="tab" data-t="prod" class="gm-t">Machines</button>
     <button type="button" role="tab" data-t="who" class="gm-t">Aniimo</button>
+    <button type="button" role="tab" data-t="progress" class="gm-t">Progresser</button>
     <button type="button" role="tab" data-t="check" class="gm-t">Vérifier</button>
     <button type="button" role="tab" data-t="chain">Chaîne</button>
     <button type="button" role="tab" data-t="garden">Le jardin</button>
@@ -529,6 +545,15 @@ ol{margin:0;padding-left:20px}
       <p class="lede" id="ch-lede"></p>
     </div>
     <div id="chgrid"></div>
+  </section>
+
+  <section data-tab="progress" class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="pg-title" id="progress">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="eyebrow">Progresser</div>
+      <h2 id="pg-title">Où investir en priorité</h2>
+      <p class="lede">Ce que rapporte une seule amélioration de ton équipe ou de tes recettes, calculé par Aniimax avec tes Aniimo et ce plan. Les gains ne s'additionnent pas tout à fait : après chaque amélioration, dis-moi « recalcule mon équipe » pour la suite.</p>
+    </div>
+    <div id="pggrid"></div>
   </section>
 
   <section data-tab="check" class="gm" style="display:flex;flex-direction:column;gap:16px" aria-labelledby="ck-title" id="check">
@@ -783,7 +808,7 @@ ol{margin:0;padding-left:20px}
     wire(g);
   }
   function wire(g){
-    g.querySelectorAll(".ck").forEach(function(b){ b.addEventListener("click",function(){ var k=b.dataset.k; if(DONE[k]) delete DONE[k]; else DONE[k]=1; save(); if(k.charAt(0)==="a") renderWho(); else renderSteps(); var nb=document.querySelector('.ck[data-k="'+k+'"]'); if(nb) nb.focus(); }); });
+    g.querySelectorAll(".ck").forEach(function(b){ b.addEventListener("click",function(){ var k=b.dataset.k; if(DONE[k]) delete DONE[k]; else DONE[k]=1; save(); if(k.charAt(0)==="a") renderWho(); else if(k.charAt(0)==="i") renderImprove(); else renderSteps(); var nb=document.querySelector('.ck[data-k="'+k+'"]'); if(nb) nb.focus(); }); });
     g.querySelectorAll("[data-see]").forEach(function(b){ b.addEventListener("click",function(){ hlKey=null; hlIds=b.dataset.see.split(","); applyHl(); toPlan(); }); });
     g.querySelectorAll("[data-key]").forEach(function(b){ b.addEventListener("click",function(){ hlIds=null; hlKey=b.dataset.key; applyHl(); toPlan(); }); });
     g.querySelectorAll("[data-go]").forEach(function(b){ b.addEventListener("click",function(){ showTab(b.dataset.go); document.getElementById("tabs").scrollIntoView({behavior:RM?"auto":"smooth",block:"start"}); }); });
@@ -980,12 +1005,30 @@ ol{margin:0;padding-left:20px}
   function baSet(v){ var r=document.getElementById("clipBr"), l=document.getElementById("divBl"), tg=document.getElementById("divBt"); if(r) r.setAttribute("width",v+1); if(l){ l.setAttribute("x1",v); l.setAttribute("x2",v); } if(tg) tg.setAttribute("transform","translate("+(Math.max(5.6,Math.min(74.4,v))-40)+" 0)"); }
   bab.addEventListener("click",function(){ var on=bab.getAttribute("aria-pressed")!=="true"; bab.setAttribute("aria-pressed",String(on)); svg.classList.toggle("before-on",on); document.getElementById("barow").hidden=!on; baSet(+bar.value); });
   bar.addEventListener("input",function(){ baSet(+bar.value); });
+  var ABCOL={Fire:"#EF5F45",Water:"#3B9BE0",Earth:"#B7834A",Grass:"#4DAE55",Lightning:"#D9A90F",Ice:"#4CC3E3",Wind:"#38B39A",Dark:"#6B5AA6",Light:"#E7B526",Artisanship:"#C9783E",Leisure:"#E06BA8",Perfumery:"#A86CD6",Hauling:"#7E8FA0"};
+  function hm(m){ var h=Math.floor(m/60), r=Math.round(m%60); return (h?h+" h"+(r?" "+(r<10?"0":"")+r:""):r+" min"); }
+  function invCard(a,mode){ var k="i:"+a.title, dn=!!DONE[k];
+    var badge=a.kind==="recipe"?(a.ic?pic(a.ic,"badge",a.title).replace('class="badge"','class="badge" style="background:var(--paper)"'):'<span class="badge" style="background:#E8862F">★</span>'):'<span class="badge" style="background:'+(ABCOL[a.ab]||"#888")+'">'+a.lv+'</span>';
+    var big=mode==="fast"?'−'+hm(a.mins)+' jusqu\'au VR 20':mode==="lvl"?[a.mins?'−'+hm(a.mins)+' pour le palier suivant':'',a.coins?'+'+fmt(a.coins)+' pièces/h'+(a.pct?' ('+a.pct+' %)':''):''].filter(Boolean).join(' · '):'≈ +'+fmt(a.value)+' pièces sur le parcours';
+    var lv=a.per?'<div class="lvls">'+D.levels.filter(function(L){ return a.per[L]; }).map(function(L){ var p=a.per[L]; return '<span'+(L===cur?' class="cur"':'')+'>VR '+L+' '+(mode==="fast"?(p.mins?'−'+hm(p.mins):'—'):(p.pct?p.pct+' %':'—'))+'</span>'; }).join("")+'</div>':'';
+    var who=a.who&&a.who.length?'<div class="who2"><small>Un seul suffit, parmi :</small>'+a.who.slice(0,10).map(function(i){ return '<img class="por" src="'+D.portraits[i]+'" alt="Aniimo n°'+(i+1)+'" title="Aniimo n°'+(i+1)+'">'; }).join("")+(a.who.length>10?'<small>+'+(a.who.length-10)+'</small>':'')+'</div>':'';
+    var how=a.kind==="recipe"?'<small>Recette spéciale : elle se débloque avec une monnaie rare ou une Note de recette.</small>':'<small>Il suffit d\'en faire monter un seul au niveau '+a.lv+' dans cette aptitude.</small>';
+    return '<div class="ic2'+(dn?' done':'')+'"><div class="hd"><button type="button" class="ck" data-k="'+esc(k)+'" aria-pressed="'+dn+'" aria-label="Fait : '+esc(a.title)+'">'+CHK+'</button>'+badge+'<b>'+esc(a.title)+'</b></div><span class="big">'+big+'</span>'+lv+who+how+'</div>'; }
+  function renderImprove(){
+    var I=D.improve, g=document.getElementById("pggrid"), h="";
+    if(I.fast.length) h+='<h3 class="pgh">Pour monter plus vite</h3><div class="inv">'+I.fast.map(function(a){ return invCard(a,"fast"); }).join("")+'</div>';
+    h+='<h3 class="pgh">Pour gagner plus, sur tout le parcours</h3><div class="inv">'+I.top.map(function(a){ return invCard(a,"top"); }).join("")+'</div>';
+    var rows=I.levels[cur]||[];
+    h+='<h3 class="pgh">Au VR '+cur+', une amélioration à la fois</h3><div class="inv">'+rows.slice(0,9).map(function(a){ return invCard(a,"lvl"); }).join("")+'</div>'+(rows.length>9?'<small style="color:var(--muted)">… et '+(rows.length-9)+' autres, plus petites.</small>':'');
+    h+='<small style="color:var(--muted)">« Sur le parcours » additionne le gain de chaque palier pendant le temps qu\'on y passe (une semaine pour le VR 20). Coche une amélioration faite : elle est enregistrée avec tes autres coches.</small>';
+    g.innerHTML=h; wire(g);
+  }
   function setLevel(L){ cur=L; svg.setAttribute("data-lv",String(L)); tip.hidden=true; hlIds=null;
     document.querySelectorAll("#lvbtns button").forEach(function(b){ b.setAttribute("aria-pressed",String(+b.dataset.lv===L)); });
     var t=D.tab[L]; document.getElementById("cart-lv").textContent="VR "+L; document.getElementById("avg").textContent=f1(t.avg);
     document.getElementById("pw").textContent=t.powered[0]+" machines actives sur "+t.powered[1]+" alimentées";
     document.getElementById("walk").innerHTML="Au VR "+L+", un porteur fait <b>"+f1(t.avg)+" cases</b> en moyenne jusqu'au stockage le plus proche, contre "+f1(D.design[L].plan)+" dans le plan le plus rentable, qui ne pense qu'au rendement.";
-    renderLegend(); renderProd(); renderSteps(); renderWho(); renderChain(); renderGoal(); renderBudget(); renderDesign(); markMine(); applyHl(); if(window.G3D) G3D.level(L); }
+    renderLegend(); renderProd(); renderSteps(); renderWho(); renderChain(); renderGoal(); renderBudget(); renderDesign(); renderImprove(); markMine(); applyHl(); if(window.G3D) G3D.level(L); }
   document.getElementById("lvbtns").innerHTML=D.levels.map(function(L){ return '<button class="ph-btn" type="button" data-lv="'+L+'" aria-pressed="false">VR '+L+'</button>'; }).join("");
   document.querySelectorAll("#lvbtns button").forEach(function(b){ b.addEventListener("click",function(){ touched=true; setLevel(+b.dataset.lv); }); });
   setLevel(ME||14); renderTeam();
