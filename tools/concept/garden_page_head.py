@@ -177,13 +177,10 @@ def deco(i, x, y, phase=14, rot=False, layer=6, draw=True):
 
 # ---------------- ground ----------------
 rect(0, 0, 80, 60, 'url(#grass)', layer=0)
-for (x, y, w, h) in ((26, 25.5, 8, 11.5), (46.5, 25.5, 8.5, 7.5), (0, 51, 28, 9), (56, 54, 24, 6)):
-    rect(x, y, w, h, 'url(#mossy)', layer=0, rx=2.5)
 rect(40, 0, 40, 15, 'url(#later)', layer=11, extra='class="lock16"')
 add('<text x="60" y="7.9" class="lock16 locktxt" font-size="1.3" text-anchor="middle">S\'ouvre au VR 16</text>', 14, 11)
 
 # ---------------- 1 · entrance and approach ----------------
-rect(38, 37, 4, 23, 'url(#slabs)', layer=2)
 CLEAR += [('allée', {'x': 38, 'y': 37, 'w': 4, 'h': 13.5}), ('allée', {'x': 38, 'y': 55.5, 'w': 4, 'h': 4.5})]
 deco('40600065', 35.9, 58.2); deco('40600065', 42.35, 58.2)
 for y in (39.5, 43.5, 47.5, 57.2):
@@ -225,14 +222,13 @@ deco('40700017', 46.6, 56.2); deco('40700016', 33.4, 51.2); deco('40700016', 35.
 num(31, 50.2, 2)
 
 # ---------------- 3 · courtyard of the great tree ----------------
-rect(34, 25, 12, 12, 'url(#gravel)', layer=2, rx=.6)
-add('<circle cx="40" cy="31" r="5.3" class="ring"/><circle cx="40" cy="31" r="5.8" class="ring"/>', 14, 3)
 T('bigtree', 'Grand arbre violet', 'Lieux', None, '8 × 8', 'Ton grand arbre actuel, déplacé au centre de la cour. De base il fait 5 × 5 comme le Lit de Cumulaine : avec « Taille », règle-le vers ×1,6 pour qu\'il remplisse la cour sans toucher les lampes ni les haies.')
 add(f'<g class="obj bigtree"{tag("bigtree")}>' + shadow(40, 31, 4) +
     blob(40, 31, 4.3, 'wis', 12, .14, 3) + blob(38.6, 29.9, 2.3, 'wis-l', 8, .2, 4) + blob(41.8, 32.2, 2.2, 'wis-l', 8, .2, 5) + blob(40.6, 29.2, 1.4, 'wis-ll', 7, .2, 6) + '</g>', 14, 8)
-for x, y in ((34.4, 25.4), (43.85, 25.4), (34.4, 35.1), (43.85, 35.1)):
+# lamps and hedges each sit in one 2 x 2 cell of the gravel ring, so the floor tiles fill the rest exactly
+for x, y in ((34.125, 25.25), (44.125, 25.25), (34.125, 35.25), (44.125, 35.25)):
     deco('40600065', x, y)
-for x, y in ((39.5, 25.3), (39.5, 35.7), (34.3, 30.5), (44.7, 30.5)):
+for x, y in ((34.5, 29.5), (34.5, 31.5), (44.5, 29.5), (44.5, 31.5)):
     deco('40700002', x, y)
 num(46.4, 24.6, 3)
 

@@ -99,25 +99,27 @@
   var PX=20;
   function paintGround(L){ var c=groundCv.getContext("2d"), W=80*PX, H=60*PX; c.fillStyle="#7EA94E"; c.fillRect(0,0,W,H);
     var R=rnd(7); for(var i=0;i<2600;i++){ c.fillStyle=R()<.5?"rgba(60,110,40,.10)":"rgba(255,255,220,.08)"; c.fillRect(R()*W,R()*H,3+R()*6,3+R()*6); }
-    var GC={"z-allee":"#CFC6B3","z-rue":"#D6CCB6","z-cour":"#E7DFCC","z-mousse":"#79A253","z-the":"#79A253","z-carriere":"#B4AEA3","z-sec":"#EAE2CF","z-nord":"#EAE2CF","z-eclo":"#D3CBB9","z-bosquet":"#7FAF55","z-fleurs":"#A9CF7A"};
+    var GC={};   /* only real floor tiles are painted; everything else is the game's own grass */
     SC.ground.forEach(function(z){ if(!on(L,z.lv)||!GC[z.k]) return; c.fillStyle=GC[z.k]; c.fillRect(z.x*PX,z.y*PX,z.w*PX,z.h*PX);
       if(z.k==="z-allee"||z.k==="z-rue"||z.k==="z-eclo"){ c.strokeStyle="rgba(90,80,60,.25)"; c.lineWidth=2; for(var x=z.x;x<=z.x+z.w;x+=1){ c.beginPath(); c.moveTo(x*PX,z.y*PX); c.lineTo(x*PX,(z.y+z.h)*PX); c.stroke(); } for(var y=z.y;y<=z.y+z.h;y+=1){ c.beginPath(); c.moveTo(z.x*PX,y*PX); c.lineTo((z.x+z.w)*PX,y*PX); c.stroke(); } }
       if(z.k==="z-sec"||z.k==="z-nord"){ c.strokeStyle="rgba(150,135,100,.35)"; c.lineWidth=2; for(var y2=z.y+.3;y2<z.y+z.h;y2+=.45){ c.beginPath(); c.moveTo(z.x*PX,y2*PX); c.lineTo((z.x+z.w)*PX,y2*PX); c.stroke(); } }
       if(z.k==="z-cour"){ c.strokeStyle="rgba(150,135,100,.4)"; c.lineWidth=2; for(var r=4.6;r<6;r+=.45){ c.beginPath(); c.arc(40*PX,31*PX,r*PX,0,7); c.stroke(); } }
       if(z.k==="z-fleurs"){ var R3=rnd(5); for(var f=0;f<160;f++){ c.fillStyle=["#F2A7C3","#FFFFFF","#F2D23C","#B79BE8"][f%4]; c.beginPath(); c.arc((z.x+R3()*z.w)*PX,(z.y+R3()*z.h)*PX,4,0,7); c.fill(); } } });
     SC.decor.forEach(function(o){ if(!on(L,o.lv)) return; if(o.n==="Sol en gravier"){ c.fillStyle="#DAD3C4"; c.fillRect(o.x*PX,o.y*PX,o.w*PX,o.h*PX); var R4=rnd(o.x); for(var p=0;p<14;p++){ c.fillStyle="#B9B2A6"; c.beginPath(); c.arc((o.x+R4()*o.w)*PX,(o.y+R4()*o.h)*PX,3+R4()*4,0,7); c.fill(); } }
-      if(o.n==="Dalle en pierre recouverte de mousse"){ c.fillStyle="#A3A893"; c.fillRect(o.x*PX+2,o.y*PX+2,o.w*PX-4,o.h*PX-4); } });
+      if(o.n==="Dalle en pierre recouverte de mousse"){ c.fillStyle="#A3A893"; c.fillRect(o.x*PX+2,o.y*PX+2,o.w*PX-4,o.h*PX-4); }
+      if(o.n==="Chaussée en pierre"){ c.fillStyle="#CFCBBA"; c.fillRect(o.x*PX+1,o.y*PX+1,o.w*PX-2,o.h*PX-2); c.strokeStyle="rgba(110,100,80,.35)"; c.lineWidth=2; c.strokeRect(o.x*PX+3,o.y*PX+3,o.w*PX-6,o.h*PX-6); }
+      if(o.n==="Chemin de gravier"){ c.fillStyle="#D8CFB8"; c.fillRect(o.x*PX+1,o.y*PX+1,o.w*PX-2,o.h*PX-2); } });
+    SC.terr.forEach(function(t){ if(!on(L,t.lv)) return; c.setLineDash([12,8]); c.strokeStyle="rgba(60,90,50,.55)"; c.lineWidth=3; c.strokeRect(t.x*PX,t.y*PX,t.w*PX,t.h*PX); c.setLineDash([]); });
     if(L<16){ c.fillStyle="rgba(40,55,40,.45)"; c.fillRect(40*PX,0,40*PX,15*PX); c.strokeStyle="rgba(255,255,255,.18)"; c.lineWidth=6; for(var h=-15;h<40;h+=2){ c.beginPath(); c.moveTo((40+h)*PX,15*PX); c.lineTo((55+h)*PX,0); c.stroke(); }
       c.fillStyle="rgba(255,255,255,.9)"; c.font="600 "+(PX*1.6)+"px 'IBM Plex Mono',monospace"; c.textAlign="center"; c.fillText("S'ouvre au VR 16",60*PX,8*PX); }
     c.strokeStyle="rgba(255,255,255,.07)"; c.lineWidth=1; for(var gx=0;gx<=80;gx++){ c.beginPath(); c.moveTo(gx*PX,0); c.lineTo(gx*PX,H); c.stroke(); } for(var gy=0;gy<=60;gy++){ c.beginPath(); c.moveTo(0,gy*PX); c.lineTo(W,gy*PX); c.stroke(); }
     groundTex.needsUpdate=true; }
   /* ---------- build a level ---------- */
-  var TH=.16;
+  var TH=0;
   function inTerr(o,L){ return SC.terr.some(function(t){ return on(L,t.lv) && o.x>=t.x-.01 && o.y>=t.y-.01 && o.x+o.w<=t.x+t.w+.01 && o.y+o.h<=t.y+t.h+.01; }); }
   function build(L){ if(lvGroup){ scene.remove(lvGroup); lvGroup.traverse(function(m){ if(m.geometry) m.geometry.dispose(); }); } if(techGroup) scene.remove(techGroup);
     lvGroup=new THREE.Group(); techGroup=new THREE.Group(); paintGround(L);
-    SC.terr.forEach(function(t){ if(!on(L,t.lv)) return; var g=grp(t); g.add(at(box(t.w,TH,t.h,"#8DB062"),0,TH/2,0));
-      [[0,-t.h/2,t.w,.22],[0,t.h/2,t.w,.22],[-t.w/2,0,.22,t.h],[t.w/2,0,.22,t.h]].forEach(function(e){ g.add(at(box(e[2],.32,e[3],"#8A7350"),e[0],.16,e[1])); }); lvGroup.add(g); });
+
     SC.decor.forEach(function(o){ if(!on(L,o.lv)) return; var g=decor(o); if(g) lvGroup.add(g); });
     (SC.levels[L]||[]).forEach(function(o){ lvGroup.add(piece(o,inTerr(o,L)?TH:0));
       if(o.k==="dev"){ var q=new THREE.Mesh(new THREE.PlaneGeometry(9,9),new THREE.MeshBasicMaterial({color:MODEC[o.m]||"#fff",transparent:true,opacity:.22,depthWrite:false})); q.rotation.x=-Math.PI/2; q.position.set(o.x+o.w/2-40,TH+.05,o.y+o.h/2-30); techGroup.add(q); }

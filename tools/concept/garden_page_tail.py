@@ -24,8 +24,6 @@ deco('40600083', 48, 28.2); deco('40600066', 48.9, 29.1); deco('40600055', 51.6,
 deco('40300014', 51, 26.9); deco('40100006', 49, 30.4, layer=3); deco('40700016', 47.4, 31.2)
 
 # ---------------- craftsmen's street, kiosks ----------------
-rect(1, 16.5, 59, 3, 'url(#slabs)', layer=2)
-rect(38, 19.5, 4, 5.5, 'url(#slabs)', layer=2)
 CLEAR += [('rue', {'x': 1, 'y': 16.5, 'w': 59, 'h': 3}), ('lien', {'x': 38, 'y': 19.5, 'w': 4, 'h': 5.5})]
 num(2.2, 18, 4)
 GL = json.load(open(os.path.join(S, 'garden_levels.json')))
@@ -40,7 +38,6 @@ def kiosk_svg(k, x, y):
             f'<text x="{f(x + 1)}" y="{f(y + 2.75)}" font-size=".5" text-anchor="middle" class="nm">Stockage {k}</text>')
 
 # ---------------- quarry ground, mountain ----------------
-rect(60, 15, 20, 15, 'url(#stone)', layer=1, rx=.4)
 num(78.6, 16.6, 5)
 MOUNT = 'ph16 until19' if GL['levels']['20']['extra'] else 'ph16'
 for x in (61.5, 70.5):
@@ -48,17 +45,14 @@ for x in (61.5, 70.5):
 deco('40300007', 75.5, 10.5, phase=MOUNT)
 
 # ---------------- terraces ----------------
+# terraces are only areas of the plan (plain grass in the game): a dashed outline, nothing to lay
 for t in GL['terraces']:
-    rect(t['x'] - .25, t['y'] - .25, t['w'] + .5, t['h'] + .5, 'url(#dike)', layer=1, rx=.6)
-    rect(t['x'] + .15, t['y'] + .15, t['w'] - .3, t['h'] - .3, 'url(#terr)', layer=1, rx=.4)
+    add(f'<rect x="{t["x"]}" y="{t["y"]}" width="{t["w"]}" height="{t["h"]}" rx=".4" class="terrz"/>', 14, 1)
 for t in GL['extra']:
-    rect(t['x'] - .25, t['y'] - .25, t['w'] + .5, t['h'] + .5, 'url(#dike)', phase='ph20x', layer=1, rx=.6)
-    rect(t['x'] + .15, t['y'] + .15, t['w'] - .3, t['h'] - .3, 'url(#terr)', phase='ph20x', layer=1, rx=.4)
-rect(40.4, 3.8, 11.6, 6.4, 'url(#gravel)', phase=18, layer=1, rx=.8)       # flower garden ground
+    add(f'<rect x="{t["x"]}" y="{t["y"]}" width="{t["w"]}" height="{t["h"]}" rx=".4" class="terrz"/>', 'ph20x', 1)
 num(3.6, 26.6, 6); num(79, 32, 7)
 
 # ---------------- hatchery pavilion ----------------
-rect(47.4, 54.6, 9.2, 4.8, 'url(#slabs)', layer=2, rx=.4)
 for g in range(3):
     rect(42 + 2 * g, 56.1, 2, 2, 'url(#gravelpath)', layer=2, rx=.3)
     used[('40100010', 14)] = used.get(('40100010', 14), 0) + 1
@@ -71,15 +65,11 @@ for i in range(4):
 num(57.8, 55, 8)
 
 # ---------------- dry garden ----------------
-rect(12, 52, 15, 7.5, 'url(#raked)', layer=2, rx=.6)
-add('<g class="rakes">' + ''.join(f'<circle cx="20.5" cy="55.8" r="{r}"/>' for r in (1.1, 1.6, 2.1)) + '</g>', 14, 3)
 deco('40700029', 2, 51)
 deco('40600083', 20.25, 55.55); deco('40700017', 24.2, 53.4); deco('40700016', 14.2, 57.6)
 num(12.4, 51.4, 9)
 
 # ---------------- north: raked garden, hedges ----------------
-rect(17.5, 1, 8, 8.2, 'url(#raked)', layer=2, rx=.6)
-add('<g class="rakes">' + ''.join(f'<circle cx="21.5" cy="5" r="{r}"/>' for r in (1, 1.5, 2)) + '</g>', 14, 3)
 deco('40600027', 21, 4.5); deco('40700017', 18.6, 2.4)
 for x in (2, 4.6, 22.6, 25.2):
     deco('40700001', x, 9.9)
@@ -93,6 +83,33 @@ for x in range(60, 79, 3):
     deco('40300002', x, 57.6)
 deco('40300014', 63.4, 54.2); deco('40300014', 72.6, 54.4)
 deco('40300002', .6, 37.6); deco('40300002', .6, 42); deco('40300002', .6, 46.4)
+
+# ---------------- floors: real 2 x 2 ground items from the shop, tile by tile ----------------
+FLOORPAT = {'40100002': 'slabs', '40100008': 'gravel', '40100010': 'gravelpath', '40100006': 'mossy'}
+FLOORFR = {JP[i]['fr'] for i in FLOORPAT}
+def _ov(a, b):
+    return min(a['x'] + a['w'], b['x'] + b['w']) - max(a['x'], b['x']) > 1e-6 and min(a['y'] + a['h'], b['y'] + b['h']) - max(a['y'], b['y']) > 1e-6
+def floors(i, x0, y0, nx, ny, phase=14):
+    """Lay floor tile i on a 2-tile grid from (x0, y0), skipping any cell where something else stands."""
+    j = JP[i]
+    T('jp' + i, j['fr'], 'Déco', ic_jp(i), '2 × 2', f'Sol à poser case par case · {j["price"]} · {j["cf"]} de confort')
+    out = []
+    for a in range(nx):
+        for b in range(ny):
+            r = {'x': x0 + 2 * a, 'y': y0 + 2 * b, 'w': 2, 'h': 2}
+            if any(_ov(r, pr) for name, pr, ph in PHYS):
+                continue
+            phys(j['fr'], r['x'], r['y'], 2, 2, phase)
+            out.append(f'<rect x="{r["x"] + .03}" y="{r["y"] + .03}" width="1.94" height="1.94" rx=".18" fill="url(#{FLOORPAT[i]})" class="tile"/>')
+    used[(i, phase)] = used.get((i, phase), 0) + len(out)
+    add(f'<g class="obj floor"{tag("jp" + i)}>' + ''.join(out) + '</g>', phase, 2)
+    return len(out)
+floors('40100002', 1, 17, 29, 1)        # craftsmen's street: one row of flagstones down the middle
+floors('40100002', 38, 19, 2, 3)        # link to the courtyard
+floors('40100002', 38, 37, 2, 11)       # lantern walk, from the gate
+floors('40100008', 34, 25, 6, 6)        # gravel courtyard round the great tree
+floors('40100008', 12, 52, 7, 3)        # dry garden
+floors('40100008', 17.5, 1, 4, 4)       # northern raked garden
 
 # ---------------- production, level by level ----------------
 LEVELS = [int(k) for k in sorted(GL['levels'], key=int)]
